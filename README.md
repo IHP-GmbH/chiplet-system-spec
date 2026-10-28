@@ -3,7 +3,7 @@ SPDX-License-Identifier: Apache-2.0
 SPDX-FileCopyrightText: 2026 IHP GmbH
 -->
 
-# chiplet-spec
+# chiplet-system-spec
 
 Open specifications for the heterogeneous-integration / chiplet-assembly interchange
 formats developed at IHP; chiefly the **`.chiplet`** assembly format and the sidecar
