@@ -1,0 +1,310 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+#
+# Conformance corpus: the format_version policy (H-B seed, format-level, public).
+# Home for the format-level fixtures per CHIPLET_FLOW_DEV_GUIDELINES Lane 2.
+# Verdict-level (H-C) fixtures live elsewhere behind the embargo gate and are
+# NOT part of this file.
+#
+# Implementation-class dimension (REQUIRED, fable change 6): the read verdict
+# (accept/warn/refuse) and the normalized version apply to EVERY reader and are
+# the cross-implementation parity contract. The writer and round-trip
+# expectations are class-specific:
+#   * passthrough readers/writers keep a lossless dict, so an unknown top-level
+#     key round-trips and a same-major higher minor is preserved on write;
+#   * typed readers/writers reconstruct from a struct model, so unknown keys are
+#     dropped BY DESIGN (the 2026-08-05 stackup loss) and writers stamp SUPPORTED.
+# An expectation tagged `passthrough_only: true` is checked only against a
+# passthrough implementation and skipped (not failed) for a typed one.
+
+# interposer_pnr_ir reads into a typed model but retains the raw dict and writes
+# it back (write_assembly dumps assembly.raw), so it is passthrough for
+# round-trip and writer purposes; only the C++ struct reader is typed-lossy
+# (no raw retention). ir's writer parity is asserted in interposer-pnr's suite.
+#
+# Rule-8 dimension (`checks_pad_usage`): whether the reader implements validation
+# rule 8, the io_class/interface-type compatibility check of the spec. It is a
+# READER rule, not a structural one, and the two reference validators run it while
+# ir does not (row open at interposer-pnr). An expectation tagged
+# `pad_usage_only: true` is therefore skipped (not failed) for a reader that does
+# not declare the dimension, exactly as `passthrough_only` and `source_text_only`
+# are. The dimension is written down here rather than left implicit so the gap is
+# visible in the parity contract instead of being invisible in a missing row.
+#
+# Source-text dimension (`reads_source_text`): whether the reader sees the BYTES
+# of the document or only a parsed node tree. It decides one thing, and only one:
+# whether the top-level block grammar (docs/CHIPLET_FORMAT_SPEC.md) is something
+# the reader can apply at all. ir is handed an already-parsed mapping, so a
+# repeated top-level key has been resolved away before it is called and it cannot
+# be asked about it; an expectation tagged `source_text_only: true` is skipped
+# (not failed) for such a reader, the same way `passthrough_only` is skipped for a
+# typed one. Everything NOT so tagged applies to every reader, as before.
+#
+# A refusing expectation may carry `refusal: {error, says}`: the exception class
+# a Python-side reader raises and a sentence its message must contain. A reader
+# reached as a binary (reference_cpp) is held to the sentence only. ir's base
+# error (ChipletError) is its counterpart of the reference's ChipletFormatError
+# and is checked under that name; its subclasses keep their own.
+#
+# Units dimension (`refuses_other_units`): whether the reader refuses an
+# `assembly.units` outside the closed set (format 1.1: um only). An expectation
+# tagged `units_refusal_only: true` is skipped for a reader that does not
+# declare it. ir declares it from the interposer router's release that refuses
+# with the reference readers' sentence.
+#
+# Source dimension (`refuses_source_documents`): whether the reader refuses a
+# SOURCE document, one with a top-level `system` block (format 1.1), even when it
+# is told to accept intermediate files. A reader written before 1.1 reads such a
+# document as an assembly with no components, which is the hole this closes. An
+# expectation tagged `source_refusal_only: true` is skipped (not failed) for a
+# reader that does not declare it. ir declares it from the interposer router's
+# release that raises its own SourceDocumentError (a ChipletError) with the sentence
+# the reference readers use.
+#
+# Unplaced dimension (`refuses_unplaced_assemblies`): whether the reader refuses
+# a document with the root key `unplaced` and no `system` block. The key is a
+# source's (format 1.3) and the schema refuses it anywhere else; a reader that
+# implements 1.3 refuses it too. An expectation tagged `unplaced_refusal_only:
+# true` is skipped for a reader that does not declare it. ir declares it from the
+# interposer router's release that reads format 1.3.
+implementations:
+  reference_python:   {class: passthrough, writes: true, reads_source_text: true,  checks_pad_usage: true,  refuses_source_documents: true, refuses_other_units: true, refuses_unplaced_assemblies: true}
+  interposer_pnr_ir:  {class: passthrough, writes: true, reads_source_text: false, checks_pad_usage: false, refuses_source_documents: true, refuses_other_units: true, refuses_unplaced_assemblies: true}
+  reference_cpp:      {class: typed,       writes: true, reads_source_text: true,  checks_pad_usage: true,  refuses_source_documents: true, refuses_other_units: true, refuses_unplaced_assemblies: true}
+
+fixtures:
+  - file: v1_0_baseline.chiplet
+    expect: accept
+    version: "1.0"
+    writer: stamp_supported
+
+  - file: v1_0_unquoted_numeric.chiplet
+    expect: accept
+    version: "1.0"
+    note: >-
+      Unquoted 1.0 is coerced through str(). PyYAML renders unquoted 1.10 as
+      "1.1" while yaml-cpp keeps "1.10"; the spec says the field MUST be quoted.
+
+  - file: v1_0_additive_unknown_key.chiplet
+    expect: accept
+    version: "1.0"
+    roundtrip_key: future_block
+    roundtrip_key_passthrough_only: true
+
+  - file: v1_0_assembly_two_die.chiplet
+    expect: accept
+    version: "1.0"
+    note: >-
+      A complete R1-emitted assembly (two SG13G2 dies on an IntM4TM2 interposer,
+      full components + netlist), not a version stub: proves every reader accepts
+      a realistic 1.0 document and normalizes to 1.0. Format-level ACCEPT,
+      class-agnostic (no round-trip or writer expectation), so it is checked
+      identically for passthrough and typed readers.
+
+  - file: v1_0_all_blocks.chiplet
+    expect: accept
+    version: "1.0"
+    note: >-
+      Schema-coverage document: every canonical top-level block (all eleven root
+      keys except _metadata). It is in the corpus so the structural schema
+      (schemas/chiplet.schema.json, driven by test_chiplet_schema.py) and the
+      reader parity are proved on the SAME file instead of on two that drift.
+      Format-level ACCEPT, class-agnostic (no round-trip or writer expectation).
+
+  - file: v1_1_baseline.chiplet
+    expect: accept
+    version: "1.1"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.1 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.1" (the input is above the assembly stamp,
+      "1.0"); typed writers stamp "1.0".
+
+  - file: v1_2_baseline.chiplet
+    expect: accept
+    version: "1.2"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.2 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.2"; typed writers stamp "1.0".
+
+  - file: v1_3_baseline.chiplet
+    expect: accept
+    version: "1.3"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.3 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.3"; typed writers stamp "1.0".
+
+  - file: v1_4_baseline.chiplet
+    expect: accept
+    version: "1.4"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.4 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.4"; typed writers stamp "1.0".
+
+  - file: v1_5_baseline.chiplet
+    expect: accept
+    version: "1.5"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.5 is the minor these readers implement, so it reads silently. Passthrough
+      writers preserve "1.5"; typed writers stamp "1.0".
+
+  - file: v1_6_higher_minor.chiplet
+    expect: warn
+    version: "1.6"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      Passthrough writers preserve "1.6" and re-warn; typed writers stamp "1.0"
+      because they may have dropped 1.6-only fields (the stamped version must
+      describe the bytes written).
+
+  - file: v1_1_system_source.chiplet
+    expect: refuse
+    source_refusal_only: true
+    refusal:
+      error: SourceDocumentError
+      says: "this is a source .chiplet (it has a top-level 'system' block), not an assembly"
+    note: >-
+      A source document (top-level `system`, every system key used once). Refused
+      by every assembly reader, with intermediate files allowed, because it is not
+      an assembly. The Python reference reads it with allow_source=True, which only
+      chiplet_system_description.source passes; the C++ reference has no source path.
+
+  - file: v1_3_unplaced_source.chiplet
+    expect: refuse
+    source_refusal_only: true
+    refusal:
+      error: SourceDocumentError
+      says: "this is a source .chiplet (it has a top-level 'system' block), not an assembly"
+    note: >-
+      An unplaced source (format 1.3): a die with no at, a carrier with no size,
+      external with no edges and the root unplaced. Refused by every assembly
+      reader like any source. The Python reference reads it with
+      allow_source=True, and refuses the same file stamped below 1.3.
+
+  - file: v1_3_unplaced_assembly.chiplet
+    expect: refuse
+    unplaced_refusal_only: true
+    refusal:
+      error: ChipletFormatError
+      says: "the root key unplaced belongs to a source (format 1.3)"
+    note: >-
+      An assembly (no system block) carrying the root unplaced. The key is a
+      source's, its pins go on the system's external edges, so every reader
+      that implements 1.3 refuses it, and the schema does too.
+
+  - file: v1_1_units_other.chiplet
+    expect: refuse
+    units_refusal_only: true
+    note: >-
+      assembly.units "mm". The set is closed to um and must be understood: a
+      reader that does not convert would read every length wrong, so it refuses
+      the document rather than warn and continue.
+
+  - file: v1_0_system_block.chiplet
+    expect: refuse
+    source_refusal_only: true
+    refusal:
+      error: SourceDocumentError
+      says: "this is a source .chiplet (it has a top-level 'system' block), not an assembly"
+    note: >-
+      The same source stamped "1.0". Refused as a source, and refused by a source
+      reader too, because the system block does not exist before 1.1.
+
+  - file: v2_0_higher_major.chiplet
+    expect: refuse
+
+  - file: v0_9_lower_major.chiplet
+    expect: refuse
+
+  - file: v1_0_missing_version.chiplet
+    expect: refuse
+
+  - file: v1_0_malformed_version.chiplet
+    expect: refuse
+
+  # Loadable, NOT splittable. Both spellings are structurally valid documents and
+  # every reader must load them (flow rule 1: a reader that cannot handle the
+  # flow block MUST NOT reject the document). What they cost is the text-level
+  # work: the first cannot be split into top-level blocks at all, the second has
+  # a flow node the grammar cannot delimit, and a writer that preserves the
+  # block's source bytes refuses to write either back rather than drop the block
+  # or emit a re-serialisation in its place. Those properties are pinned in
+  # fixtures/top_level_blocks_cases.json; what belongs HERE is the read verdict,
+  # which is the cross-implementation parity contract.
+  - file: v1_0_quoted_key_at_column_zero.chiplet
+    expect: accept
+    version: "1.0"
+
+  - file: v1_0_flow_not_delimitable.chiplet
+    expect: accept
+    version: "1.0"
+
+  # Ill-formed on the TEXT and nowhere else: `flow` appears twice at column zero.
+  # PyYAML resolves it to the last value and yaml-cpp to the first, so the two
+  # reference readers would report different documents from these bytes and
+  # neither the schema nor a parsed node tree can see that anything happened.
+  # Refused at load by every reader that sees the source text.
+  - file: v1_0_repeated_top_level_key.chiplet
+    expect: refuse
+    source_text_only: true
+
+  # Validation rule 8 (io_class vs interfaces[].type). The pair is one case seen
+  # from both sides: the same wire_bond pad and the same copper_pillar interface,
+  # refused when the pad is on the endpoint's port_layer and accepted when it is
+  # not. The accept row binds every reader; the refuse row binds only a reader
+  # that declares checks_pad_usage, because rule 8 is a reader rule and ir has
+  # not adopted it yet.
+  - file: v1_0_interface_pad_other_layer.chiplet
+    expect: accept
+    version: "1.0"
+
+  - file: v1_0_interface_pad_mismatch.chiplet
+    expect: refuse
+    pad_usage_only: true
+
+  # SPEC-32: an interfaces[].type outside the closed vocabulary is CARRIED, by
+  # every reader here, under either setting of the validate flag. The second
+  # document is the one that decides it: its interface meets a pad whose io_class
+  # HAS a row in rule 8's table, which is where the refusal survived after the
+  # parse-path and validate-path ones were removed. The accept verdict is the
+  # cross-implementation half; the per-cell behaviour (validate on and off, load
+  # and load-then-dump, one note per load on the normative channel) is
+  # conformance/fixtures/unknown_vocabulary_cases.json, which both reference
+  # readers run in their own suites.
+  - file: v1_0_unknown_interface_type.chiplet
+    expect: accept
+    version: "1.0"
+
+  - file: v1_0_unknown_type_meets_known_io_class.chiplet
+    expect: accept
+    version: "1.0"
+
+  # Validation rule 9 (component connection -> method -> interfaces[].type), the
+  # cross-artifact rule. No implementation listed above runs it: the method's
+  # interface_type lives in the interconnect manifest and none of these readers
+  # holds one. So the row that binds THEM is the accept, and it is a measured
+  # fact rather than an endorsement: a reference reader has nothing to object to
+  # in this document. `assembly_stage` carries the verdict the hosts that DO hold
+  # the manifest owe (the plugin at export; adk-tools' assembly DRC, Mosaic and
+  # chiplet-system-description at load), so the three of them are measured against this one
+  # file instead of against each other. Nothing in this repository checks that
+  # verdict; conformance/test_interface_binding.py says exactly that.
+  - file: v1_0_interface_inconsistent_binding.chiplet
+    expect: accept
+    version: "1.0"
+    assembly_stage:
+      rule: 9
+      expect: refuse
+      why: >-
+        U1 selects cupillar_opt1, a Cu-pillar method, and takes part in link0,
+        an interface of type micro_bump.

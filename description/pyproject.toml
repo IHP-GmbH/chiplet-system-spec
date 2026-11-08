@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chiplet-system-description"
+version = "0.1.0"
+description = "Typed Python eDSL that elaborates a chiplet-on-interposer system description to .chiplet."
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+# Runtime: stdlib + PyYAML (pulled in by the vendored chiplet_format_io). No
+# jsonschema until a schema exists to validate. No engine adopted.
+dependencies = ["pyyaml>=6.0"]
+
+[project.scripts]
+chiplet-system-description = "chiplet_system_description.source.check:main"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+# A bare `pytest` starts no tool: the cases that start openroad are deselected
+# here. A command-line -m replaces this one, so the live tier is
+# `HCDP_STRICT_LIVE=1 pytest -m live_openroad`, and the checkpoint clears it
+# (-o addopts=) to run everything. conftest holds each case to its marker.
+addopts = ["-m", "not live_openroad"]
+markers = [
+    "needs_sibling_sources: reads a sibling checkout (its own variable, else HCDP_ROOT, else beside the repository)",
+    "live_openroad: starts the openroad binary, through interposer_pnr",
+]

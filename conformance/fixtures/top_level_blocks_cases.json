@@ -1,0 +1,480 @@
+{
+  "$comment": "Accept/reject oracle for the TOP-LEVEL BLOCK GRAMMAR of a .chiplet document (docs/CHIPLET_FORMAT_SPEC.md, 'Top-level block grammar'). The grammar answers one question on the raw text, never on a parsed node tree: which run of lines belongs to which top-level key. Flow rule 4 (a host re-emits a flow block it did not author byte for byte) is defined in terms of it, and three implementations run THIS file rather than being compared to each other: the merge splitter in the KiCad plugin (chiplet_merge.split_top_level_blocks), the Python reference (chiplet_format_io.top_level_blocks) and the C++ reference (ChipletDocument::flow_yaml). Add a case here, never in a consumer. key_lines: 'line' is LINE CONTENT, i.e. the text up to the next LF with one optional trailing CR already removed; 'key' is capture group 1 of ^([A-Za-z0-9_][A-Za-z0-9_.-]*):(?:\\\\s.*)? anchored at both ends. Anchoring note, the same one adapter_id_cases.json carries: end the expression with \\\\Z in Python re or (?![\\\\s\\\\S]) portably, or match the whole content (std::regex_match); $ is WRONG in Python (it also matches before a trailing newline). ECMAScript's . excludes CR as well as LF, so a std::regex implementation writes [^\\\\n] where the expression writes . ; on a line the two mean the same thing. splits: 'doc' is the whole document text and 'blocks' is the exact slice per top-level key in document order, key line included, line endings untouched, nothing normalised. The empty key is the PREAMBLE (lines before the first key line). Concatenating every slice in order reproduces 'doc' byte for byte, which is the property that makes the grammar lossless, and every split case has it: the one case that did not (a repeated top-level key, whose two runs joined under the first occurrence) is now a refuse case. A case with \"loadable\": false is a document every reader REFUSES, split or no split; a case without the flag is one every reader LOADS, and both halves are executed, so the flag is a verdict and not a note. It used to mean \"no reader is REQUIRED to load this\", which is a permission rather than an obligation and let one row carry a false claim while the tests stayed green: the same overloading, one field along, that the \"refused_by\" note below describes. THE THREE VERDICTS ARE INDEPENDENT, and confusing them is the defect this file now pins: a document can be loadable and not splittable, and splittable and not writable. refuse: documents SOME implementation refuses, each tagged with its \"kind\" and with the explicit \"refused_by\" list that says WHICH: \"splitter\", \"reader\", or both. Read that field; do not read the group name. The group was \"documents a splitter refuses\" when every row in it was one, and when reader-only rows arrived (a forbidden line break, which a splitter has a perfectly good answer for) every consumer that had parametrized a \"the splitter must raise\" test over the whole group went red on a verdict that had been inverted under it. A consumer that filters on \"refused_by\" stays correct across both kinds of addition; one that carries a copy of this file predating the field fails on a MISSING FIELD, which is loud, instead of on an inverted verdict, which is not. \"reader\" is in the list exactly when \"loads\" is false, and both are kept because \"loads\" is what consumers already read. A quoted key at column zero is valid YAML but is NOT a key line, so a splitter would attach its block to the preceding key, where that key's owner regenerates it away on the next re-export; splitting is refused instead of mis-attributing. The quoted key is one spelling of a wider kind, \"unattributable_line_at_column_zero\": ANY line at column zero that is not a key line and not one of the five attributable shapes (a blank line, a comment \"#\", a directive \"%\", a document marker \"---\" or \"...\", and a BLOCK SEQUENCE ENTRY, \"-\" followed by a space, a tab or end of content) leaves the same question with no answer, so the same refusal covers it. The kind exists because the reference WRITER can emit two further spellings of it from a top-level key it cannot write bare, and neither is quoted: PyYAML 6.0.3 writes a key carrying NEL, LS, PS or a CR as an EXPLICIT key, \"? \\\"a\\\\Lb\\\"\" on one line with its \": x: 1\" value line on the next, and writes a key carrying a space bare, as \"a b:\", which is outside the grammar. Both split into the PRECEDING key while the parser reads a top-level key the split never saw, which is the split-versus-parse disagreement this whole file is about, produced by our own writer. The sequence-entry exemption is not a nicety: PyYAML writes a block sequence under a mapping key at the PARENT'S indentation, so 68 of the 70 column-zero non-key lines across the 77 tracked .chiplet in this ecosystem are \"- id: ...\" entries under \"components:\", and a rule without the exemption would call almost every real document unsplittable. Column zero means \"does not start with a space\", so a TAB-led line is at column zero: this grammar has no notion of tab indentation and YAML has none either in block context (measured on PyYAML 6.0.3 and yaml-cpp 0.8.0: both refuse a tab-indented mapping outright), so the only documents where the shape arises at all are quoted scalars continued onto a tab-led line, which both parsers do read. Blank content consists only of SPACE (U+0020) and TAB (U+0009); NBSP, other Unicode whitespace and C0 separators do not count. This is a line-based grammar, not a YAML lexer: a key-shaped continuation inside a multi-line quoted scalar is indistinguishable from a real key line, while a harmless non-key continuation may be refused. Generated mappings do not use that spelling. Writer post-checks require the intended key sequence and also cover the C++ caller-supplied flow slice, but do not validate arbitrary source semantics. A WRITER is bound the other way round and both references enforce it on their complete output: dumps() splits the text it just emitted and refuses when the split does not return exactly the keys it was given, in order. \"loads\" says whether a READER still loads the document: true for the quoted key (flow rule 1 forbids rejecting a document over a block a host cannot handle), false for a repeated top-level key, where no reading is conforming at all. The reason is stronger than the value disagreement it used to be stated as, and it was measured by the KiCad plugin against yaml-cpp 0.8.0: that reader does not merge the duplicate at all, it LOADS it, so the map reports size() == 3 with two distinct keys and an iterating consumer walks the key twice. PyYAML takes the last value and yaml-cpp the first, but that disagreement is the smaller half: even a consumer that only ever talks to one reader sees a document that cannot exist, so the refusal does not depend on which reader wins. A \"forbidden_line_break\" case carries a character a YAML parser breaks a line on and THIS GRAMMAR does not, which is the criterion that generates the set: the parser sees a top-level key the grammar cannot, so the splitter, the repeated-key scan and every ownership guard built on either are all blind to it at once. Four characters qualify, derived by execution rather than listed (conformance/test_top_level_blocks.py runs PyYAML over U+0000..U+21FF and asserts the reader refuses exactly what it finds): NEL (U+0085), U+2028 and U+2029 ANYWHERE, and CR (U+000D) unless an LF follows it immediately, since CRLF is the format's other line break. A CR at end of file with no LF after it is refused too, which is a decision and not a consequence: it keeps the rule one property of the bytes, enforceable in one pass by a splitter with no YAML lexer. Both reference readers refuse such a document at LOAD, on the text, before any YAML parse, and the refusal names the case's \"code_point\" and \"line\". The parser-versus-parser reading of this set is the second, sharper reason and it covers only NEL, U+2028 and U+2029: both parsers break a line on CR, and CR is nonetheless the member with the widest blast radius. A SPLITTER is not the gate for that kind: the grammar has a perfectly good answer for those bytes (they are not line breaks and no block starts there), and the case in splits/ that proves it is kept, marked \"loadable\": false. \"writes\", meaningful only when \"loads\" is true, says whether a writer that preserves the flow block's SOURCE BYTES can write the document back; a canonical writer that has no source slice at all (the Python reference's dumps()) is not bound by it. not_delimitable: documents whose flow node the grammar cannot delimit, because it is not written as a bare `flow:` key line at column zero (a flow-style document, or `flow :`). Every reader LOADS them and a source-slice writer MUST refuse to write them back: the block's bytes were never captured, so the only alternatives are dropping the block or emitting a re-serialisation in the place the source text belongs. Their SPLIT verdict moved with the unattributable-line rule and moved toward it: `flow :` and a whole document in flow style are both lines at column zero that no top-level key owns, so both documents are now not splittable, which is the same disagreement stated on the same bytes rather than a second rule. Nothing a source-slice writer does changes: a document that is not splittable at all was already one of the two ways a flow block ends up with no slice. version: 5 generalises the quoted-key refusal into \"unattributable_line_at_column_zero\" and moves two verdicts with it: the two not_delimitable documents are now refused by a splitter as well, and a consumer pinned to version 4 that splits them will disagree with this file. version 4 restates the repeated-key reason as a structural one (yaml-cpp loads the duplicate and reports two keys) rather than a value disagreement, and changes no verdict, so a consumer pinned to version 3 reads the same rows; version 3 adds the escaped-form control row and turns \"loadable\" into an obligation both ways; version 2 added the per-case \"refused_by\" list and the U+000D rows of the line-break set; version 1 is any copy without a \"version\" key, where the refuse group means \"a splitter refuses\" and the line-break set has three members instead of four. The line-break refusal is on the RAW bytes: the ESCAPED spellings stay legal and are how a value carrying one of those characters is written, which is what the splits row escaped_line_break_in_a_double_quoted_scalar_is_ordinary_text pins as a document that must load.",
+  "version": 5,
+  "key_lines": {
+    "accept": [
+      {
+        "line": "flow:",
+        "key": "flow"
+      },
+      {
+        "line": "flow: value",
+        "key": "flow"
+      },
+      {
+        "line": "flow: # a trailing comment",
+        "key": "flow"
+      },
+      {
+        "line": "flow:\t",
+        "key": "flow"
+      },
+      {
+        "line": "flow: ",
+        "key": "flow"
+      },
+      {
+        "line": "_metadata:",
+        "key": "_metadata"
+      },
+      {
+        "line": "format_version: \"1.0\"",
+        "key": "format_version"
+      },
+      {
+        "line": "a.b-c_d:",
+        "key": "a.b-c_d"
+      },
+      {
+        "line": "0start:",
+        "key": "0start"
+      },
+      {
+        "line": "netlist: {}",
+        "key": "netlist"
+      }
+    ],
+    "reject": [
+      "  flow:",
+      "\tflow:",
+      "\"flow\":",
+      "'flow':",
+      "flow:value",
+      "---",
+      "...",
+      ":",
+      ": value",
+      "# flow:",
+      "",
+      "-flow:",
+      ".flow:",
+      "flow",
+      "fl ow:",
+      "flow :",
+      "a b:",
+      "? \"a\\Lb\"",
+      ": x: 1",
+      "- id: x"
+    ]
+  },
+  "splits": [
+    {
+      "name": "flow_block_with_a_comment_a_quoted_scalar_and_a_variable",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\nflow:\n  # export first, then assemble\n  steps:\n    - name: export\n      tool: 'kicad'\n      layout: ${component.die_0.layout_path}\n      mode: '0755'\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\n  # export first, then assemble\n  steps:\n    - name: export\n      tool: 'kicad'\n      layout: ${component.die_0.layout_path}\n      mode: '0755'\n"
+        }
+      ],
+      "note": "The discriminating case for flow rule 4. A node dump loses the comment, re-quotes 'kicad' and '0755' (which a YAML 1.1 loader then reads as the integer 493 once the quotes are gone) and may resolve the ${...} reference."
+    },
+    {
+      "name": "blank_and_comment_lines_between_blocks_attach_to_the_preceding_block",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\n\n# a note that sits between two blocks\n\nflow:\n  steps: []\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n\n# a note that sits between two blocks\n\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\n  steps: []\n"
+        }
+      ],
+      "note": "A comment written directly above flow: belongs to the block before it. Surprising when read as prose, but it is what the merge splitter does and the alternative moves bytes between two blocks with different owners."
+    },
+    {
+      "name": "last_block_at_end_of_file_without_a_trailing_newline",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\nflow:\n  steps: []",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\n  steps: []"
+        }
+      ],
+      "note": "No trailing-newline normalisation: the slice ends where the file ends."
+    },
+    {
+      "name": "crlf_line_endings_are_kept_in_the_slice",
+      "doc": "format_version: \"1.0\"\r\nassembly:\r\n  name: demo\r\nflow:\r\n  # a comment\r\n  steps: []\r\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\r\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\r\n  name: demo\r\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\r\n  # a comment\r\n  steps: []\r\n"
+        }
+      ],
+      "note": "The CR is removed to decide whether a line is a key line, and kept in the slice. An implementation that anchors with ECMAScript's . instead of [^\\n] fails the key line 'flow: value\\r' here."
+    },
+    {
+      "name": "unicode_line_separator_inside_a_scalar_is_not_a_line_break",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: \"demo\u2028flow: injected\"\nflow:\n  steps: []\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: \"demo\u2028flow: injected\"\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\n  steps: []\n"
+        }
+      ],
+      "note": "assembly.name carries U+2028 LINE SEPARATOR followed by `flow: injected`, all inside one double-quoted scalar. The grammar defines a line as LF-terminated with one optional preceding CR and nothing else, so there is no line break there and no key line: the whole scalar stays in the assembly block. An implementation that splits with Python's str.splitlines(), which also breaks on CR, VT, FF, U+0085, U+2028 and U+2029, grows a `flow` block that is not in the file and hands a foreign host a block whose bytes came out of somebody's assembly name. That is the whole case, and it is why both reference readers iterate on LF by hand. The split verdict above is unchanged and is why this case stays here. The LOAD verdict is not the same question and it moved: U+2028 anywhere in a document is now ill-formed, so both reference readers refuse THIS document at load too, which is what \"loadable\": false records. Keeping the case is the point: the grammar must still not grow a `flow` block out of a scalar, and a reader refusing the document is not a splitter agreeing with it.",
+      "loadable": false
+    },
+    {
+      "name": "escaped_line_break_in_a_double_quoted_scalar_is_ordinary_text",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: \"demo\\Lx\"\ncomponents: []\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: \"demo\\Lx\"\n"
+        },
+        {
+          "key": "components",
+          "text": "components: []\n"
+        }
+      ],
+      "note": "The CONTROL for the line-break rule, and the point of it is that it LOADS. The refusal is on the RAW bytes; the escaped spelling is how a value that needs U+2028 is written, and it is ordinary text to the grammar, to PyYAML 6.0.3 (which reads assembly.name back as demo<U+2028>x) and to yaml-cpp 0.8.0. A rule whose only cases are refusals cannot be told apart from a blanket ban, and this row is what tells them apart."
+    },
+    {
+      "name": "document_that_starts_with_a_marker_has_a_preamble",
+      "doc": "---\nformat_version: \"1.0\"\nassembly:\n  name: demo\nflow:\n  steps: []\n",
+      "blocks": [
+        {
+          "key": "",
+          "text": "---\n"
+        },
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\n  steps: []\n"
+        }
+      ],
+      "note": "--- is not a key line, so it lands in the preamble, keyed by the empty string."
+    },
+    {
+      "name": "leading_comment_block_is_preamble",
+      "doc": "# generated by the exporter, do not edit by hand\n# see docs/CHIPLET_FORMAT_SPEC.md\nformat_version: \"1.0\"\nassembly:\n  name: demo\n",
+      "blocks": [
+        {
+          "key": "",
+          "text": "# generated by the exporter, do not edit by hand\n# see docs/CHIPLET_FORMAT_SPEC.md\n"
+        },
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n"
+        }
+      ]
+    },
+    {
+      "name": "indented_and_commented_key_shaped_lines_stay_inside_their_block",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\n  # flow:\n  flow: not a top level key\nflow:\n  steps: []\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n  # flow:\n  flow: not a top level key\n"
+        },
+        {
+          "key": "flow",
+          "text": "flow:\n  steps: []\n"
+        }
+      ],
+      "note": "Column zero is the whole test: an indented flow: and a commented one belong to assembly. Both reference readers LOAD this document (assembly.flow is simply not a modelled key, and an unmodelled key is carried, not refused), which is why it no longer carries a load flag: the flag used to mean 'no reader is required to load this' and now means 'every reader refuses it', and under the new meaning this row was false."
+    },
+    {
+      "name": "components_block_with_sequence_entries_at_column_zero",
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\ncomponents:\n- id: die_0\n  type: die\n- id: die_1\n  type: die\n",
+      "blocks": [
+        {
+          "key": "format_version",
+          "text": "format_version: \"1.0\"\n"
+        },
+        {
+          "key": "assembly",
+          "text": "assembly:\n  name: demo\n"
+        },
+        {
+          "key": "components",
+          "text": "components:\n- id: die_0\n  type: die\n- id: die_1\n  type: die\n"
+        }
+      ],
+      "note": "The regression guard for the shape almost every real document has. PyYAML writes a block sequence under a mapping key at the PARENT'S indentation, so a `- id: ...` entry sits at column zero and is not a key line; 68 of the 70 column-zero non-key lines across the 77 tracked .chiplet in this ecosystem are exactly this. Unlike the refuse cases below, the entry IS attributable: it belongs to the key whose block it sits in, the splitter and the parser agree that it does, and a rule that called every non-key line at column zero unattributable would refuse to split almost everything we ship."
+    }
+  ],
+  "refuse": [
+    {
+      "name": "double_quoted_key_at_column_zero",
+      "kind": "quoted_key_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\n\"flow\":\n  steps: []\n",
+      "reason": "A splitter attaches \"flow\": and its body to the assembly block, where the exporter owns them and regenerates them away on the next export. Refuse instead of mis-attributing.",
+      "loads": true,
+      "writes": false
+    },
+    {
+      "name": "single_quoted_key_at_column_zero",
+      "kind": "quoted_key_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\n'flow':\n  steps: []\n",
+      "reason": "Same guard for the single-quoted spelling.",
+      "loads": true,
+      "writes": false
+    },
+    {
+      "name": "quoted_key_at_column_zero_without_a_flow_block",
+      "kind": "quoted_key_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\n\"assembly\":\n  name: demo\n",
+      "reason": "The guard is about block ownership, not about flow: a document with a quoted key at column zero is refused whether or not it carries a flow block. This is the spelling a document-wide key-quoting emitter switch produces (validation rule 7).",
+      "loads": true,
+      "writes": true
+    },
+    {
+      "name": "repeated_top_level_key_is_ill_formed",
+      "kind": "repeated_top_level_key",
+      "refused_by": [
+        "splitter",
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\nflow:\n  steps: []\nnetlist:\n  nets: []\nflow:\n  extra: true\n",
+      "reason": "A document names each top-level key once. This one names flow twice, and there is no reading of it that is conforming: PyYAML resolves the key to the LAST value, yaml-cpp to the FIRST, so two conforming readers build different documents from these bytes. The splitter could concatenate the runs without dropping a byte, which is what it used to do, but that only decides who owns the text and not which value wins, and neither the schema nor a parsed node tree can see that anything happened. Refused on the text, at load, by every reader.",
+      "loads": false
+    },
+    {
+      "name": "carriage_return_smuggles_a_top_level_key",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\rformat_version: \"9.0\"\ncomponents: []\n",
+      "code_point": "U+000D",
+      "line": 3,
+      "reason": "PyYAML 6.0.3 reads a lone CR (U+000D) as a line break, so the `format_version: \"9.0\"` after it becomes a SECOND top-level key: safe_load returns format_version '9.0' with the top-level key list unchanged, so the spoof moves a VALUE and not the shape. yaml-cpp 0.8.0 throws \"illegal map value\" at line 3, column 28 on the same bytes. CR is the member the parser-versus-parser reading does NOT generate, because both parsers break a line on it; what makes it ill-formed is that THIS GRAMMAR does not, so the smuggled key is invisible to the splitter, to the repeated-key scan and to every ownership guard built on either. It is also the member with the widest blast radius, being one lost LF away from any CRLF file.",
+      "loads": false
+    },
+    {
+      "name": "carriage_return_inside_a_plain_scalar",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\rtrailing\n",
+      "code_point": "U+000D",
+      "line": 3,
+      "reason": "The same CR followed by ordinary text flips the disagreement: yaml-cpp 0.8.0 LOADS this document and FOLDS the CR to a space, so assembly.name comes back as the 13-byte 'demo trailing', while PyYAML 6.0.3 throws a ScannerError while scanning a simple key. One reader silently changes the value and the other refuses the file, which is why the rule is a text-level refusal in both readers and not one reader imitating the other.",
+      "loads": false
+    },
+    {
+      "name": "carriage_return_at_end_of_file",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\r",
+      "code_point": "U+000D",
+      "line": 3,
+      "reason": "A CR as the LAST byte of the file, with no LF after it. Here the two parsers AGREE: PyYAML 6.0.3 and yaml-cpp 0.8.0 both read assembly.name as 'demo' and drop the CR. It is refused anyway, and the spec says so explicitly rather than leaving it to be discovered: the rule stays ONE property of the bytes (every CR is immediately followed by LF), which is what a splitter with no YAML lexer can enforce in a single pass, and both reference line splitters pop a trailing CR whether or not an LF follows, so accepting this document would mean reading one byte less than the file holds and never saying so. Cost is zero: a bare CR ends no committed .chiplet.",
+      "loads": false
+    },
+    {
+      "name": "next_line_smuggles_a_top_level_key",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\u0085format_version: \"9.0\"\ncomponents: []\n",
+      "code_point": "U+0085",
+      "line": 3,
+      "reason": "PyYAML 6.0.3 reads NEL (U+0085) as a line break (YAML 1.1), so the `format_version: \"9.0\"` that follows it becomes a SECOND top-level key: safe_load returns format_version '9.0' while the top-level key list is unchanged, so the spoof moves a VALUE and not the shape and a \"no unexpected keys\" check does not see it. yaml-cpp 0.8.0 (YAML 1.2) throws \"illegal map value\" on the same bytes. Two conforming readers, two different documents, so the text is refused before either parser sees it.",
+      "loads": false
+    },
+    {
+      "name": "next_line_inside_a_plain_scalar",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\u0085trailing\n",
+      "code_point": "U+0085",
+      "line": 3,
+      "reason": "The same separator followed by ordinary text flips the disagreement: yaml-cpp 0.8.0 LOADS this document with the NEL (U+0085) bytes kept inside the scalar and PyYAML 6.0.3 throws a ScannerError. Parity is broken in BOTH directions and which reader refuses depends on the payload, which is why the rule is a text-level refusal in both readers and not one reader imitating the other.",
+      "loads": false
+    },
+    {
+      "name": "line_separator_smuggles_a_top_level_key",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\u2028format_version: \"9.0\"\ncomponents: []\n",
+      "code_point": "U+2028",
+      "line": 3,
+      "reason": "PyYAML 6.0.3 reads LS (U+2028) as a line break (YAML 1.1), so the `format_version: \"9.0\"` that follows it becomes a SECOND top-level key: safe_load returns format_version '9.0' while the top-level key list is unchanged, so the spoof moves a VALUE and not the shape and a \"no unexpected keys\" check does not see it. yaml-cpp 0.8.0 (YAML 1.2) throws \"illegal map value\" on the same bytes. Two conforming readers, two different documents, so the text is refused before either parser sees it.",
+      "loads": false
+    },
+    {
+      "name": "line_separator_inside_a_plain_scalar",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\u2028trailing\n",
+      "code_point": "U+2028",
+      "line": 3,
+      "reason": "The same separator followed by ordinary text flips the disagreement: yaml-cpp 0.8.0 LOADS this document with the LS (U+2028) bytes kept inside the scalar and PyYAML 6.0.3 throws a ScannerError. Parity is broken in BOTH directions and which reader refuses depends on the payload, which is why the rule is a text-level refusal in both readers and not one reader imitating the other.",
+      "loads": false
+    },
+    {
+      "name": "paragraph_separator_smuggles_a_top_level_key",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\u2029format_version: \"9.0\"\ncomponents: []\n",
+      "code_point": "U+2029",
+      "line": 3,
+      "reason": "PyYAML 6.0.3 reads PS (U+2029) as a line break (YAML 1.1), so the `format_version: \"9.0\"` that follows it becomes a SECOND top-level key: safe_load returns format_version '9.0' while the top-level key list is unchanged, so the spoof moves a VALUE and not the shape and a \"no unexpected keys\" check does not see it. yaml-cpp 0.8.0 (YAML 1.2) throws \"illegal map value\" on the same bytes. Two conforming readers, two different documents, so the text is refused before either parser sees it.",
+      "loads": false
+    },
+    {
+      "name": "paragraph_separator_inside_a_plain_scalar",
+      "kind": "forbidden_line_break",
+      "refused_by": [
+        "reader"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\u2029trailing\n",
+      "code_point": "U+2029",
+      "line": 3,
+      "reason": "The same separator followed by ordinary text flips the disagreement: yaml-cpp 0.8.0 LOADS this document with the PS (U+2029) bytes kept inside the scalar and PyYAML 6.0.3 throws a ScannerError. Parity is broken in BOTH directions and which reader refuses depends on the payload, which is why the rule is a text-level refusal in both readers and not one reader imitating the other.",
+      "loads": false
+    },
+    {
+      "name": "explicit_key_at_column_zero",
+      "kind": "unattributable_line_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\n? \"a\\Lb\"\n: x: 1\n",
+      "reason": "The spelling the reference WRITER produces from a top-level key carrying a forbidden line break: measured on PyYAML 6.0.3, dumps({..., \"a<U+2028>b\": {\"x\": 1}}) emits the explicit key `? \"a\\Lb\"` on one line and its value on the next, `: x: 1`, both at column zero and neither a key line. The splitter attributes both lines to `assembly` and loads() returns a third top-level key; that is the split-versus-parse disagreement, produced by our own writer with no diagnostic anywhere. The document is valid YAML and still loads; splitting is what has no answer. The writer refuses to produce it at all now, which is why this row is a document a reader may still MEET rather than one it can still be handed by us.",
+      "loads": true,
+      "writes": true
+    },
+    {
+      "name": "bare_key_with_a_space_at_column_zero",
+      "kind": "unattributable_line_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\na b:\n  x: 1\n",
+      "reason": "The second writer spelling, and the one no quoting rule catches: a top-level key with a space in it is emitted BARE, as `a b:`, which YAML reads as an ordinary key and the grammar does not recognise at all. Same outcome as the explicit key above and the quoted key below: the block goes to `assembly`, whose owner drops it on the next re-export, while the parser reports a key the split never saw.",
+      "loads": true,
+      "writes": true
+    },
+    {
+      "name": "non_space_tab_blank_line_at_column_zero_in_quoted_scalar",
+      "kind": "unattributable_line_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: \"demo\n\u00a0\n  continued\"\n",
+      "reason": "A line containing only NBSP is not blank in this grammar: only SPACE and TAB count. Both YAML readers load this quoted continuation, but a splitter must refuse rather than apply a language-specific Unicode whitespace predicate. The source has no flow slice, so canonical re-emission is still possible.",
+      "loads": true,
+      "writes": true
+    },
+    {
+      "name": "tab_led_line_at_column_zero",
+      "kind": "unattributable_line_at_column_zero",
+      "refused_by": [
+        "splitter"
+      ],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: \"demo\n\tcontinued\"\ncomponents: []\n",
+      "reason": "Column zero means \"does not start with a space\", so a tab-led line is at column zero and the grammar will not guess that it is indented under the open block. YAML forbids tab indentation in block context and both reference parsers enforce that (measured: PyYAML 6.0.3 raises a ScannerError and yaml-cpp 0.8.0 says \"illegal tab when looking for indentation\"), so the only documents where a tab reaches column zero at all are quoted scalars continued onto the next line, which is what this one is: both parsers read assembly.name as 'demo continued'. The splitter would get this particular document right by accident; it refuses because the grammar has no notion of tab indentation with which to be right on purpose, and a rule that guesses is the rule that mis-attributes the other spellings.",
+      "loads": true,
+      "writes": true
+    }
+  ],
+  "not_delimitable": [
+    {
+      "name": "flow_style_document_has_no_delimitable_flow_block",
+      "kind": "unattributable_line_at_column_zero",
+      "refused_by": ["splitter"],
+      "doc": "{format_version: \"1.0\", assembly: {name: demo}, flow: {steps: []}}\n",
+      "reason": "A whole document written in flow style. YAML reads a flow node from it and the grammar sees one line that is not a key line, so the block has no slice. The document loads; writing it back would have to invent the bytes."
+    },
+    {
+      "name": "flow_key_line_with_a_space_before_the_colon",
+      "kind": "unattributable_line_at_column_zero",
+      "refused_by": ["splitter"],
+      "doc": "format_version: \"1.0\"\nassembly:\n  name: demo\nflow :\n  steps: []\n",
+      "reason": "`flow :` is the key `flow` to YAML and nothing at all to the grammar, which requires the colon to follow the key directly. Same outcome: a flow node with no source slice."
+    }
+  ]
+}

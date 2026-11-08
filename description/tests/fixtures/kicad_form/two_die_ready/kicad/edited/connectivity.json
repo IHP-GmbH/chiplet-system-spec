@@ -1,0 +1,551 @@
+{
+  "base_sha256": "2630666c819f0b317a9b4d948d9b6a426f40bfa06fdcd3e4ef74d128b61dfc16",
+  "format": "chiplet_system.connectivity",
+  "front_end": {
+    "inputs": [
+      {
+        "path": "cf_two_die_bondpad.net",
+        "sha256": "8ad5c6a2f4f69f480e76249d7edee3326dd35b14b8aaa804bc2cecb262a3590f"
+      },
+      {
+        "path": "cf_two_die_bondpad.kicad_sch",
+        "sha256": "73039196dbce1030d45c06925bd9b6c64d4fff2b4d3bc547524f8d8aae6bc065"
+      }
+    ],
+    "reader": "kicad_sch_to_connectivity 1.0",
+    "tool": "kicad",
+    "tool_version": "Eeschema 9.0.2"
+  },
+  "generator_report": {
+    "path": "../../pnr/schematic.json",
+    "sha256": "8c06f96a78b162eefee6329d610367e06a5a0002590500ea2ea6bf5dc43d03d6"
+  },
+  "nets": [
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_CFG_MODE"
+        ]
+      ],
+      "name": "U1_PAD_CFG_MODE"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_CLK"
+        ]
+      ],
+      "name": "U1_PAD_CLK"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_RSTN"
+        ]
+      ],
+      "name": "U1_PAD_RSTN"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_STATUS"
+        ]
+      ],
+      "name": "U1_STATUS"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U2",
+          "PAD_CFG_MODE"
+        ]
+      ],
+      "name": "U2_PAD_CFG_MODE"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U2",
+          "PAD_STATUS"
+        ]
+      ],
+      "name": "U2_PAD_STATUS"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_VDD_E0"
+        ],
+        [
+          "U1",
+          "PAD_VDD_E1"
+        ],
+        [
+          "U1",
+          "PAD_VDD_W0"
+        ],
+        [
+          "U1",
+          "PAD_VDD_W1"
+        ],
+        [
+          "U2",
+          "PAD_VDD_E0"
+        ],
+        [
+          "U2",
+          "PAD_VDD_E1"
+        ],
+        [
+          "U2",
+          "PAD_VDD_W0"
+        ],
+        [
+          "U2",
+          "PAD_VDD_W1"
+        ]
+      ],
+      "name": "VDD"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_VSS_E0"
+        ],
+        [
+          "U1",
+          "PAD_VSS_E1"
+        ],
+        [
+          "U1",
+          "PAD_VSS_W0"
+        ],
+        [
+          "U1",
+          "PAD_VSS_W1"
+        ],
+        [
+          "U2",
+          "PAD_VSS_E0"
+        ],
+        [
+          "U2",
+          "PAD_VSS_E1"
+        ],
+        [
+          "U2",
+          "PAD_VSS_W0"
+        ],
+        [
+          "U2",
+          "PAD_VSS_W1"
+        ]
+      ],
+      "name": "VSS"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F0"
+        ],
+        [
+          "U2",
+          "PAD_F0"
+        ]
+      ],
+      "name": "d2d_f0_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F1"
+        ],
+        [
+          "U2",
+          "PAD_F1"
+        ]
+      ],
+      "name": "d2d_f1_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F2"
+        ],
+        [
+          "U2",
+          "PAD_F2"
+        ]
+      ],
+      "name": "d2d_f2_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F3"
+        ],
+        [
+          "U2",
+          "PAD_F3"
+        ]
+      ],
+      "name": "d2d_f3_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F4"
+        ],
+        [
+          "U2",
+          "PAD_F4"
+        ]
+      ],
+      "name": "d2d_f4_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F5"
+        ],
+        [
+          "U2",
+          "PAD_F5"
+        ]
+      ],
+      "name": "d2d_f5_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F6"
+        ],
+        [
+          "U2",
+          "PAD_F6"
+        ]
+      ],
+      "name": "d2d_f6_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F7"
+        ],
+        [
+          "U2",
+          "PAD_F7"
+        ]
+      ],
+      "name": "d2d_f7_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F8"
+        ],
+        [
+          "U2",
+          "PAD_F8"
+        ]
+      ],
+      "name": "d2d_f8_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_F9"
+        ],
+        [
+          "U2",
+          "PAD_F9"
+        ]
+      ],
+      "name": "d2d_f9_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_FCLK"
+        ],
+        [
+          "U2",
+          "PAD_FCLK"
+        ]
+      ],
+      "name": "d2d_fclk_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_FRSTN"
+        ],
+        [
+          "U2",
+          "PAD_FRSTN"
+        ]
+      ],
+      "name": "d2d_frst_n_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R0"
+        ],
+        [
+          "U2",
+          "PAD_R0"
+        ]
+      ],
+      "name": "d2d_r0_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R1"
+        ],
+        [
+          "U2",
+          "PAD_R1"
+        ]
+      ],
+      "name": "d2d_r1_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R2"
+        ],
+        [
+          "U2",
+          "PAD_R2"
+        ]
+      ],
+      "name": "d2d_r2_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R3"
+        ],
+        [
+          "U2",
+          "PAD_R3"
+        ]
+      ],
+      "name": "d2d_r3_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R4"
+        ],
+        [
+          "U2",
+          "PAD_R4"
+        ]
+      ],
+      "name": "d2d_r4_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R5"
+        ],
+        [
+          "U2",
+          "PAD_R5"
+        ]
+      ],
+      "name": "d2d_r5_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R6"
+        ],
+        [
+          "U2",
+          "PAD_R6"
+        ]
+      ],
+      "name": "d2d_r6_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R7"
+        ],
+        [
+          "U2",
+          "PAD_R7"
+        ]
+      ],
+      "name": "d2d_r7_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R8"
+        ],
+        [
+          "U2",
+          "PAD_R8"
+        ]
+      ],
+      "name": "d2d_r8_n"
+    },
+    {
+      "auto_named": false,
+      "endpoints": [
+        [
+          "U1",
+          "PAD_R9"
+        ],
+        [
+          "U2",
+          "PAD_R9"
+        ]
+      ],
+      "name": "d2d_r9_n"
+    }
+  ],
+  "refusals": [],
+  "symbols": [
+    {
+      "identity": "U1",
+      "pins": [
+        "PAD_CFG_MODE",
+        "PAD_CLK",
+        "PAD_F0",
+        "PAD_F1",
+        "PAD_F2",
+        "PAD_F3",
+        "PAD_F4",
+        "PAD_F5",
+        "PAD_F6",
+        "PAD_F7",
+        "PAD_F8",
+        "PAD_F9",
+        "PAD_FCLK",
+        "PAD_FRSTN",
+        "PAD_R0",
+        "PAD_R1",
+        "PAD_R2",
+        "PAD_R3",
+        "PAD_R4",
+        "PAD_R5",
+        "PAD_R6",
+        "PAD_R7",
+        "PAD_R8",
+        "PAD_R9",
+        "PAD_RSTN",
+        "PAD_STATUS",
+        "PAD_VDD_E0",
+        "PAD_VDD_E1",
+        "PAD_VDD_W0",
+        "PAD_VDD_W1",
+        "PAD_VSS_E0",
+        "PAD_VSS_E1",
+        "PAD_VSS_W0",
+        "PAD_VSS_W1"
+      ],
+      "ref": "U1"
+    },
+    {
+      "identity": "U2",
+      "pins": [
+        "PAD_CFG_MODE",
+        "PAD_F0",
+        "PAD_F1",
+        "PAD_F2",
+        "PAD_F3",
+        "PAD_F4",
+        "PAD_F5",
+        "PAD_F6",
+        "PAD_F7",
+        "PAD_F8",
+        "PAD_F9",
+        "PAD_FCLK",
+        "PAD_FRSTN",
+        "PAD_R0",
+        "PAD_R1",
+        "PAD_R2",
+        "PAD_R3",
+        "PAD_R4",
+        "PAD_R5",
+        "PAD_R6",
+        "PAD_R7",
+        "PAD_R8",
+        "PAD_R9",
+        "PAD_STATUS",
+        "PAD_VDD_E0",
+        "PAD_VDD_E1",
+        "PAD_VDD_W0",
+        "PAD_VDD_W1",
+        "PAD_VSS_E0",
+        "PAD_VSS_E1",
+        "PAD_VSS_W0",
+        "PAD_VSS_W1"
+      ],
+      "ref": "U2"
+    }
+  ],
+  "version": "1.0"
+}

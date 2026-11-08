@@ -1,0 +1,490 @@
+{
+  "schema": "die-output-contract",
+  "version": "1.1",
+  "die": {
+    "name": "CF_ECHO_CX_BONDPAD",
+    "layout": "layout.gds",
+    "layout_sha256": "29e259762bbae0b8200dddbdddc078ca8ed1324503c34853f7940dc9e73515dc",
+    "top_cell": "CF_ECHO_CX_BONDPAD",
+    "dbu_um": 0.001,
+    "bbox_um": [
+      0.0,
+      0.0,
+      1000.0,
+      1000.0
+    ],
+    "frame": "die_local_gds_origin"
+  },
+  "process": {
+    "pdk": "gf180mcuD",
+    "pdk_version": "77cb86086e6bcded39e5e3f2d25ab234b6cdee65"
+  },
+  "build_record": {
+    "path": "build-record.json",
+    "sha256": "b8ed33c6c4792f9809854443aea48da806b6ffab582d4903960ed695db8db7a7"
+  },
+  "inventory": {
+    "kind": "pins_json",
+    "path": "pins.json",
+    "sha256": "a9d4e86b2a45013a43148116e6085f9c4172866f9b4c04f60286e11d655f2cc8"
+  },
+  "terminals": [
+    {
+      "name": "PAD_VDD_E0",
+      "pad_index": 0,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDD",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDD"
+    },
+    {
+      "name": "PAD_VSS_E0",
+      "pad_index": 1,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSS",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSS"
+    },
+    {
+      "name": "PAD_VDD_E1",
+      "pad_index": 2,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDD",
+      "ordinal": 1,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDD"
+    },
+    {
+      "name": "PAD_VSS_E1",
+      "pad_index": 3,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSS",
+      "ordinal": 1,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSS"
+    },
+    {
+      "name": "PAD_F9",
+      "pad_index": 4,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f9",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F8",
+      "pad_index": 5,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f8",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F0",
+      "pad_index": 6,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f0",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F3",
+      "pad_index": 7,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f3",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F2",
+      "pad_index": 8,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f2",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F1",
+      "pad_index": 9,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f1",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F6",
+      "pad_index": 10,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f6",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_FRSTN",
+      "pad_index": 11,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_frst_n",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F7",
+      "pad_index": 12,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f7",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_FCLK",
+      "pad_index": 13,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_fclk",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F5",
+      "pad_index": 14,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f5",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_F4",
+      "pad_index": 15,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d_f4",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_VDD_W0",
+      "pad_index": 16,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDD",
+      "ordinal": 2,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDD"
+    },
+    {
+      "name": "PAD_VSS_W0",
+      "pad_index": 17,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSS",
+      "ordinal": 2,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSS"
+    },
+    {
+      "name": "PAD_VDD_W1",
+      "pad_index": 18,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDD",
+      "ordinal": 3,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDD"
+    },
+    {
+      "name": "PAD_VSS_W1",
+      "pad_index": 19,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSS",
+      "ordinal": 3,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSS"
+    },
+    {
+      "name": "PAD_CFG_MODE",
+      "pad_index": 20,
+      "role": "signal",
+      "direction": "input",
+      "port": "CFG_MODE",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R9",
+      "pad_index": 21,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r9",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R8",
+      "pad_index": 22,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r8",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R0",
+      "pad_index": 23,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r0",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R2",
+      "pad_index": 24,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r2",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R3",
+      "pad_index": 25,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r3",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R1",
+      "pad_index": 26,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r1",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_STATUS",
+      "pad_index": 27,
+      "role": "signal",
+      "direction": "output",
+      "port": "STATUS",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R4",
+      "pad_index": 28,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r4",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R5",
+      "pad_index": 29,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r5",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R7",
+      "pad_index": 30,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r7",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_R6",
+      "pad_index": 31,
+      "role": "signal",
+      "direction": "output",
+      "port": "d2d_r6",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 37,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    }
+  ],
+  "generator": "chiplet-flow emit-ready-die"
+}

@@ -1,0 +1,28 @@
+{
+  "$comment": "Oracle for the CARRY rule on an unrecognised member of a closed vocabulary (SPEC-32/SPEC-34, panel ruling Q1). Both reference readers run THIS file rather than being compared to each other: conformance/test_unknown_vocabulary_roundtrip.py runs the Python cells and reference/cpp/tests/test_chiplet_format_io.cpp runs the C++ cells, over the same documents and the same cells, so agreeing cell by cell is a property of the rows and not of one suite trusting the other. The cross product is deliberate and dropping any axis reproduces a defect that existed: the VALIDATE axis, because the C++ refusal lived in parse_interface, which takes no options, so validate=false did not reach it and the two readers disagreed on the same document (SPEC-34) - an implementer who 'fixes' this by gating the C++ throw behind LoadOptions::validate still fails the validate=false cell; the PATH axis, because the value has to survive the WRITER too, and a reader that carries a string a writer then drops has moved the loss rather than removed it; and the DOCUMENT axis, because the interesting document is not the one with a bare interface, it is the one whose interface meets an interposer pad with a KNOWN io_class, which is validation rule 8 and was the third refusal site. notes_per_load is the count on the NORMATIVE channel (on_warn in both readers), per load, undeduplicated: the test asserts it by loading the same document TWICE in one process and expecting two notes, which states the dedup trap as a test rather than as a comment. The schema still REFUSES both documents, and it is right to: the vocabulary is closed for WRITERS. That divergence is pinned in conformance/test_chiplet_schema.py's DIVERGENCES.",
+  "unknown_type": "quantum_tunnel",
+  "documents": [
+    {
+      "file": "v1_0_unknown_interface_type.chiplet",
+      "interface": "link0",
+      "why": "The plain case: an interface carrying a type no reader knows, with no pad in sight."
+    },
+    {
+      "file": "v1_0_unknown_type_meets_known_io_class.chiplet",
+      "interface": "link0",
+      "why": "The third refusal site: the same unknown type on an interface that meets an io_pad whose io_class (flipped_bump) HAS a row in rule 8's table, so the type matched no allowed entry and the rule reported a violation. Removing the parse-path and validate-path refusals alone leaves this document refused."
+    }
+  ],
+  "cells": [
+    {"validate": true, "path": "load"},
+    {"validate": true, "path": "load_then_dump"},
+    {"validate": false, "path": "load"},
+    {"validate": false, "path": "load_then_dump"}
+  ],
+  "expect": {
+    "raises": false,
+    "type_survives_the_load": true,
+    "dump_re_emits_the_type_verbatim": true,
+    "notes_per_load": 1
+  }
+}

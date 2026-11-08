@@ -1,0 +1,176 @@
+{
+  "_comment": [
+    "The since-minor rule's verdict oracle (docs/VERSION_POLICY.md, \"What bumps",
+    "what\", and the spec's validation rule 1). One file, two readers:",
+    "conformance/test_member_since.py runs every row through the Python",
+    "check_member_since and reference/cpp/tests through the C++ one, each with",
+    "the row's own map, so the rule is measured while the real map is small.",
+    "",
+    "A row is a map (field, member, the minor that added it), the version a",
+    "document declares, one member of one field, and the verdict: ok, or refuse",
+    "(a data error the validator raises). The members here are invented on",
+    "purpose; the rule must not depend on which members are real."
+  ],
+  "cases": [
+    {
+      "name": "member below its minor is refused",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.0",
+      "field": "interfaces[].type",
+      "member": "hybrid_bond",
+      "verdict": "refuse"
+    },
+    {
+      "name": "member at its minor reads",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.1",
+      "field": "interfaces[].type",
+      "member": "hybrid_bond",
+      "verdict": "ok"
+    },
+    {
+      "name": "member above its minor reads",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.2",
+      "field": "interfaces[].type",
+      "member": "hybrid_bond",
+      "verdict": "ok"
+    },
+    {
+      "name": "member with no entry is since 1.0",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.0",
+      "field": "interfaces[].type",
+      "member": "micro_bump",
+      "verdict": "ok"
+    },
+    {
+      "name": "an entry binds only its own field",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.0",
+      "field": "components[].anchor",
+      "member": "hybrid_bond",
+      "verdict": "ok"
+    },
+    {
+      "name": "minors compare as numbers, not text",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.9",
+      "field": "io_pads[].io_class",
+      "member": "hybrid_pad",
+      "verdict": "refuse"
+    },
+    {
+      "name": "minor 1.10 reaches a 1.10 member",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "1.10",
+      "field": "io_pads[].io_class",
+      "member": "hybrid_pad",
+      "verdict": "ok"
+    },
+    {
+      "name": "another major is the version policy's question",
+      "since": [
+        [
+          "interfaces[].type",
+          "hybrid_bond",
+          "1.1"
+        ],
+        [
+          "io_pads[].io_class",
+          "hybrid_pad",
+          "1.10"
+        ]
+      ],
+      "declared": "2.0",
+      "field": "interfaces[].type",
+      "member": "hybrid_bond",
+      "verdict": "ok"
+    },
+    {
+      "name": "an empty map refuses nothing",
+      "since": [],
+      "declared": "1.0",
+      "field": "interfaces[].type",
+      "member": "hybrid_bond",
+      "verdict": "ok"
+    }
+  ]
+}

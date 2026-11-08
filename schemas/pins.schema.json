@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ihp.example/chiplet-spec/pins.schema.json",
+  "title": "Chiplet die pad geometry (pins.json)",
+  "description": "Schema for a GEOMETRY pins.json: the reconciled, footprint-derived or hand-authored die pad map that interposer-pnr's pin-list reader (pads.load_pin_list) consumes to place bumps. Structural validation only. What makes a file GEOMETRY is the presence of dbu_um and per-pin coordinates (required below), NOT an enumerated source_type: source_type is an open, self-describing vocabulary (kicad_footprint, gds_extracted, hand_authored, ...), so a new geometry producer never has to edit this schema. A name-review artifact (source_type pin_review, no coordinates) fails this schema on the missing geometry, so a geometry consumer refuses it. dbu-based: every *_dbu value scales by the file's own dbu_um. The um-based black-box padmap ('pads' + bbox_um) is a DIFFERENT artifact with its own schema (blackbox_padmap.schema.json). Cross-field invariants (unique (name, pad_index); pad_index contiguity; die_bbox agreement with the .chiplet dimensions) are checked by the consumer, not here.",
+  "type": "object",
+  "required": ["version", "source_type", "dbu_um", "pins"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "description": "Contract version. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.0. The bare integer 1 is the LEGACY spelling of \"1.0\", still emitted by existing pin-list producers; it is deprecated and will be removed one minor after every producer writes the string form, per the deprecation rule in the policy. New emitters write the string.",
+      "oneOf": [
+        {"type": "string", "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])"},
+        {"type": "integer", "enum": [1]}
+      ]
+    },
+    "source_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Self-describing producer kind (open vocabulary), e.g. kicad_footprint (footprint_to_pinlist), gds_extracted (reconcile), hand_authored (a hand-written fixture). Geometry is established by dbu_um plus per-pin coordinates below, not by this value; a name-review artifact (source_type pin_review, no coordinates) fails this schema on the missing geometry. A consumer may still special-case a known non-geometry source_type for a clearer error message."
+    },
+    "dbu_um": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Database unit in um; every *_dbu value scales by this. Never defaulted by the consumer."
+    },
+    "chiplet_name": {"type": "string"},
+    "source": {"type": "string"},
+    "timestamp": {"type": "string"},
+    "die_bbox_dbu": {
+      "type": "object",
+      "required": ["x_min", "y_min", "x_max", "y_max"],
+      "additionalProperties": true,
+      "properties": {
+        "x_min": {"type": "number"},
+        "y_min": {"type": "number"},
+        "x_max": {"type": "number"},
+        "y_max": {"type": "number"}
+      },
+      "description": "Optional die GDS bounding box in the file's dbu_um; present for a bbox_center die, absent for a gds_origin die. Malformed is a hard error in the consumer, never a silent drop."
+    },
+    "pins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "pad_index", "center_x_dbu", "center_y_dbu"],
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Pad name. Never inferred from array position."
+          },
+          "pad_index": {
+            "type": "integer",
+            "description": "Orders same-name pads (a rail); a bump binds to (name, pad_index). Never inferred from array position."
+          },
+          "center_x_dbu": {"type": "number"},
+          "center_y_dbu": {"type": "number"},
+          "width_dbu": {"type": "number", "minimum": 0},
+          "height_dbu": {"type": "number", "minimum": 0},
+          "side": {"type": "string"},
+          "type": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,592 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ihp.example/chiplet-spec/chiplet.schema.json",
+  "title": "Chiplet assembly document (.chiplet)",
+  "description": "Machine-readable schema of the .chiplet root document described in docs/CHIPLET_FORMAT_SPEC.md. NORMATIVE FOR STRUCTURE: which root keys exist, which block each key holds, the type and key set of every block the spec defines by key list, and the closed vocabularies (component anchor, component orientation, interface type, io_pads[].io_class), which bind WRITERS: the reference readers carry an unrecognised member of any of them as a raw string and report it on their warn channel, so this schema is deliberately stricter than they are on that axis. NOT normative for semantics: the format_version tolerance policy (same-major higher minor accepted with a warning, a different major refused), the _metadata.finalize_required refusal, the absent-anchor default-and-warn, the 1e5 um leak guard and every cross-reference check (a component technology naming a defined technology, unique component ids, a connection naming a known interconnect method) stay with the reference reader (reference/python/chiplet_format_io), which is normative for them. A document may therefore be schema-valid and still be refused by a reader (a same-major-plus-one major, an intermediate file), and the two deliberate cases where the reader is more tolerant than this schema are pinned as fixtures in conformance/: an undeclared ROOT key (the reader passes it through additively; the schema rejects it, which is the point of additionalProperties false here) and an unquoted numeric format_version (the reader coerces through str() for back-compat; the spec says the field MUST be quoted and the schema holds that line). YAML is validated by parsing it to the JSON data model first; this schema constrains that model.",
+  "type": "object",
+  "required": ["format_version", "assembly"],
+  "additionalProperties": false,
+  "properties": {
+    "format_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(?![\\s\\S])",
+      "description": "Quoted MAJOR.MINOR string; baseline \"1.0\". Quoting is structural: an unquoted 1.10 is read as \"1.1\" by PyYAML and \"1.10\" by yaml-cpp, so an unquoted value is a schema error here even though the reference reader coerces it through str(). Which majors and minors a given reader accepts is the reader's tolerant policy (spec, Validation Rules 1), not a structural question, so this pattern does not pin the major."
+    },
+    "assembly": {
+      "$ref": "#/definitions/assembly",
+      "description": "Assembly metadata. Required."
+    },
+    "technologies": {
+      "type": "object",
+      "description": "Map of technology id -> technology. Ids are unique by construction (map keys) and are not constrained here: the spec recommends alphanumeric plus underscore but no reader enforces it.",
+      "additionalProperties": {"$ref": "#/definitions/technology"}
+    },
+    "connection_stacks": {
+      "type": "object",
+      "description": "Map of stack id -> named interconnect stack. A die selects one by id through its component `connection` field. The same stacks are published in the interconnect_methods.json sidecar (the single source of truth for the interconnect PDK); inlining them here is for self-containment.",
+      "additionalProperties": {"$ref": "#/definitions/connection_stack"}
+    },
+    "components": {
+      "type": "array",
+      "description": "Placed components. May be empty (a version/metadata-only document is legal).",
+      "items": {"$ref": "#/definitions/component"}
+    },
+    "interconnect": {
+      "$ref": "#/definitions/interconnect",
+      "description": "Optional interconnect-axis adapter and its optional PDK-backed identity."
+    },
+    "interposer": {
+      "$ref": "#/definitions/interposer",
+      "description": "Optional interposer-axis adapter: which interposer PDK rule set the assembly is verified against."
+    },
+    "system": {
+      "$ref": "#/definitions/system",
+      "description": "Format 1.1. The system a SOURCE document describes: carrier, placed dies and their connections, from which a finalizer derives the assembly. A document with this key is a source, never an assembly: it carries none of the DERIVED blocks (technologies, connection_stacks, components, interconnect, interfaces, netlist) and always carries _metadata.finalize_required true. See docs/CHIPLET_FORMAT_SPEC.md, System."
+    },
+    "interfaces": {
+      "type": "array",
+      "description": "Typed die-to-die / bond interfaces.",
+      "items": {"$ref": "#/definitions/interface"}
+    },
+    "netlist": {
+      "$ref": "#/definitions/netlist",
+      "description": "Optional assembly netlist, inline or by reference."
+    },
+    "flow": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "OPAQUE host-specific build/flow configuration. The format leaves its content unspecified and readers preserve it verbatim across a load/dump cycle. A reader MAY parse it; a reader that cannot parse it must not reject the document. The block is not authorization: it names nothing a reader is required to run, and a host that executes what it names is responsible for establishing that the block is one its operator intended, since a re-export copies a foreign block into a freshly generated file and authorship therefore proves nothing. Deliberately left extensible; never validate a project's build steps here. See docs/CHIPLET_FORMAT_SPEC.md, Flow."
+    },
+    "_metadata": {
+      "$ref": "#/definitions/metadata",
+      "description": "Intermediate-file marker. Canonical .chiplet files carry no _metadata block."
+    },
+    "unplaced": {
+      "type": "object",
+      "required": ["pins"],
+      "additionalProperties": false,
+      "x-since": "1.3",
+      "description": "Format 1.3, sources only, written after system. The external entries (port refs and rail names, as on an edge row) that no edge of system.external carries yet: packaging-flow place assigns them an edge. A root key on purpose, so that a reader before 1.3 refuses the file rather than skipping the key and reading on without these externals. See docs/CHIPLET_FORMAT_SPEC.md, Format 1.3: the unplaced source.",
+      "properties": {
+        "pins": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"required": ["system"]},
+      "then": {
+        "required": ["_metadata"],
+        "properties": {
+          "_metadata": {"required": ["finalize_required"], "properties": {"finalize_required": {"const": true}}}
+        },
+        "not": {"anyOf": [
+          {"required": ["technologies"]}, {"required": ["connection_stacks"]},
+          {"required": ["components"]}, {"required": ["interconnect"]},
+          {"required": ["interfaces"]}, {"required": ["netlist"]}
+        ]}
+      }
+    },
+    {
+      "if": {"required": ["unplaced"]},
+      "then": {"required": ["system"], "properties": {"system": {"required": ["external"]}}}
+    },
+    {
+      "$comment": "Format 1.3 lets a source leave its placement open: dies absent or empty, a die without at, a carrier without size, external without edges, and the root unplaced. A source stamped below 1.3 holds none of them.",
+      "if": {"required": ["format_version", "system"], "properties": {"format_version": {"pattern": "^(0\\.[0-9]+|1\\.[0-2])(?![\\s\\S])"}}},
+      "then": {
+        "not": {"required": ["unplaced"]},
+        "properties": {
+          "system": {
+            "required": ["dies"],
+            "properties": {
+              "carrier": {"required": ["size"]},
+              "dies": {"minItems": 1, "items": {"required": ["at"]}},
+              "external": {"required": ["edges"]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Format 1.4 lets a die row name its admission file. A source stamped below 1.4 names none.",
+      "if": {"required": ["format_version", "system"], "properties": {"format_version": {"pattern": "^(0\\.[0-9]+|1\\.[0-3])(?![\\s\\S])"}}},
+      "then": {"properties": {"system": {"properties": {"dies": {"items": {"not": {"required": ["admission"]}}}}}}}
+    },
+    {
+      "$comment": "Format 1.5 lets a rail state its routing requirement. A source stamped below 1.5 states none.",
+      "if": {"required": ["format_version", "system"], "properties": {"format_version": {"pattern": "^(0\\.[0-9]+|1\\.[0-4])(?![\\s\\S])"}}},
+      "then": {"properties": {"system": {"properties": {"rails": {"items": {"not": {"anyOf": [
+        {"required": ["width_um"]}, {"required": ["amps"]}, {"required": ["current_density_ma_per_um"]}
+      ]}}}}}}}
+    }
+  ],
+  "definitions": {
+    "assembly": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "description": "Assembly metadata. Closed key set: the spec enumerates these eight keys.",
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "description": "Display name. Required and non-empty (the reference reader enforces the same)."},
+        "description": {"type": "string"},
+        "author": {"type": "string"},
+        "created": {"type": "string", "description": "ISO 8601 date; the format is not machine-checked here."},
+        "modified": {"type": "string", "description": "ISO 8601 date; the format is not machine-checked here."},
+        "units": {"type": "string", "enum": ["um"], "default": "um", "description": "Unit of every length in the document. Closed, and the one vocabulary a reader must understand: um is the only member and the normative default when the key is absent, and a reader refuses any other value rather than reading lengths in a unit it does not convert. Absent stays legal."},
+        "assembly_gds": {"type": "string", "description": "Verbatim path to a merged/flattened assembly GDS, when one is produced. Never resolved by a reader."},
+        "io_technology": {"type": "string", "description": "Technology id used for assembly-level I/O pads."}
+      }
+    },
+    "technology": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One fabrication process. Closed key set. Paths are verbatim as written: ${VAR} expansion and relative-to-the-.chiplet resolution are the consumer's job.",
+      "properties": {
+        "description": {"type": "string"},
+        "layer_properties": {"type": "string", "description": "Verbatim path to a KLayout .lyp file."},
+        "stackup": {"type": "string", "description": "Verbatim path to a layer-stackup YAML this technology ships. Takes priority over a consumer's own stackup lookup for this technology id."},
+        "dbu": {"type": "number", "exclusiveMinimum": 0, "description": "Database unit in micrometers; typically 0.001. A zero or negative dbu is not a coordinate resolution."}
+      }
+    },
+    "connection_stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The physical layers a die's bump/pillar stack is built from, bottom (interposer side) first. The stack total drives per-die z-mounting.",
+      "properties": {
+        "description": {"type": "string"},
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "One stack layer. The spec marks no key required here (a partially specified stack is legal but contributes nothing to z-mounting); the interconnect PDK registry that owns the canonical stacks does require all four.",
+            "properties": {
+              "name": {"type": "string", "description": "Layer name, matched against the interposer stackup for z-mounting."},
+              "material": {"type": "string", "description": "Material, e.g. Cu, SnAg, SAC305."},
+              "height": {"type": "number", "description": "Layer height in um; the stack total drives z-mounting."},
+              "diameter": {"type": "number", "description": "Body diameter in um."}
+            }
+          }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "description": "One placed physical element. Closed key set: the sixteen keys the spec's Common Fields table lists, plus the two proposed interop references (cdxml_ref, 3dblox_ref) which the spec documents as optional and additive; they are declared here so a file that uses the documented interop hook is not a structural error, and they carry no placement meaning.",
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "description": "Unique component identifier. Uniqueness across the array is a consumer check, not a structural one."},
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Component type. The canonical values are die, die_array, interposer and substrate; deliberately NOT an enum, and the reason is not that the schema may never be stricter than a reader. It may, and elsewhere it is on purpose: anchor, orientation, io_class and interfaces[].type are CLOSED here and carried as raw strings by both reference readers, because a closed vocabulary binds WRITERS and a reader that refuses the document over an unrecognised member would turn every future addition into a MAJOR (see the anchor description below, and docs/VERSION_POLICY.md). The reason this field is open is that its vocabulary is not closed by the format at all: the spec names four canonical values and leaves the field free-form for a host that models something else, so there is no list to hold a writer to (spec, consumer-level rule 14)."
+        },
+        "technology": {"type": "string", "description": "Reference to a technology id. Whether that id is defined is a consumer check."},
+        "anchor": {
+          "type": "string",
+          "enum": ["gds_origin", "bbox_center"],
+          "description": "How the component's mesh is centered: gds_origin (mesh built around the component's own GDS origin; dies) or bbox_center (mesh centered on the GDS bbox; interposers). A CLOSED vocabulary: an unknown anchor silently changes where geometry lands, so it is a structural error here. New files MUST declare it; an ABSENT anchor is still schema-valid for compatibility with files that predate the rule. The reference readers (Python and C++) are structural and apply NO default; every consumer that reads a missing anchor defaults it to bbox_center and MUST warn, never assume silently, and the strict conformance profile requires the field."
+        },
+        "layout": {"type": "string", "description": "Verbatim path to a GDS/OASIS layout file."},
+        "top_cell": {"type": "string", "description": "Top cell name in the layout (single-cell shorthand for cells)."},
+        "cells": {
+          "description": "One or more cell names in the layout. Writers emit top_cell for one cell and cells for several.",
+          "oneOf": [
+            {"type": "string"},
+            {"type": "array", "items": {"type": "string"}}
+          ]
+        },
+        "position": {"$ref": "#/definitions/position3d"},
+        "rotation": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Rotation angles. Only the Z axis is modeled by the format.",
+          "properties": {"z": {"type": "number", "description": "Rotation around Z in degrees."}}
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["face_up", "flip_chip", "face_down"],
+          "description": "Mounting orientation of a die. A CLOSED vocabulary: the spec fixes three values and tells writers to stay within them. The reference reader does not reject other strings (it keeps orientation as a raw string and lets the consumer decide), so a file with an unlisted value loads but is not schema-valid; that asymmetry is intentional and is why writers are the ones held to the vocabulary."
+        },
+        "connection": {"type": "string", "description": "Interconnect method id this die mounts on (e.g. cupillar_opt1), referencing the interconnect method registry. Drives per-die z-mounting. An empty string means no method (fall back to the interposer mount reference)."},
+        "dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Physical size of the component body in um. For a die, thickness excludes the interconnect below it; for an interposer, thickness is the substrate body and the mount plane is attachment_surface_z.",
+          "properties": {
+            "width": {"type": "number", "minimum": 0, "description": "X-extent in um."},
+            "height": {"type": "number", "minimum": 0, "description": "Y-extent in um."},
+            "thickness": {"type": "number", "minimum": 0, "description": "Z-extent in um."}
+          }
+        },
+        "attachment_surface_z": {
+          "type": "number",
+          "description": "INTERPOSER ONLY. Z of the die-attachment (BEOL-top) surface in the component-local frame: the plane dies mount on. Decouples the mount reference from dimensions.thickness. When absent, consumers fall back to dimensions.thickness (legacy files). Which component types may carry it is a consumer check; nothing structural distinguishes them."
+        },
+        "io_pads": {
+          "type": "array",
+          "description": "INTERPOSER ONLY. Assembly-level I/O pads (e.g. wire-bond pads), in the same canonical frame as components. Pads do not declare their own anchor. May be empty.",
+          "items": {"$ref": "#/definitions/io_pad"}
+        },
+        "die_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "description": "DIE ONLY, and additive: a reference to this component's die output contract sidecar (die_contract.schema.json), which carries the die's process provenance, its authoritative pad inventory, what each terminal is for, and its intrinsic verification record. The reference lives here and the content does not, because a .chiplet is an assembly document that references dies: a production claim embedded in it would be a claim the assembly cannot verify. A reference and a digest only: it adds no selector and changes no existing key, so a reader that skips it resolves exactly what it resolved before. That is a statement about THIS key, not a general licence, since an optional key that steers an existing consumer is a MAJOR however optional it looks. Strict chiplet-full and demo admission is where it is resolved, its hash rechecked and a missing reference refused. Note io_pads above is the INTERPOSER's own pads and is not this: the two describe different sides of the attachment and are not interchangeable.",
+          "properties": {
+            "path": {"type": "string", "description": "Verbatim path to the die contract sidecar. ${VAR} expansion and relative resolution are the consumer's job, as everywhere else in this format."},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}(?![\\s\\S])", "description": "Digest of the referenced sidecar. Without it the reference names a filename rather than bytes, which is the gap it exists to close: a stale or regenerated contract resolves cleanly against whatever the caller happens to have on disk."}
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom key-value pairs. Deliberately extensible: the format assigns no meaning to any key here and no reader interprets one."
+        },
+        "array": {"$ref": "#/definitions/component_array"},
+        "cdxml_ref": {"$ref": "#/definitions/cdxml_ref"},
+        "3dblox_ref": {"$ref": "#/definitions/threedblox_ref"}
+      }
+    },
+    "position3d": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "3D position of the component's GEOMETRIC CENTER, in the canonical frame (GDS-bbox-corner of the interposer top_cell, y-up, um). An absent axis is 0. The 1e5 um leak guard on x and y is a reader warning, not a structural bound.",
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "z": {"type": "number"}
+      }
+    },
+    "io_pad": {
+      "type": "object",
+      "required": ["id", "position"],
+      "additionalProperties": false,
+      "description": "One assembly-level I/O pad. id and position are required: a pad with no position is not a point in the canonical frame and cannot be placed, which is also why the io_pads.json sidecar requires its coordinates. size is optional (the reference C++ writer emits it for every pad).",
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "description": "Pad reference; the join key with io_pads.json ref."},
+        "io_class": {"type": "string", "enum": ["wire_bond", "flipped_bump", "tsv_bump"], "description": "Die-side USAGE class of the pad (how it is attached): wire_bond, flipped_bump or tsv_bump. Closed vocabulary since 2026-09-05; it was free-form before, but every governed emitter already refused anything else (KiCad exporter export_chiplet.cpp, plugin chiplet_writer.py). NOT because a reference reader refuses one: MEASURED, neither does. The C++ reference stores io_class verbatim and validation rule 8 SKIPS a pad whose class has no row; the Python reference does the same. The consumer that throws is the studio's own converter (ChipletFormat.cpp), which is a consumer decision and not the format's. This sentence previously claimed the C++ reader throws, which would have been a standing invitation to re-add a refusal here. The interposer-side pad GEOMETRY class is a different axis (PDK pad_classes), joined through the interconnect method, never by this field's name."},
+        "net": {"type": "string", "description": "Net name. May be empty: a no-net pad is legal."},
+        "position": {
+          "type": "object",
+          "required": ["x", "y"],
+          "additionalProperties": false,
+          "description": "Pad geometric center in the canonical frame, um.",
+          "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+        },
+        "size": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional 2D extent in um.",
+          "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+        },
+        "layer": {"type": "string", "description": "PDK layer name the pad sits on (e.g. TopMetal2). Never a KiCad board layer name."}
+      }
+    },
+    "component_array": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Array configuration; die_array only.",
+      "properties": {
+        "pattern": {"type": "string", "description": "Array pattern: grid, linear or custom. Left open (not an enum) because the spec introduces these as conventional values and no reader validates them."},
+        "count": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Element counts. Integer >= 1 per the spec's data-type table: a zero or fractional count is not an array.",
+          "properties": {
+            "x": {"type": "integer", "minimum": 1},
+            "y": {"type": "integer", "minimum": 1}
+          }
+        },
+        "pitch": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Element spacing in um.",
+          "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+        },
+        "start_position": {"$ref": "#/definitions/position3d"}
+      }
+    },
+    "cdxml_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "PROPOSED, NON-NORMATIVE. Cites the part this die instantiates in a part-description standard (CDXML / JEDEC JEP30) instead of duplicating that part's datasheet data. Optional and additive: readers that do not understand it ignore it, and its presence never changes placement, the coordinate frame or z-mounting. At least one of mpn or uri SHOULD be present so the reference resolves; that is a SHOULD, so it is not required here.",
+      "properties": {
+        "mpn": {"type": "string", "description": "Manufacturer part number."},
+        "opn": {"type": "string", "description": "Ordering part number."},
+        "version": {"type": "string", "description": "Part-document version."},
+        "uri": {"type": "string", "description": "Path or URL to the part document."},
+        "sha256": {"type": "string", "description": "Content hash, for provenance."}
+      }
+    },
+    "threedblox_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "PROPOSED, NON-NORMATIVE. Cites the 3Dblox ChipletDef describing the same die at the P&R abstraction level. Component-level by design: there is deliberately no assembly-level .3dbx reference, because two machine-readable placement sources for one assembly would create a source-of-truth ambiguity. Optional and additive, exactly like cdxml_ref.",
+      "properties": {
+        "chiplet": {"type": "string", "description": "ChipletDef name inside the .3dbv."},
+        "uri": {"type": "string", "description": "Path or URL to the .3dbv file."},
+        "sha256": {"type": "string", "description": "Content hash, for provenance."}
+      }
+    },
+    "interconnect": {
+      "type": "object",
+      "required": ["adapter"],
+      "additionalProperties": false,
+      "description": "The interconnect axis for the assembly. The spec makes adapter required when the block is present (a block without adapter is ignored by readers, so writing one is a writer bug, not a tolerated shape).",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]*(?![\\s\\S])",
+          "not": {"pattern": "\\.drc(?![\\s\\S])"},
+          "description": "Interconnect adapter id, e.g. ihp_cupillar. A REGISTRY ID resolved by the consuming ADK, never a filesystem path: same rule and same pattern as interposer.adapter, see that field."
+        },
+        "technology": {
+          "$ref": "#/definitions/technology",
+          "description": "Optional PDK-backed identity for the interconnect, the same shape as a technologies entry. It is registered under the adapter id, so it resolves through the ordinary technology lookup."
+        }
+      }
+    },
+    "interposer": {
+      "type": "object",
+      "required": ["adapter"],
+      "additionalProperties": false,
+      "description": "The interposer axis for the assembly: which interposer PDK rule set the assembly is verified against. Emitted by the KiCad exporter (from the INTERPOSER_ADAPTER project variable), consumed by the ADK assembly-DRC runner and by the Mosaic cockpit.",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]*(?![\\s\\S])",
+          "not": {"pattern": "\\.drc(?![\\s\\S])"},
+          "description": "Interposer adapter id, e.g. intm4tm2. A REGISTRY ID resolved by the consuming ADK against its own adapter directory; NEVER a filesystem path. The pattern admits no path separator and no leading dot, and a value ending in .drc is refused: an id that is really a path (or a rule-deck filename) ties a portable assembly document to one machine's layout, and a document that travels must name what it needs, not where that thing lives on the author's disk. A consumer that needs an adapter and does not find this key REFUSES; it never falls back to a built-in default, because a silently defaulted rule set means an assembly is signed off against rules nobody chose."
+        }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "description": "One typed die-to-die / bond interface.",
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "description": "Unique interface id."},
+        "type": {
+          "type": "string",
+          "enum": ["micro_bump", "copper_pillar", "tsv", "wire_bond", "solder_bump"],
+          "x-since": {"solder_bump": "1.1"},
+          "description": "A CLOSED vocabulary, like io_pads[].io_class and component anchor: this schema rejects an unlisted type, which is how the list is enforced on PRODUCERS. Neither reference validator rejects one: both carry the string verbatim and report an unrecognised member on their warn channel, because refusing the document would make every future addition to this list a MAJOR instead of the MINOR the policy calls it, and element-level refusal is the consumer's to make (docs/VERSION_POLICY.md; the readers export the list as KNOWN_INTERFACE_TYPES and kKnownInterfaceTypes so a consumer can). solder_bump is the C4-class reflowed solder ball, the interconnect manifest's sbump_sac305; producers emit it only from format 1.1, so until that stamp the value in a 1.0 document is out of contract. Which io_class a given type may meet is spec validation rule 8, a cross-field rule this schema cannot express."
+        },
+        "from": {"$ref": "#/definitions/interface_endpoint"},
+        "to": {"$ref": "#/definitions/interface_endpoint"},
+        "physical": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Physical parameters in um.",
+          "properties": {
+            "pitch": {"type": "number"},
+            "diameter": {"type": "number"},
+            "height": {"type": "number"}
+          }
+        }
+      }
+    },
+    "interface_endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One end of an interface.",
+      "properties": {
+        "component": {"type": "string", "description": "Component id."},
+        "surface": {"type": "string", "description": "Which surface of the component, e.g. top."},
+        "port_layer": {"type": "string", "description": "PDK layer the port sits on, e.g. TopMetal2."}
+      }
+    },
+    "netlist": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Assembly netlist: inline nets, an external_netlist path, or both. An otherwise-empty netlist block is not preserved on write.",
+      "properties": {
+        "external_netlist": {"type": "string", "description": "Verbatim path to an external netlist file. May be empty."},
+        "nets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"type": "string", "minLength": 1, "description": "Net name. Required (the C++ reference enforces it; the Python reference validator does not, so this schema is the portable statement of the rule)."},
+              "class": {"type": "string", "description": "Net class; default signal. Free-form (power, ground, signal, ...)."},
+              "external": {"type": "boolean", "description": "True if the net is exposed at the assembly boundary."},
+              "connections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "One net endpoint.",
+                  "properties": {
+                    "component": {"type": "string", "description": "Component id."},
+                    "pin": {"type": "string", "description": "Pin/pad name on that component."},
+                    "layer": {"type": "string", "description": "PDK layer the connection lands on."}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "system": {
+      "type": "object",
+      "required": ["carrier"],
+      "additionalProperties": false,
+      "description": "Format 1.1. Closed key set, written in this order: carrier, registry, dies, buses, links, rails, alone, open, external, fill_keepout. Every die port appears exactly once across buses, links, rails, alone, open and external; that rule, the [a..b] range shorthand and the one-item-per-line grammar are checked by the source reader, not by this schema. From format 1.3 dies may be absent or empty (a project before its first sheet import); below 1.3 the root allOf requires at least one.",
+      "properties": {
+        "carrier": {"$ref": "#/definitions/system_carrier"},
+        "registry": {"$ref": "#/definitions/system_relative_path", "description": "Interconnect registry root the dies' methods resolve against, relative to the file. Absent: the consuming flow's own registry."},
+        "dies": {"type": "array", "items": {"$ref": "#/definitions/system_die"}},
+        "buses": {"type": "array", "items": {"$ref": "#/definitions/system_bus"}},
+        "links": {"type": "array", "items": {"$ref": "#/definitions/system_link"}},
+        "rails": {"type": "array", "items": {"$ref": "#/definitions/system_rail"}},
+        "alone": {"type": "array", "items": {"$ref": "#/definitions/system_port_ref"}, "description": "Ports whose pads each get their own net, named <instance>_<pad>."},
+        "open": {"type": "array", "items": {"$ref": "#/definitions/system_port_ref"}, "description": "Ports that get no net and no connection."},
+        "external": {"$ref": "#/definitions/system_external"},
+        "fill_keepout": {"$ref": "#/definitions/system_fill_keepout"}
+      }
+    },
+    "system_instance_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])",
+      "description": "A die instance id."
+    },
+    "system_port_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*\\.\\S+(?![\\s\\S])",
+      "description": "<instance>.<port>, the port being the inventory's port column, not a pad name. May carry one [a..b] range."
+    },
+    "system_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "not": {"anyOf": [{"pattern": "^/"}, {"pattern": "\\$\\{"}, {"pattern": "(^|/)\\.\\.(/|(?![\\s\\S]))"}]},
+      "description": "A path relative to the file: never absolute, never an environment variable, never a '..' segment."
+    },
+    "system_carrier": {
+      "type": "object",
+      "required": ["technology", "top_cell"],
+      "description": "The carrier. size is required below format 1.3; from 1.3 it may be left to placement.",
+      "additionalProperties": false,
+      "properties": {
+        "technology": {"type": "string", "minLength": 1, "description": "Technology id of the carrier, e.g. intm4tm2."},
+        "top_cell": {"type": "string", "minLength": 1},
+        "size": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 2, "maxItems": 2, "description": "Width and height, um. Absent (format 1.3): placement chooses it."}
+      }
+    },
+    "system_die": {
+      "type": "object",
+      "required": ["id", "die", "method"],
+      "additionalProperties": false,
+      "dependencies": {"rotation": ["at"]},
+      "description": "One die, written in this key order: id, die, at, rotation, method, thickness, admission. at is required below format 1.3; from 1.3 a die may omit at and rotation together (unplaced), never rotation alone. admission is format 1.4.",
+      "properties": {
+        "id": {"$ref": "#/definitions/system_instance_id"},
+        "die": {"$ref": "#/definitions/system_relative_path", "description": "Folder holding the die's die-contract.json, relative to the file."},
+        "at": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "Die centre x, y in the carrier's canonical frame, um."},
+        "rotation": {"enum": [0, 90, 180, 270], "description": "Degrees about z. Absent: 0."},
+        "method": {"type": "string", "minLength": 1, "description": "Interconnect method id, resolved against the registry."},
+        "thickness": {"type": "number", "minimum": 0, "description": "Die thickness, um, carried as written. Absent: 0.0."},
+        "admission": {"allOf": [{"$ref": "#/definitions/system_relative_path"}, {"pattern": "\\.json(?![\\s\\S])"}], "x-since": "1.4", "description": "Format 1.4. The die's admission file, a .json relative to the file: why a die this run does not build is placed (reason), for what (scope) and which checks the run does not verify for it (not_verified). Who admits it is never written here. See docs/CHIPLET_FORMAT_SPEC.md, Format 1.4: a die's admission."}
+      }
+    },
+    "system_bus": {
+      "type": "object",
+      "required": ["ends", "ports"],
+      "additionalProperties": false,
+      "description": "Same-named ports joined between two dies, one link per port, oriented OUTPUT end first. Net <net_prefix><port><net_suffix>, lane-indexed for a multi-pad port.",
+      "properties": {
+        "ends": {"type": "array", "items": {"$ref": "#/definitions/system_instance_id"}, "minItems": 2, "maxItems": 2, "uniqueItems": true},
+        "ports": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+        "net_prefix": {"type": "string"},
+        "net_suffix": {"type": "string"}
+      }
+    },
+    "system_link": {
+      "type": "object",
+      "required": ["a", "b"],
+      "additionalProperties": false,
+      "description": "Two differently named ports joined. Net: net, default <a instance>_<a port>.",
+      "properties": {
+        "a": {"$ref": "#/definitions/system_port_ref"},
+        "b": {"$ref": "#/definitions/system_port_ref"},
+        "net": {"type": "string", "minLength": 1}
+      }
+    },
+    "system_rail": {
+      "type": "object",
+      "required": ["name", "class", "ports"],
+      "additionalProperties": false,
+      "description": "Every pad of every listed port joined into one net named name. A rail of one pad is a tie of its class. Written in this key order: name, class, volts, width_um, amps, current_density_ma_per_um, ports. From format 1.5 a rail of either class may state its routing requirement: width_um, or amps with current_density_ma_per_um, never both forms.",
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "class": {"enum": ["power", "ground"]},
+        "volts": {"type": "number", "exclusiveMinimum": 0, "x-since": "1.2", "description": "The rail's nominal supply in volts (format 1.2). Power rails only: a ground rail is 0 by its class."},
+        "width_um": {"type": "number", "exclusiveMinimum": 0, "x-since": "1.5", "description": "Format 1.5. The width the rail is routed at, um. Not beside amps or current_density_ma_per_um. The router rounds it to its grid and holds it to each layer's maximum. See docs/CHIPLET_FORMAT_SPEC.md, Format 1.5: a rail's routing requirement."},
+        "amps": {"type": "number", "exclusiveMinimum": 0, "x-since": "1.5", "description": "Format 1.5. The current the rail carries, A. Only with current_density_ma_per_um; the router computes the width as amps * 1000 / current_density_ma_per_um."},
+        "current_density_ma_per_um": {"type": "number", "exclusiveMinimum": 0, "x-since": "1.5", "description": "Format 1.5. The current density the rail is drawn at, mA per um of width. Only with amps."},
+        "ports": {"type": "array", "items": {"$ref": "#/definitions/system_port_ref"}, "minItems": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"class": {"const": "ground"}}, "required": ["class"]},
+          "then": {"not": {"required": ["volts"]}}
+        },
+        {"dependencies": {"amps": ["current_density_ma_per_um"], "current_density_ma_per_um": ["amps"]}},
+        {"not": {"required": ["width_um", "amps"]}},
+        {"not": {"required": ["width_um", "current_density_ma_per_um"]}}
+      ]
+    },
+    "system_edge_pins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "Port refs or rail names, in pad-row order along the edge."
+    },
+    "system_external": {
+      "type": "object",
+      "required": ["profile"],
+      "additionalProperties": false,
+      "description": "The carrier's external terminals. A port written here is not written in alone; its net is <instance>_<pad>. Edges keep file order. edges is required below format 1.3; from 1.3 the entries may all wait in the root unplaced.",
+      "properties": {
+        "profile": {"type": "string", "minLength": 1, "description": "A shipped terminal profile name or a relative .json path."},
+        "edges": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "north": {"$ref": "#/definitions/system_edge_pins"},
+            "south": {"$ref": "#/definitions/system_edge_pins"},
+            "west": {"$ref": "#/definitions/system_edge_pins"},
+            "east": {"$ref": "#/definitions/system_edge_pins"}
+          }
+        }
+      }
+    },
+    "system_fill_keepout": {
+      "type": "object",
+      "required": ["halo_um"],
+      "additionalProperties": false,
+      "properties": {
+        "halo_um": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number", "minimum": 0}, "description": "Keep-out width per routing layer, um."}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Intermediate-file marker written by a writer that cannot yet emit the canonical frame (notably the KiCad GUI export). A reader MUST refuse a file with finalize_required true unless intermediate files are explicitly allowed; that refusal is reader semantics, so such a file is still schema-valid. Canonical .chiplet files carry no _metadata block at all.",
+      "properties": {
+        "frame": {"type": "string", "description": "The frame the positions are actually in, e.g. pcb-bbox-corner. Any value other than the canonical frame is what makes the file intermediate."},
+        "finalize_required": {"type": "boolean", "description": "True while the file still needs the finalizer. Boolean, not a string: a reader that treats the string \"false\" as truthy would refuse a finalized file."},
+        "finalizer": {"type": "string", "description": "The command that converts positions into the canonical frame and strips this block."}
+      }
+    }
+  }
+}

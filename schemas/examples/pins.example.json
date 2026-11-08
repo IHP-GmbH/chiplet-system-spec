@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "source_type": "kicad_footprint",
+  "chiplet_name": "example_die",
+  "source": "example_die.kicad_mod",
+  "dbu_um": 0.001,
+  "pins": [
+    {
+      "name": "d2d_clk",
+      "pad_index": 0,
+      "center_x_dbu": 1930000,
+      "center_y_dbu": 389000,
+      "width_dbu": 70000,
+      "height_dbu": 70000,
+      "side": "right",
+      "type": "passive"
+    },
+    {
+      "name": "VDD",
+      "pad_index": 0,
+      "center_x_dbu": 70000,
+      "center_y_dbu": 300000
+    },
+    {
+      "name": "VDD",
+      "pad_index": 1,
+      "center_x_dbu": 70000,
+      "center_y_dbu": 400000
+    }
+  ]
+}

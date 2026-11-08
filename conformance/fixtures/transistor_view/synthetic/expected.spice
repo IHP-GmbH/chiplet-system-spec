@@ -1,0 +1,19 @@
+.subckt syn_ota VDD vss InP InM Out ibias
+x1 d1 Out InP InM tail vss diff_pair
+x2 VDD d1 Out mirror_p
+x3 ibias tail vss tail_n
+XC1 Out vss cap_cmim w=10.0e-6 l=10.0e-6 m=1
+.ends
+.subckt diff_pair d1 d2 v+ v- tail vss
+XM1 d1 v+ tail sub! sg13_lv_nmos w=2.0u l=0.5u ng=1 m=1
+XM2 d2 v- tail sub! sg13_lv_nmos w=2.0u l=0.5u ng=1 m=1
+RSUB sub! vss 1
+.ends
+.subckt mirror_p vdd a b
+XM3 a a vdd vdd sg13_lv_pmos w=4.0u l=0.5u ng=1 m=1
+XM4 b a vdd vdd sg13_lv_pmos w=4.0u l=0.5u ng=1 m=1
+.ends
+.subckt tail_n ibias tail vss
+XM5 ibias ibias vss vss sg13_lv_nmos w=2.0u l=1.0u ng=1 m=1
+XM6 tail ibias vss vss sg13_lv_nmos w=4.0u l=1.0u ng=1 m=1
+.ends

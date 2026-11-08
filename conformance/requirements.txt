@@ -1,0 +1,6 @@
+# Test dependencies for the conformance + schema-gate suite (conformance/).
+# jsonschema backs the executable schema gate (test_schemas.py); it is a hard
+# dependency there, so a run must never degrade to a skip for want of it.
+# PyYAML backs the .chiplet corpus reader (run_conformance.py / test_conformance.py).
+jsonschema>=4.18
+PyYAML>=5.1

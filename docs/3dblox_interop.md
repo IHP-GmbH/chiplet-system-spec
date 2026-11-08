@@ -168,7 +168,7 @@ The `mounting_surface` resolves to the technology's **attachment surface**
 (the pad top through the passivation opening), which is generally **not** the
 substrate's maximum z: passivation can rise above the attachment surface
 (in the reference interposer stackup of the contract's worked example, the
-attachment surface sits at 13.83 um while the passivation top lies above
+attachment surface sits at 10.8103 um while the passivation top lies above
 it). A converter that derives the die-to-substrate
 gap from outline max-z instead of the attachment surface disagrees with
 `total_height()` by the passivation height and fails the exact-equality

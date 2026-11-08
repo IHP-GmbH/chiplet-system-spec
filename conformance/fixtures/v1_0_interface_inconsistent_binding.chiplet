@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+#
+# Validation rule 9 negative, and the ONE oracle for it. U1 selects the
+# interconnect method `cupillar_opt1` (a Cu pillar, examples/interconnect_methods.json)
+# and takes part in `link0`, an interface of type `micro_bump`. The binding is
+# inconsistent: the method behind the stack is not the interface's type.
+#
+# NOT RUN BY THE REFERENCE VALIDATORS, and that is the point. Rule 9 is
+# cross-artifact: the method's `interface_type` lives in the interconnect
+# manifest, which `chiplet-format-io` never holds, so both reference readers
+# ACCEPT this document (the conformance manifest records the accept, and it is a
+# measured fact about them, not an endorsement of the document). The hosts that
+# hold both halves refuse it: the KiCad plugin at export, adk-tools' assembly
+# DRC, the Mosaic loader and chiplet-system at load. Each parity-tests its
+# refusal against THIS file, so three implementations are measured against one
+# oracle instead of against each other.
+#
+# What this fixture does NOT cover (META-2): it is one row, not the rule. It
+# says nothing about a consistent binding being accepted, about a component with
+# no `connection:` (outside rule 9), about a method id that resolves to nothing
+# (a consumer-level cross-reference question, rule 11's SHOULD), or about the
+# message a host emits. It also cannot be checked here in the sense that
+# matters: no implementation in this repository resolves the method id, so a
+# green in this repository is a green on the ACCEPT, never on the refusal.
+#
+# Rule 8 passes on purpose. The interposer pad on the endpoint's port_layer is
+# `flipped_bump`, which the normative table allows to meet a micro_bump
+# interface, so the intra-document rule is satisfied while the cross-artifact one
+# is violated: a green from rule 8 is not a green on rule 9.
+format_version: "1.0"
+
+assembly:
+  name: "Rule 9 negative: a copper-pillar method under a micro_bump interface"
+
+components:
+  - id: interposer
+    type: interposer
+    io_pads:
+      - id: B1
+        io_class: flipped_bump
+        net: VDD
+        position: {x: 1500.0, y: 2801.0}
+        size: {x: 25.0, y: 25.0}
+        layer: TopMetal2
+
+  - id: U1
+    type: die
+    connection: "cupillar_opt1"
+
+interfaces:
+  - id: link0
+    type: micro_bump
+    from: {component: U1, surface: bottom, port_layer: TopMetal2}
+    to:   {component: interposer, surface: top, port_layer: TopMetal2}

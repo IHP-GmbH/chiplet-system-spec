@@ -6,7 +6,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chiplet-format-io"
-version = "0.1.0"
+# Single source of truth: chiplet_format_io.__version__. The package and a
+# vendored copy of the module must never be able to disagree about which reader
+# release they are.
+dynamic = ["version"]
 description = "Permissive (Apache-2.0) reference reader/writer for the .chiplet assembly format"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -15,5 +18,31 @@ authors = [{ name = "IHP GmbH" }]
 keywords = ["chiplet", "heterogeneous integration", "eda", "interchange format"]
 dependencies = ["PyYAML>=5.1"]
 
+# Reading a .chiplet stays PyYAML-only, so a legacy reader gains no dependency.
+# Strict die-contract admission validates against the shipped JSON Schema and
+# needs this; without it that path refuses rather than falling back to a
+# partial check, which would look like a pass.
+[project.optional-dependencies]
+strict = ["jsonschema>=4"]
+
 [tool.setuptools]
 packages = ["chiplet_format_io"]
+
+# The schemas are copied into the package by setup.py's build_py at build time,
+# from the one canonical schemas/ at the repository root, so there is no second
+# copy in git and nothing to keep in step. A build that cannot see that directory
+# stops rather than producing a wheel whose strict admission would fail closed.
+
+[tool.setuptools.dynamic]
+version = { attr = "chiplet_format_io.__version__" }
+
+[tool.pytest.ini_options]
+# The format suite needs nothing but PyYAML; the conformance suite additionally
+# needs jsonschema, since strict die-contract admission validates against the
+# shipped schema and a test that skipped there would be reporting nothing.
+# -ra is here so
+# that if one ever starts to, the log says why rather than quietly shrinking the
+# passed count. --strict-markers and --strict-config turn a typo in a marker or
+# an ini key into an error instead of a silently ignored line.
+addopts = "-ra --strict-markers --strict-config"
+testpaths = ["tests"]

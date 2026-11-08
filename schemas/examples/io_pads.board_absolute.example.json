@@ -1,0 +1,12 @@
+{
+  "schema": "chiplet-io-pad-manifest",
+  "version": "1.0.0",
+  "frame": "board_absolute_ynegated_um",
+  "generator": "gds_to_kicad.io_pads.kicad_pcb_to_iopads",
+  "board": "two_die_interposer.kicad_pcb",
+  "io_pads": [
+    {"ref": "IO1", "io_class": "wire_bond", "x_um": 152400.0, "y_um": -101600.0, "size_x_um": 70.0, "size_y_um": 70.0, "net": "VDD", "layer": "TopMetal2", "source_layer": "F.Cu"},
+    {"ref": "IO2", "io_class": "wire_bond", "x_um": 152400.0, "y_um": -203200.0, "size_x_um": 70.0, "size_y_um": 70.0, "net": "GND", "layer": "TopMetal2"},
+    {"ref": "IO3", "io_class": "wire_bond", "x_um": 254000.0, "y_um": -101600.0, "size_x_um": 70.0, "size_y_um": 70.0, "net": "", "layer": "TopMetal2"}
+  ]
+}

@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+#
+# The THIRD refusal site of SPEC-32, and the only one that survives removing the
+# other two. An unrecognised interfaces[].type meeting a pad whose io_class IS in
+# rule 8's table: `flipped_bump` has a row, `quantum_tunnel` matches no entry in
+# it, so before this fixture existed the rule reported a violation for a value it
+# has nothing to say about. Rule 8 relates two CLOSED vocabularies, and a member
+# of neither is outside its domain rather than in breach of it, so it is skipped
+# exactly the way an unrecognised io_class already was.
+#
+# Without this file, an implementer could delete the parse-path and validate-path
+# refusals, watch the suite go green, and ship a reader that still refuses the
+# one document the change was about: the one whose interface actually meets an
+# interposer pad.
+format_version: "1.0"
+
+assembly:
+  name: "Unknown interface type meeting a known io_class"
+
+components:
+  - id: interposer
+    type: interposer
+    io_pads:
+      - id: B1
+        io_class: flipped_bump
+        net: VDD
+        position: {x: 1500.0, y: 2801.0}
+        size: {x: 25.0, y: 25.0}
+        layer: TopMetal1
+
+  - id: U1
+    type: die
+
+interfaces:
+  - id: link0
+    type: quantum_tunnel
+    from: {component: U1, surface: bottom, port_layer: TopMetal1}
+    to:   {component: interposer, surface: top, port_layer: TopMetal1}

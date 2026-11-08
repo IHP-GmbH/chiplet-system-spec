@@ -1,0 +1,353 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://heterogenic-chip-design-project/chiplet-spec/schema/die_contract.schema.json",
+    "title": "Die output contract (die_contract.json)",
+    "description": "Sidecar emitted beside a produced die artifact, carrying what the DIE knows about itself: which process produced it, which build record it came out of, which pad inventory is authoritative for it, what each terminal is for, and what intrinsic verification has been recorded over its bytes. It is external to .chiplet on purpose: a .chiplet is an assembly document that references dies, so a production claim embedded in it would be a claim the assembly cannot verify. Three things this artifact deliberately does NOT hold. It carries no production recipe; build_record binds the producer's own manifest by digest instead. It duplicates no pad geometry; terminal centers stay in the bound inventory (pins.json or the black-box padmap) and are referenced by identity, never copied, because a second copy of the same coordinates is a divergence with no detector. And it makes no assembly-compatibility claim: compatibility is contextual to a specific assembly, interposer, attachment method and set of transforms, so it belongs to the assembly-side gate that can bind those dependencies, not to a context-free property of a die. Every path in this file is relative to the file itself, and an absolute path or one escaping the sidecar's directory is refused, so the artifact and everything it names move together. Structural validation only; the refusal semantics live in the reader and in the strict admission profile.",
+    "type": "object",
+    "required": [
+        "schema",
+        "version",
+        "die",
+        "process",
+        "build_record",
+        "inventory",
+        "terminals"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "schema": {
+            "const": "die-output-contract",
+            "description": "Artifact discriminator (boundary-manifest idiom). Doubles as cross-parse self-discrimination."
+        },
+        "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
+            "description": "Contract version, quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md."
+        },
+        "generator": {
+            "type": "string",
+            "description": "Producing tool (provenance)."
+        },
+        "die": {
+            "type": "object",
+            "required": [
+                "name",
+                "layout",
+                "layout_sha256",
+                "top_cell",
+                "dbu_um",
+                "bbox_um",
+                "frame"
+            ],
+            "additionalProperties": false,
+            "description": "Identity of the artifact this contract describes. The hash is what makes every other statement in the file about specific bytes rather than about a filename.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "layout": {
+                    "type": "string",
+                    "description": "Verbatim path to the die layout. Resolution is the consumer's job, as everywhere else in this format."
+                },
+                "layout_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
+                },
+                "top_cell": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "dbu_um": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "bbox_um": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "description": "Die top-cell bounding box in um as [x_min, y_min, x_max, y_max]. Strict admission checks it against the bound inventory's own die box, so the terminals and the outline are known to describe one die rather than two."
+                },
+                "frame": {
+                    "const": "die_local_gds_origin",
+                    "description": "The frame every coordinate in the bound inventory is expressed in. Stated rather than assumed: the assembly's canonical frame and a die's own frame are different frames, and mixing them is silent."
+                }
+            }
+        },
+        "process": {
+            "type": "object",
+            "required": [
+                "pdk",
+                "pdk_version"
+            ],
+            "additionalProperties": false,
+            "description": "Process provenance: which fabrication process actually produced these bytes. This is the payload .chiplet's technology block advertises and does not carry; a rendering reference (a .lyp path, a stackup, a dbu) cannot establish process compatibility, so it is stated here instead of inferred there.",
+            "properties": {
+                "pdk": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "PDK identifier, e.g. ihp-sg13g2, ihp-sg13cmos5l, gf180mcu."
+                },
+                "pdk_version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "PDK version or commit. A branch name is not a version."
+                },
+                "technology": {
+                    "type": "string",
+                    "description": "Optional: the .chiplet technologies key this process corresponds to, when the assembly declares one."
+                }
+            }
+        },
+        "inventory": {
+            "type": "object",
+            "required": [
+                "kind",
+                "path",
+                "sha256"
+            ],
+            "additionalProperties": false,
+            "description": "The authoritative pad inventory for this die, bound by hash. This is the key gap it exists to close: the pad geometry itself already exists and is already resolved by consumers, but nothing today says WHICH inventory is authoritative for a component, so a stale, swapped or regenerated pin list resolves cleanly against whatever the caller passed. Binding it here makes that detectable.",
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "pins_json",
+                        "blackbox_padmap"
+                    ],
+                    "description": "Which existing contract the inventory follows: pins.schema.json (GEOMETRY pins.json, dbu-based, carrying pad_index) or blackbox_padmap.schema.json (um-based padmap, name only). The join differs by kind and is stated rather than inferred: a padmap has no index, so a unique name binds canonically at index 0 and a REPEATED name is refused outright, because ordering by array position would make file order a fact about the design. A die that genuinely needs repeated physical names binds a reconciled pins_json instead."
+                },
+                "path": {
+                    "type": "string"
+                },
+                "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
+                }
+            }
+        },
+        "terminals": {
+            "type": "array",
+            "description": "One entry per physical terminal, joined to the bound inventory by exact physical identity (name, pad_index), never by name alone. Strict admission requires SET EQUALITY with the bound inventory in both directions: a terminal the die does not have is a description of a different die, and a pad no terminal declares is a terminal whose purpose nobody stated. Carries role and meaning, not geometry.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "pad_index",
+                    "role"
+                ],
+                "additionalProperties": false,
+                "dependentRequired": {
+                    "port": [
+                        "ordinal"
+                    ],
+                    "ordinal": [
+                        "port"
+                    ]
+                },
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Pad name as it appears in the bound inventory. Never inferred from array position."
+                    },
+                    "pad_index": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Orders same-name pads (a rail). Together with name this is the physical identity; the pair must exist in the bound inventory."
+                    },
+                    "role": {
+                        "enum": [
+                            "signal",
+                            "power",
+                            "ground",
+                            "no_connect"
+                        ],
+                        "description": "Closed vocabulary. What the terminal IS. Deliberately closed and deliberately separate from the two axes below: the free-form netlist net class ('power, ground, signal, ...') describes a net in an assembly, not a terminal on a die, and a free-form role here would repeat that defect one level down."
+                    },
+                    "direction": {
+                        "enum": [
+                            "input",
+                            "output",
+                            "bidir",
+                            "analog",
+                            "none"
+                        ],
+                        "description": "Electrical direction. A separate axis from role: an analog signal and a bidirectional signal share a role and differ here."
+                    },
+                    "supply_domain": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Supply domain identifier. A separate axis again: two power terminals in different domains are not interchangeable, and role alone cannot say so. Meaningful for role power and ground."
+                    },
+                    "port": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Authored external port this terminal carries. Together with ordinal it is the STABLE external identity of the terminal, which pad_index is not: moving one pad renumbers every later one, and intent names a port, not a pad number. Added at 1.1, so a contract stamped below 1.1 may not carry it. Not a closed vocabulary; port names are design-specific."
+                    },
+                    "ordinal": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Position of this terminal within its port, 0-based, written rather than inferred. Never read from array position: terminals join the bound inventory by set equality, so their order in this array carries no meaning at all. Added at 1.1."
+                    },
+                    "opening": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "description": "Attachment-facing terminal detail the existing inventories cannot express. Size is NOT here: pins.json already carries width_dbu and height_dbu, and the strict profile requires it THERE rather than accepting a second copy. The layer is given as a GDS layer/datatype pair rather than a name, because a name resolves only against a mapping the consumer happens to hold; and purpose is explicit, because a conductor and an aperture in the same place are opposite things. Naming the pair does not prove the geometry is present in the GDS; that is a separate check against the layout, and this file does not claim to have made it.",
+                        "properties": {
+                            "purpose": {
+                                "enum": [
+                                    "conductor",
+                                    "aperture"
+                                ],
+                                "description": "conductor: metal the attachment lands on. aperture: an opening in a covering layer, e.g. a passivation opening. The distinction is not cosmetic; the same rectangle means opposite things under the two."
+                            },
+                            "gds_layer": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "GDS layer number. Unambiguous where a layer name is not."
+                            },
+                            "gds_datatype": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "GDS datatype."
+                            },
+                            "shape": {
+                                "enum": [
+                                    "rectangle",
+                                    "octagon",
+                                    "circle"
+                                ],
+                                "description": "Opening shape. Closed set; extend by MINOR when a real attachment needs another."
+                            }
+                        },
+                        "required": [
+                            "purpose",
+                            "gds_layer",
+                            "gds_datatype",
+                            "shape"
+                        ]
+                    }
+                }
+            }
+        },
+        "supply_domains": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+                "minLength": 1
+            },
+            "additionalProperties": {
+                "type": "object",
+                "required": [
+                    "volts"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "volts": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "The domain's nominal supply in volts: 0 for a ground domain, above 0 for a power domain."
+                    }
+                }
+            },
+            "description": "Since 1.2, optional. The voltage of each supply domain the terminals name, stated once per domain. When present, its keys are exactly the supply_domain values of the power and ground terminals; a ground domain is 0, a power domain is above 0, and no domain is named by both a power and a ground terminal. Those rules span keys, so the reader holds them, not this schema."
+        },
+        "attestation": {
+            "type": "array",
+            "description": "Intrinsic verification recorded over this die's bytes. INTRINSIC ONLY: die-level DRC and LVS are properties of the die, while compatibility in an assembly is not, and mixing them would produce a die that appears to certify a context it never saw. An entry is a record of a named check over named bytes, never an authorization. A resolvable evidence digest is NOT by itself a pass: the entry must also bind the same layout this contract describes, name the deck that was applied, and record that the execution completed. An entry missing any of those, or one whose evidence cannot be resolved, is unresolved whatever its recorded result, and a consumer that reports it as a pass has reintroduced the self-authorizing status blob this array exists to avoid.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "check",
+                    "result",
+                    "execution",
+                    "tool",
+                    "layout_sha256",
+                    "deck",
+                    "deck_sha256",
+                    "evidence",
+                    "evidence_sha256"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "check": {
+                        "enum": [
+                            "drc",
+                            "lvs"
+                        ],
+                        "description": "Which intrinsic check. Closed; extend by MINOR."
+                    },
+                    "result": {
+                        "enum": [
+                            "pass",
+                            "fail",
+                            "unresolved"
+                        ],
+                        "description": "Three outcomes on purpose. A two-outcome verdict space has nowhere to put an observation that is neither, so an ambiguous one gets resolved toward whatever the record already suggests. unresolved means the check could not establish its fact, and it is distinct from fail."
+                    },
+                    "deck": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Rule deck identity that was applied."
+                    },
+                    "deck_sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
+                    },
+                    "tool": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Tool and version that produced the result. A tool name without a version does not identify a check."
+                    },
+                    "evidence": {
+                        "type": "string",
+                        "description": "Verbatim path to the result artifact (report database, LVS report)."
+                    },
+                    "evidence_sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "description": "ISO 8601 UTC."
+                    },
+                    "execution": {
+                        "enum": [
+                            "completed",
+                            "not_run",
+                            "interrupted"
+                        ],
+                        "description": "Whether the check actually ran to completion. not_run and interrupted are their own values rather than an absent field, because a check that never ran and a check that ran and said nothing are different facts, and only one of them is a result."
+                    },
+                    "layout_sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}(?![\\s\\S])",
+                        "description": "Digest of the layout this check actually ran over. Strict admission requires it to equal die.layout_sha256; a result about other bytes is a result about another die."
+                    }
+                }
+            }
+        },
+        "build_record": {
+            "type": "object",
+            "required": [
+                "path",
+                "sha256"
+            ],
+            "additionalProperties": false,
+            "description": "Reference to the producer's own build record, bound by digest. This is what lets a consumer establish that a die came out of the chiplet-full template rather than from somewhere else, without this artifact restating a recipe: the record names the template, the inputs and the outputs, and it is the producer's to define and to write. A reference and a digest, nothing more.",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Path to the producer build record, relative to this sidecar."
+                },
+                "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
+                }
+            }
+        }
+    }
+}

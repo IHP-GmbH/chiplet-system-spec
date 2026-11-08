@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ihp.example/chiplet-spec/io_pads.schema.json",
+  "title": "Interposer external I/O pad manifest (io_pads.json)",
+  "description": "Governs the EXISTING io_pads.json sidecar (govern-what-exists; no new manifest). One schema, two frames, discriminated by the required 'frame' field: emitters (adk-tools chiplet_writer.write_io_pads_json, gds_to_kicad kicad_pcb_to_iopads.py) run in the pcbnew/GUI tier before any GDS exists and MUST emit frame=board_absolute_ynegated_um; the worker-tier canonicalizer (hyp_to_gds, which owns the GDS top-cell bbox) MUST re-emit the placed pads as frame=gds_bbox_corner_um next to the GDS, and that file is the only one a board-less consumer (Mosaic) may read. Structural validation only. Cross-field invariants checked by consumers/conformance, not here: ref uniqueness within io_pads; numeric rounding to 3 decimals; the leak guard (|x_um|,|y_um| > 1e5 in a gds_bbox_corner_um file indicates un-rebased coordinates, coord_frame_contract.md section 6.2). Self-discriminates from pins.json (top-level pins), the blackbox padmap (die+pads) and the adk boundary manifest (different schema const) via the schema const plus the top-level io_pads array.",
+  "type": "object",
+  "required": ["schema", "version", "frame", "io_pads"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {
+      "const": "chiplet-io-pad-manifest",
+      "description": "Artifact discriminator (boundary-manifest idiom). Doubles as cross-parse self-discrimination."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
+      "description": "Contract version, quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.0. v1.0.0 IS the governed shape of the previously unversioned artifact, so the patch component stays writable and stays ignored."
+    },
+    "frame": {
+      "type": "string",
+      "enum": ["board_absolute_ynegated_um", "gds_bbox_corner_um"],
+      "description": "board_absolute_ynegated_um: KiCad-board-absolute, um, Y negated (Y-up); the only frame the pcbnew-tier emitters may produce, and the only frame hyp_to_gds --io-pads accepts. gds_bbox_corner_um: the canonical frame of coord_frame_contract.md section 6 (re-anchored to the interposer GDS top-cell bbox lower-left); produced only by the worker-tier canonicalizer, the only frame Mosaic-side checks accept. A consumer MUST hard-refuse a frame it does not expect; it never converts."
+    },
+    "frame_origin_board_um": {
+      "type": "object",
+      "required": ["x", "y"],
+      "additionalProperties": false,
+      "properties": {"x": {"type": "number"}, "y": {"type": "number"}},
+      "description": "gds_bbox_corner_um files only: the canonical origin (GDS top-cell bbox lower-left) expressed in board_absolute_ynegated_um. Written by the canonicalizer as provenance; never compared."
+    },
+    "generator": {"type": "string", "description": "Producing tool, e.g. chiplet_writer.write_io_pads_json."},
+    "board": {"type": "string", "description": "Source .kicad_pcb basename (provenance)."},
+    "io_pads": {
+      "type": "array",
+      "description": "May be empty: the canonicalizer always writes the file (boundary-manifest precedent), so an empty array is the loud 'board yielded 0' signal, distinguishable from 'extraction never ran' (file absent).",
+      "items": {
+        "type": "object",
+        "required": ["ref", "io_class", "x_um", "y_um", "size_x_um", "size_y_um", "net", "layer"],
+        "additionalProperties": true,
+        "properties": {
+          "ref": {"type": "string", "minLength": 1, "description": "Footprint reference; the join key. Unique within the file (consumer-enforced). Maps to .chiplet io_pads[].id."},
+          "io_class": {"type": "string", "enum": ["wire_bond", "flipped_bump", "tsv_bump"], "description": "Closed vocabulary, mirroring the .chiplet field: the die-side USAGE class of the pad (how it is attached), not the interposer-side pad geometry class, which lives in the PDK as pad_classes and is joined through the interconnect method. Closed on 2026-09-05 to the set every governed emitter already enforces (KiCad exporter, plugin writer, studio); adding a value is a MINOR bump adopted by consumers before any producer emits it."},
+          "x_um": {"type": "number", "description": "Pad geometric center X in the file's frame, um, rounded to 3 decimals."},
+          "y_um": {"type": "number", "description": "Pad geometric center Y in the file's frame, um, rounded to 3 decimals."},
+          "size_x_um": {"type": "number", "exclusiveMinimum": 0, "description": "A pad whose size cannot be determined is an emitter ERROR, never a 0.0 entry and never a silent drop."},
+          "size_y_um": {"type": "number", "exclusiveMinimum": 0},
+          "net": {"type": "string", "description": "May be empty: a no-net pad is legal (interposer-pnr treats it as an unattached diagnostic)."},
+          "layer": {"type": "string", "minLength": 1, "description": "PDK layer name the pad geometry is rendered on (e.g. TopMetal2), matching the .chiplet io_pads[].layer domain. NEVER a KiCad board layer name; that goes in source_layer."},
+          "source_layer": {"type": "string", "description": "Optional provenance: the KiCad board layer (e.g. F.Cu). Never compared."}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "chiplet_name": "example_die",
+  "die": {
+    "bbox_um": [0.0, 0.0, 2000.0, 2000.0]
+  },
+  "pads": [
+    {"name": "d2d_clk", "x_um": 1930.0, "y_um": 389.0, "w_um": 70.0, "h_um": 70.0},
+    {"name": "VDD", "x_um": 70.0, "y_um": 300.0, "w_um": 70.0, "h_um": 70.0},
+    {"name": "VSS", "x_um": 70.0, "y_um": 400.0, "w_um": 70.0, "h_um": 70.0}
+  ]
+}

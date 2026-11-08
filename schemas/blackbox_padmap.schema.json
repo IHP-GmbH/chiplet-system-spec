@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ihp.example/chiplet-spec/blackbox_padmap.schema.json",
+  "title": "Black-box chiplet pad map (um-based padmap)",
+  "description": "Schema for the um-based black-box pad map (*.blackbox.json and the extract_padmap output): the plan-derived pad map that is the conformance answer key, and the extracted pad map it is checked against. Produced by blackbox_chiplet.py / extract_padmap.py, consumed by chiplet-flow (reconcile.py, and the conform gate in runner.py). Structural validation only. It governs the CANONICAL persisted padmap (the extract_padmap output and *.blackbox.json), which always carries die.bbox_um; the pre-normalization authoring sugar that blackbox_chiplet.py also accepts (die as width_um/height_um, or a die derived from the pads) is normalized to bbox_um before any artifact exists, so it is out of scope here. Distinct from the dbu-based pins.json (pins.schema.json): this artifact self-discriminates by its top-level 'pads' array and 'die.bbox_um' in um, so the two never cross-parse. Cross-field invariants (the extracted die.bbox_um equals the plan's; the extracted pad set equals the plan's, by name and position) are checked by the conform stage, not here.",
+  "type": "object",
+  "required": ["die", "pads"],
+  "additionalProperties": true,
+  "properties": {
+    "chiplet_name": {"type": "string"},
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
+      "description": "Contract version, quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. OPTIONAL: this artifact shipped unversioned and the existing files carry no version, so requiring one would invalidate every padmap already on disk. When present it is read under the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.0; an absent version means 1.0. New emitters SHOULD write it, so the day this artifact changes shape there is something to gate on."
+    },
+    "_provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional generator metadata (generator, plan, ring, ...); not read by the geometry consumer."
+    },
+    "die": {
+      "type": "object",
+      "required": ["bbox_um"],
+      "additionalProperties": true,
+      "properties": {
+        "bbox_um": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Die GDS bounding box in um as [x_min, y_min, x_max, y_max] (the top-cell bbox). The conform gate pins the extracted bbox to this."
+        }
+      }
+    },
+    "pads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "x_um", "y_um"],
+        "additionalProperties": true,
+        "properties": {
+          "name": {"type": "string", "minLength": 1, "description": "Pad name."},
+          "x_um": {"type": "number", "description": "Pad centre X in um."},
+          "y_um": {"type": "number", "description": "Pad centre Y in um."},
+          "w_um": {"type": "number", "minimum": 0},
+          "h_um": {"type": "number", "minimum": 0}
+        }
+      }
+    }
+  }
+}

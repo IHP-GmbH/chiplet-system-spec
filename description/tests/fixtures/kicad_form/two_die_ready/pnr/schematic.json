@@ -1,0 +1,39 @@
+{
+  "check": {
+    "word": "not_run"
+  },
+  "chiplet": "../base/cf_two_die_bondpad.chiplet",
+  "chiplet_sha256": "2630666c819f0b317a9b4d948d9b6a426f40bfa06fdcd3e4ef74d128b61dfc16",
+  "components": [
+    {
+      "id": "U1",
+      "terminals": 34,
+      "top_cell": "CF_DRIVER_BONDPAD",
+      "type": "die"
+    },
+    {
+      "id": "U2",
+      "terminals": 32,
+      "top_cell": "CF_ECHO_BONDPAD",
+      "type": "die"
+    }
+  ],
+  "format": "gds2kicad.system-schematic",
+  "nets": 30,
+  "pins": {
+    "U1": {
+      "path": "../../trees/pf/examples/two_die_ready/inputs/dies/CF_DRIVER_BONDPAD/pins.json",
+      "sha256": "44fd9de8535455150532b3eeb489b36c47b91c86c7622c8ecfc77bed56881f7e"
+    },
+    "U2": {
+      "path": "../../trees/pf/examples/two_die_ready/inputs/dies/CF_ECHO_BONDPAD/pins.json",
+      "sha256": "9fcee1e9886a7418cdbb46713e691acd27bdb5b50c864cc6a0a8b1ca6cad7533"
+    }
+  },
+  "refusals": [],
+  "schematic": "cf_two_die_bondpad.kicad_sch",
+  "schematic_sha256": "ae56a149590e0300165cdd13f7eedb4946519abd29253e487ef5feb1c3224832",
+  "unconnected_terminals": 0,
+  "version": "1.0",
+  "word": "written"
+}

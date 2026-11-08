@@ -2,12 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://ihp.example/interconnect_pdk/interconnect_methods.schema.json",
   "title": "Interconnect method registry",
-  "description": "Schema for interconnect_methods.json. Structural validation only; cross-field invariants (unique GDS (layer,datatype), connection_stack layer names present in layer_registry, default_connection_library entries present in methods) are checked by python/tests/test_manifest.py.",
+  "description": "Schema for interconnect_methods.json. Structural validation only; cross-field invariants (unique GDS (layer,datatype); connection_stack layer names present in layer_registry; default_connection_library entries present in methods; connection_stack names match layers_3d; stack layer diameter equals body_diameter_um; interconnect_rules.json mirrors pitch_rules/fab_params) are checked by libs.tech/klayout/interconnect_tests/test_manifest.py.",
   "type": "object",
   "required": ["schema_version", "pdk", "default_method", "default_connection_library", "layer_registry", "fab_anchors", "methods"],
   "additionalProperties": true,
   "properties": {
-    "schema_version": {"type": "string"},
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
+      "description": "Contract version of this registry (the field is named schema_version here for historical reasons; it is the same contract version as the other governed sidecars). Quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. This file is at 1.1 (1.0 plus the optional per-method die_processes); the reader shipped beside it (libs.tech/klayout/python/interconnect_manifest.py, SUPPORTED_SCHEMA_VERSION) supports 1.1, and every other consumer carries its own pin."
+    },
     "pdk": {"type": "string"},
     "description": {"type": "string"},
     "default_method": {"type": "string"},
@@ -44,7 +48,7 @@
           "adk_attachment_adapter": {"type": "string"},
           "layers": {
             "type": "object",
-            "additionalProperties": {"type": "string", "pattern": "^[0-9]+/[0-9]+$"}
+            "additionalProperties": {"type": "string", "pattern": "^[0-9]+/[0-9]+(?![\\s\\S])"}
           }
         }
       }
@@ -60,6 +64,13 @@
           "description": {"type": "string"},
           "vendor": {"type": "string"},
           "fab_anchor": {"type": "string"},
+          "die_processes": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "Contract 1.1, optional. Ids of the die processes this method attaches, as the assembly document keys its technologies (the .chiplet technologies map key, chiplet-system Technology.id; e.g. \"sg13g2\"), joined by string equality and nothing else. Ids, not versions: a process revision that changes what a method accepts is a new id or a new manifest, never a version string here. Absent means the method states no die process, and a strict consumer refuses to mount any die on it; absence never means any process. An empty list is not a statement and is refused by this schema, so absence is the only spelling of not stated."
+          },
           "body_diameter_um": {"type": "number", "exclusiveMinimum": 0},
           "layers_3d": {"type": "array", "items": {"type": "string"}, "minItems": 1},
           "connection_stack": {

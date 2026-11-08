@@ -1,0 +1,60 @@
+{
+  "format": "chiplet-eda-views-transistor/v1",
+  "dialect": "spice",
+  "netlist_kind": "schematic",
+  "top": "CMP7345-final",
+  "top_form": "commented",
+  "pins": [
+    {
+      "name": "v-",
+      "role": "signal"
+    },
+    {
+      "name": "v+",
+      "role": "signal"
+    },
+    {
+      "name": "vss",
+      "role": "supply"
+    },
+    {
+      "name": "vdd",
+      "role": "supply"
+    },
+    {
+      "name": "clk",
+      "role": "signal"
+    },
+    {
+      "name": "vout2",
+      "role": "signal"
+    },
+    {
+      "name": "vout1",
+      "role": "signal"
+    }
+  ],
+  "devices": [
+    "sg13_lv_nmos",
+    "sg13_lv_pmos",
+    "ptap1",
+    "ntap1",
+    "dantenna",
+    "dpantenna"
+  ],
+  "local_subckts": [
+    "cc_pair_nmos",
+    "cc_pair_pmos",
+    "diff_pair"
+  ],
+  "pdk": {
+    "name": "ihp-sg13g2",
+    "revision": "bf0790268f00fd9ebf5625d273a68f24e21bbb8f"
+  },
+  "files": [
+    {
+      "file": "CMP7345-final.spice",
+      "sha256": "a10cb07a3d6a3a93a9784e9f870cc70bac0b2ab89d8ec805869c427f377d3062"
+    }
+  ]
+}

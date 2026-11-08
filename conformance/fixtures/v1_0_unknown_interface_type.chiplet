@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+#
+# An interfaces[].type outside the closed vocabulary (SPEC-32). Both reference
+# readers CARRY the string: the format owns the vocabulary, the schema closes it
+# and binds writers, and a consumer that cannot act on an unrecognised member
+# refuses the ELEMENT that carries one. Refusing the DOCUMENT is what would turn
+# every future enum member into a MAJOR for everyone downstream, so no reader
+# here does it.
+#
+# The value is deliberately not a plausible future member: `quantum_tunnel` is
+# what a document from a minor this reader has never heard of looks like, which
+# is the case the carry rule exists for. The schema still refuses this file (the
+# enum is closed for producers), and that divergence is pinned in
+# conformance/test_chiplet_schema.py.
+format_version: "1.0"
+
+assembly:
+  name: "Unknown interface type, carried not refused"
+
+components:
+  - id: U1
+    type: die
+
+  - id: U2
+    type: die
+
+interfaces:
+  - id: link0
+    type: quantum_tunnel
+    from: {component: U1, surface: bottom, port_layer: TopMetal2}
+    to:   {component: U2, surface: bottom, port_layer: TopMetal2}

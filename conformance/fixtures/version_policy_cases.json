@@ -1,0 +1,205 @@
+{
+  "_comment": [
+    "The version policy's verdict oracle (docs/VERSION_POLICY.md). One file, two",
+    "readers: conformance/test_version_policy.py runs every row through the",
+    "Python check_contract_version and reference/cpp/tests runs every row it can",
+    "through the C++ one, so the two references are measured against this file",
+    "and never against each other.",
+    "",
+    "A row is a consumer's declared ACCEPTANCE (one MAJOR.MINOR floor per major",
+    "it accepts) plus the version a document declares, and the verdict the policy",
+    "owes: accept, accept_warn (accepted, and the higher minor is reported),",
+    "refuse (a data error the reader raises), or call_error (a PROGRAMMING error",
+    "in the accepted set itself, refused at call time and not at read time).",
+    "",
+    "declared_kind exists because one reader is typed and the other is not. The",
+    "C++ entry point takes a std::string, so a row whose declared value is a JSON",
+    "number, null or list cannot be handed to it at all: the distinction was made",
+    "by the loader before the reader was called. Those rows are Python-only and",
+    "say so in their own field rather than being quietly absent.",
+    "",
+    "What this oracle does NOT cover (META-2): warning DELIVERY. It says a higher",
+    "minor is accepted and reported; whether that arrives through Python's",
+    "warnings channel, how it is deduplicated, and what a host that escalates",
+    "warnings to errors sees are all owned by the tests in",
+    "conformance/test_version_policy.py. It also says nothing about which set a",
+    "given consumer should declare, nor about the three-step bump procedure that",
+    "set is meant to make shippable."
+  ],
+  "cases": [
+    {
+      "name": "one major, minor equal to the floor",
+      "accepted": ["1.0"], "declared": "1.0", "declared_kind": "string",
+      "verdict": "accept", "normalized": "1.0",
+      "why": "the ordinary read"
+    },
+    {
+      "name": "one major, minor below the floor",
+      "accepted": ["1.2"], "declared": "1.1", "declared_kind": "string",
+      "verdict": "accept", "normalized": "1.1",
+      "why": "an older minor of an accepted major carries nothing new"
+    },
+    {
+      "name": "one major, minor above the floor",
+      "accepted": ["1.0"], "declared": "1.4", "declared_kind": "string",
+      "verdict": "accept_warn", "normalized": "1.4",
+      "why": "additive by construction, so it is read as 1.0 with the rest ignored, and the event is reported"
+    },
+    {
+      "name": "one major, the document is a lower major",
+      "accepted": ["1.0"], "declared": "0.9", "declared_kind": "string",
+      "verdict": "refuse", "names_majors": [1],
+      "why": "an older major is a different document shape; half-parsing it is worse than refusing"
+    },
+    {
+      "name": "one major, the document is a higher major",
+      "accepted": ["1.0"], "declared": "2.0", "declared_kind": "string",
+      "verdict": "refuse", "names_majors": [1],
+      "why": "the consumer has no code path for major 2"
+    },
+    {
+      "name": "two majors, the older one at its floor",
+      "accepted": ["1.0", "2.3"], "declared": "1.0", "declared_kind": "string",
+      "verdict": "accept", "normalized": "1.0",
+      "why": "a transition window is open and the old major is still read"
+    },
+    {
+      "name": "two majors, the older one above its floor",
+      "accepted": ["1.0", "2.3"], "declared": "1.7", "declared_kind": "string",
+      "verdict": "accept_warn", "normalized": "1.7",
+      "why": "the minor rule applies per major, not to the set"
+    },
+    {
+      "name": "two majors, the newer one below its floor",
+      "accepted": ["1.0", "2.3"], "declared": "2.1", "declared_kind": "string",
+      "verdict": "accept", "normalized": "2.1",
+      "why": "each major carries its own floor, and 2.1 is under 2.3"
+    },
+    {
+      "name": "two majors, the newer one at its floor",
+      "accepted": ["1.0", "2.3"], "declared": "2.3", "declared_kind": "string",
+      "verdict": "accept", "normalized": "2.3",
+      "why": "the floor itself is accepted, silently"
+    },
+    {
+      "name": "two majors, the newer one above its floor",
+      "accepted": ["1.0", "2.3"], "declared": "2.9", "declared_kind": "string",
+      "verdict": "accept_warn", "normalized": "2.9",
+      "why": "same verdict as the one-major case, on the second entry"
+    },
+    {
+      "name": "two majors, a third one nobody accepts",
+      "accepted": ["1.0", "2.3"], "declared": "3.0", "declared_kind": "string",
+      "verdict": "refuse", "names_majors": [1, 2],
+      "why": "the refusal names EVERY accepted major, so the producer sees the whole window"
+    },
+    {
+      "name": "two majors, a document below both",
+      "accepted": ["1.0", "2.3"], "declared": "0.9", "declared_kind": "string",
+      "verdict": "refuse", "names_majors": [1, 2],
+      "why": "a lower major is refused whatever the size of the set"
+    },
+    {
+      "name": "patch present, at the floor",
+      "accepted": ["1.0"], "declared": "1.0.7", "declared_kind": "string",
+      "verdict": "accept", "normalized": "1.0",
+      "why": "PATCH is parsed and discarded; the normalized version drops it"
+    },
+    {
+      "name": "patch present, above the floor",
+      "accepted": ["1.0"], "declared": "1.4.2", "declared_kind": "string",
+      "verdict": "accept_warn", "normalized": "1.4",
+      "why": "a patch never changes a verdict, so this is the higher-minor case"
+    },
+    {
+      "name": "patch present in the accepted set itself",
+      "accepted": ["1.0.0"], "declared": "1.0", "declared_kind": "string",
+      "verdict": "accept", "normalized": "1.0",
+      "why": "emitters already declare 1.0.0; a consumer may spell its floor the same way"
+    },
+    {
+      "name": "patch present on a refused major",
+      "accepted": ["1.0"], "declared": "2.0.0", "declared_kind": "string",
+      "verdict": "refuse", "names_majors": [1],
+      "why": "the patch does not rescue a major the consumer does not accept"
+    },
+    {
+      "name": "malformed: a major alone",
+      "accepted": ["1.0"], "declared": "1", "declared_kind": "string",
+      "verdict": "refuse",
+      "why": "a version without a minor is not a version"
+    },
+    {
+      "name": "malformed: a v prefix",
+      "accepted": ["1.0"], "declared": "v1.0", "declared_kind": "string",
+      "verdict": "refuse",
+      "why": "digits only, the same rule the sidecar schemas' pattern states"
+    },
+    {
+      "name": "malformed: four components",
+      "accepted": ["1.0"], "declared": "1.0.0.0", "declared_kind": "string",
+      "verdict": "refuse",
+      "why": "MAJOR.MINOR or MAJOR.MINOR.PATCH, and nothing longer"
+    },
+    {
+      "name": "malformed: a trailing newline",
+      "accepted": ["1.0"], "declared": "1.0\n", "declared_kind": "string",
+      "verdict": "refuse",
+      "why": "surrounding whitespace is malformed, not a version (SPEC-2); the schemas' pattern admits none"
+    },
+    {
+      "name": "malformed: a leading space",
+      "accepted": ["1.0"], "declared": " 1.0", "declared_kind": "string",
+      "verdict": "refuse",
+      "why": "same rule at the other end of the string"
+    },
+    {
+      "name": "a bare JSON number",
+      "accepted": ["1.0"], "declared": 1.0, "declared_kind": "number",
+      "verdict": "refuse",
+      "why": "JSON cannot tell 1.0 from 1, and 1.10 would already have become 1.1; only a quoted string is a version"
+    },
+    {
+      "name": "a bare JSON integer, the legacy pins spelling",
+      "accepted": ["1.0"], "declared": 1, "declared_kind": "number",
+      "verdict": "refuse",
+      "why": "pins.json's deprecated integer is normalized to \"1.0\" by the consumer, before the policy is applied"
+    },
+    {
+      "name": "missing",
+      "accepted": ["1.0"], "declared": null, "declared_kind": "null",
+      "verdict": "refuse",
+      "why": "an absent version is refused, not defaulted"
+    },
+    {
+      "name": "a structured value where a version belongs",
+      "accepted": ["1.0"], "declared": ["1", "0"], "declared_kind": "list",
+      "verdict": "refuse",
+      "why": "the components are not for a reader to reassemble"
+    },
+    {
+      "name": "call error: two floors for one major",
+      "accepted": ["1.0", "1.2"], "declared": "1.0", "declared_kind": "string",
+      "verdict": "call_error",
+      "why": "the consumer declared two floors for major 1 and there is no verdict to give; a programming error, refused at call time"
+    },
+    {
+      "name": "call error: two floors for one major, one spelled with a patch",
+      "accepted": ["2.0", "2.0.1"], "declared": "2.0", "declared_kind": "string",
+      "verdict": "call_error",
+      "why": "PATCH is discarded, so these are the same floor twice and the duplicate is not hidden by the spelling"
+    },
+    {
+      "name": "call error: an empty accepted set",
+      "accepted": [], "declared": "1.0", "declared_kind": "string",
+      "verdict": "call_error",
+      "why": "a consumer that accepts nothing can read nothing; silently refusing every document would look like bad data"
+    },
+    {
+      "name": "call error: a malformed entry in the accepted set",
+      "accepted": ["1"], "declared": "1.0", "declared_kind": "string",
+      "verdict": "call_error",
+      "why": "a typo in the consumer must not read as a bad document"
+    }
+  ]
+}

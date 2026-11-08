@@ -1,0 +1,152 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+#
+# Schema-coverage fixture: one document that carries every canonical top-level
+# block (all eleven root keys except _metadata, which only a not-yet-finalized
+# file carries, and which is exercised inline in test_chiplet_schema.py). It is
+# also a format-level ACCEPT case for the reader corpus, so the schema depth and
+# the reader parity are proved on the SAME document rather than on two files that
+# can drift apart. Illustrative values; paths are placeholders.
+format_version: "1.0"
+
+assembly:
+  name: "All-blocks coverage assembly"
+  description: "Every canonical .chiplet block, for the schema gate"
+  author: "chiplet-spec conformance"
+  created: "2026-09-01"
+  modified: "2026-09-01"
+  units: um
+  assembly_gds: ./gds/assembly.gds
+  io_technology: intm4tm2
+
+interposer:
+  adapter: intm4tm2
+
+interconnect:
+  adapter: ihp_cupillar
+  technology:
+    description: "IHP Cu pillar interconnect"
+    layer_properties: ./tech/ihp_cupillar.lyp
+    dbu: 0.001
+
+technologies:
+  intm4tm2:
+    description: "IHP 130nm IntM4TM2 aluminium BEOL interposer"
+    layer_properties: ./tech/intm4tm2.lyp
+    stackup: ./tech/intm4tm2.stackup.yaml
+    dbu: 0.001
+  sg13g2:
+    description: "IHP SG13G2 130nm BiCMOS die"
+    layer_properties: ./tech/sg13g2.lyp
+    dbu: 0.001
+
+connection_stacks:
+  cupillar_opt1:
+    description: "IHP Cu pillar (CuPillar 28 + SnAgCap 16 = 44 um)"
+    layers:
+      - {name: CuPillar, material: Cu,   height: 28.0, diameter: 44.0}
+      - {name: SnAgCap,  material: SnAg, height: 16.0, diameter: 44.0}
+
+components:
+  - id: interposer
+    type: interposer
+    technology: intm4tm2
+    anchor: bbox_center
+    layout: ./gds/interposer.gds
+    top_cell: INTERPOSER
+    position: {x: 3246.156, y: 2801.000, z: 0.0}
+    dimensions: {width: 6492.312, height: 5602.001, thickness: 300.0}
+    attachment_surface_z: 13.83
+    # Two usage classes, one per layer, and the split is not decoration:
+    # validation rule 8 scopes an endpoint's pad set by its port_layer, so the
+    # wire-bond pads and the flip-chip landing pads of an interposer that also
+    # carries an interface endpoint on that layer have to be told apart by
+    # something. Until the explicit pad binding of SPEC-24 exists, the layer is
+    # that something.
+    io_pads:
+      - id: J1
+        io_class: wire_bond
+        net: VDD
+        position: {x: 100.0, y: 100.0}
+        size: {x: 80.0, y: 80.0}
+        layer: TopMetal2
+      - id: B1
+        io_class: flipped_bump
+        net: VDD
+        position: {x: 1500.0, y: 2801.0}
+        size: {x: 25.0, y: 25.0}
+        layer: TopMetal1
+
+  - id: U1
+    type: die
+    technology: sg13g2
+    anchor: gds_origin
+    orientation: flip_chip
+    connection: cupillar_opt1
+    layout: ./gds/u1.gds
+    cells: [DIE_U1_TOP, DIE_U1_SEAL]
+    position: {x: 1500.0, y: 2801.0, z: 57.83}
+    dimensions: {width: 1000.0, height: 2000.0, thickness: 750.0}
+    rotation: {z: 0.0}
+    metadata:
+      vendor: IHP
+      part_number: "U1-0001"
+    cdxml_ref:
+      mpn: "ACME-PHY-0001"
+      uri: ./parts/acme_phy.cdxml
+    3dblox_ref:
+      chiplet: u1_die
+      uri: ./views/u1_die.3dbv
+
+  - id: MEM
+    type: die_array
+    # bbox_center, and the change from gds_origin belongs to the SPEC-30 ruling
+    # rather than to this file's coverage. The anchor applies per element and
+    # start_position places the first element's anchor point, which is a rule the
+    # format had never written down: the contract defined the anchor for a
+    # component's own mesh and never mentioned die_array or start_position. Two
+    # die_array components exist in the whole ecosystem, this one and a studio
+    # fixture that declares no anchor, so settling the rule reinterprets exactly
+    # zero documents ONLY if this one moves in the same commit. It is fixture
+    # data with no reason to be gds_origin, so it moves and the clarification
+    # stays a MINOR instead of quietly restating what an existing file meant.
+    anchor: bbox_center
+    orientation: face_up
+    connection: cupillar_opt1
+    layout: ./gds/mem.gds
+    top_cell: MEM_DIE
+    dimensions: {width: 800.0, height: 800.0, thickness: 200.0}
+    array:
+      pattern: grid
+      count: {x: 2, y: 2}
+      pitch: {x: 1200.0, y: 1200.0}
+      start_position: {x: 4200.0, y: 1600.0, z: 57.83}
+
+interfaces:
+  - id: link0
+    type: micro_bump
+    from: {component: U1, surface: top, port_layer: TopMetal2}
+    to:   {component: interposer, surface: top, port_layer: TopMetal1}
+    physical: {pitch: 45.0, diameter: 25.0, height: 24.0}
+  - id: bond0
+    type: wire_bond
+    from: {component: interposer, surface: top, port_layer: TopMetal2}
+
+netlist:
+  external_netlist: ""
+  nets:
+    - name: VDD
+      class: power
+      external: true
+      connections:
+        - {component: U1, pin: VDD, layer: TopMetal2}
+        - {component: interposer, pin: J1, layer: TopMetal2}
+    - name: sig0
+      connections:
+        - {component: U1, pin: A0, layer: TopMetal2}
+        - {component: MEM, pin: B0, layer: TopMetal2}
+
+flow:
+  steps:
+    - {name: export, tool: kicad}
+    - {name: assemble, tool: hyp_to_gds}

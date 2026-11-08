@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 IHP GmbH
+#
+# Validation rule 8 negative: a wire_bond pad on the layer a copper_pillar
+# interface lands on. Structurally impeccable (the schema validates it: rule 8
+# relates two fields the schema cannot see at once), and refused by both
+# reference validators, which is exactly the divergence this fixture pins.
+#
+# The pad set of the `to` endpoint is the interposer's inline io_pads whose
+# layer is the endpoint's port_layer, i.e. {J1}, and J1's io_class wire_bond
+# allows only a wire_bond interface. The die side of the same interface carries
+# no pads in the document and is not checked (SPEC-24).
+format_version: "1.0"
+
+assembly:
+  name: "Rule 8 negative: wire_bond pad under a copper_pillar interface"
+
+components:
+  - id: interposer
+    type: interposer
+    io_pads:
+      - id: J1
+        io_class: wire_bond
+        net: VDD
+        position: {x: 100.0, y: 100.0}
+        size: {x: 80.0, y: 80.0}
+        layer: TopMetal2
+
+  - id: U1
+    type: die
+
+interfaces:
+  - id: link0
+    type: copper_pillar
+    from: {component: U1, surface: bottom, port_layer: TopMetal2}
+    to:   {component: interposer, surface: top, port_layer: TopMetal2}

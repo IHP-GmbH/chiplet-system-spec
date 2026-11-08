@@ -1,0 +1,120 @@
+* Vendored from https://github.com/KrzysztofHerman/IHP__CMP7345 at commit
+* 688ee1cfb81b82e6058699e429825682b25d3002, CMP7345-main/netlist/schematic/CMP7345-final.spice.
+* SPDX-License-Identifier: Apache-2.0
+* Changed: the sch_path and sym_path comment lines (1, 21, 22, 60, 61, 85, 86) are removed.
+**.subckt CMP7345-final v- v+ vss vdd clk vout2 vout1
+*.iopin v-
+*.iopin v+
+*.iopin vss
+*.iopin vdd
+*.iopin clk
+*.iopin vout2
+*.iopin vout1
+XM7 net1 clk vss vss sg13_lv_nmos w=6u l=0.13u ng=6 m=1 mm_ok=0
+XMS4 vout2 clk vdd vdd sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1 mm_ok=0
+XMS1 P clk vdd vdd sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1 mm_ok=0
+XMS2 Q clk vdd vdd sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1 mm_ok=0
+XMS3 vout1 clk vdd vdd sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1 mm_ok=0
+x2 vout2 vout1 vss P Q vdd cc_pair_nmos
+x3 vout2 vout1 vdd vdd vdd vss cc_pair_pmos
+x1 P Q v+ v- vdd net1 vss diff_pair
+**.ends
+
+* expanding   symbol:  cc_pair_nmos.sym # of pins=6
+.subckt cc_pair_nmos Id2 Id1 vss Is1 Is2 vdd
+*.iopin vss
+*.iopin Id2
+*.iopin Id1
+*.iopin Is2
+*.iopin Is1
+*.iopin vdd
+XMA1 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA2 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA3 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA4 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB1 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB2 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB3 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB4 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA5 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA6 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA7 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA8 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB5 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB6 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB7 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB8 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA9 vss vss Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA10 vss vss Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA11 vss vss Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA12 vss vss Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA13 Is1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA14 Is2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA15 Is2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA16 Is1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XD1 sub! vdd dantenna l=1.0u w=1.0u
+XR1 vss sub! ptap1 R=196 w=1.0e-6 l=1.0e-6
+.ends
+
+
+* expanding   symbol:  cc_pair_pmos.sym # of pins=6
+.subckt cc_pair_pmos Id2 Id1 Is2 Is1 vdd vss
+*.iopin vdd
+*.iopin Id2
+*.iopin Id1
+*.iopin Is2
+*.iopin Is1
+*.iopin vss
+XMA1 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB1 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA2 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB2 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA3 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA4 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB3 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB4 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMD1 vdd vdd vdd nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMD2 vdd vdd vdd nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XD1 vss nw dpantenna l=0.78u w=0.78u
+XR1 vdd nw ntap1 R=262.8473 w=0.78e-6 l=0.78e-6
+.ends
+
+
+* expanding   symbol:  diff_pair.sym # of pins=7
+.subckt diff_pair Id1 Id2 v+ v- vdd tail vss
+*.iopin v-
+*.iopin v+
+*.iopin vss
+*.iopin tail
+*.iopin Id2
+*.iopin Id1
+*.iopin vdd
+XMA1 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA2 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA3 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA4 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB1 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB2 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB3 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB4 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA5 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA6 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA7 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA8 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB5 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB6 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB7 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMB8 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA9 vss vss Id2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA10 vss vss Id1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA11 vss vss Id1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA12 vss vss Id2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA13 Id2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA14 Id1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA15 Id1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XMA16 Id2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1 mm_ok=0
+XR1 sub! vss ptap1 R=196 w=1.0e-6 l=1.0e-6
+XD1 sub! vdd dantenna l=1.0u w=1.0u
+.ends
+
+.end

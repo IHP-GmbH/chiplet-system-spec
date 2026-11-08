@@ -1,0 +1,102 @@
+# Routing fixture: two SG13G2 dies on an IHP IntM4TM2 interposer, both on
+# IHP Cu-pillar (cupillar_opt1), with a netlist connecting them so there is real
+# connectivity for rdl_route to route. Modeled on
+# chiplet-system-spec/examples/interposer_demo_design.chiplet (same frame + tech), with
+# a `netlist:` block added (the demo has none). Frame per coord_frame_contract.md
+# section 2.1: interposer-local, y-up, um; `position` is the die geometric centre,
+# so the dies declare `anchor: bbox_center` (the anchor whose reference point IS
+# that centre). The die GDS bbox each mount needs is carried in the pin list as
+# `die_bbox_dbu` (two_die_route.pins.json).
+format_version: "1.0"
+
+assembly:
+  name: "ihp_two_die_route"
+  description: "Two SG13G2 dies on an IntM4TM2 interposer; cupillar_opt1; routable netlist"
+  units: um
+
+technologies:
+  intm4tm2:
+    description: "IHP 130nm IntM4TM2 aluminium BEOL interposer"
+    dbu: 0.001
+  sg13g2:
+    description: "IHP SG13G2 130nm BiCMOS die"
+    dbu: 0.001
+
+components:
+  - id: interposer
+    type: interposer
+    technology: intm4tm2
+    anchor: bbox_center
+    top_cell: INTERPOSER
+    position: {x: 3246.156, y: 2801.000, z: 0.0}
+    dimensions: {width: 6492.312, height: 5602.001, thickness: 10.8103}
+    io_pads:
+      - id: J_VDD
+        io_class: wire_bond
+        net: VDD
+        position: {x: 300.0, y: 2801.0}
+        size: {x: 80.0, y: 80.0}
+        layer: TopMetal2
+      - id: J_GND
+        io_class: wire_bond
+        net: GND
+        position: {x: 6192.0, y: 2801.0}
+        size: {x: 80.0, y: 80.0}
+        layer: TopMetal2
+
+  - id: U1
+    type: die
+    technology: sg13g2
+    anchor: bbox_center
+    orientation: flip_chip
+    connection: cupillar_opt1
+    top_cell: DIE_U1
+    position: {x: 1500.0, y: 2801.0, z: 54.8103}
+    dimensions: {width: 1000.0, height: 2000.0, thickness: 750.0}
+    rotation: {z: 0.0}
+
+  - id: U2
+    type: die
+    technology: sg13g2
+    anchor: bbox_center
+    orientation: flip_chip
+    connection: cupillar_opt1
+    top_cell: DIE_U2
+    position: {x: 5000.0, y: 2801.0, z: 54.8103}
+    dimensions: {width: 1000.0, height: 2000.0, thickness: 750.0}
+    rotation: {z: 0.0}
+
+netlist:
+  nets:
+    - name: sig0
+      connections:
+        - {component: U1, pin: A0, layer: TopMetal2}
+        - {component: U2, pin: B0, layer: TopMetal2}
+    - name: sig1
+      connections:
+        - {component: U1, pin: A1, layer: TopMetal2}
+        - {component: U2, pin: B1, layer: TopMetal2}
+    - name: sig2
+      connections:
+        - {component: U1, pin: A2, layer: TopMetal2}
+        - {component: U2, pin: B2, layer: TopMetal2}
+    - name: sig3
+      connections:
+        - {component: U1, pin: A3, layer: TopMetal2}
+        - {component: U2, pin: B3, layer: TopMetal2}
+    - name: sig4
+      connections:
+        - {component: U1, pin: A4, layer: TopMetal2}
+        - {component: U2, pin: B4, layer: TopMetal2}
+    - name: sig5
+      connections:
+        - {component: U1, pin: A5, layer: TopMetal2}
+        - {component: U2, pin: B5, layer: TopMetal2}
+    - name: VDD
+      class: power
+      connections:
+        - {component: U1, pin: VDD, layer: TopMetal2}
+    - name: GND
+      class: ground
+      connections:
+        - {component: U2, pin: GND, layer: TopMetal2}
