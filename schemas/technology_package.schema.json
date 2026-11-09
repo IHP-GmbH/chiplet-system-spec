@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heterogenic-chip-design-project/chiplet-spec/schema/technology_package.schema.json",
+  "title": "Technology package manifest (technology.json)",
+  "description": "Entry of a technology package: the one file that names a technology's members and the role it plays in an assembly. A carrier package keeps its manifest at libs.tech/adk/technology.json inside its PDK tree, and that directory tree is the package root: every member path is relative to the root, never absolute and never climbing out of it. The manifest names files and states what is not a layer fact; layer facts stay in the routing descriptor, which is a member. Members are grouped in capability sets: A (geometry and assembly), B (automated design) and C (analysis). The schema checks the shape of each member that is present; whether a set is complete is the validator's verdict, which names every missing fact, so a package can pass set A without carrying set B. This version models the carrier role only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "id", "roles", "revision"],
+  "properties": {
+    "schema": {"const": "technology-package"},
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
+      "description": "Governed by docs/VERSION_POLICY.md: a major this reader does not accept is refused."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?![\\s\\S])",
+      "description": "Technology id, the key an assembly names the technology by."
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["carrier", "die"]},
+      "description": "What the technology can be in an assembly. The die role is reserved for the die half of the package format; this version refuses it as not modelled."
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Release of the technology this manifest describes, for a carrier the PDK version."
+    },
+    "description": {"type": "string"},
+    "dbu_um": {"$ref": "#/$defs/positive_um", "x-capability-set": ["A"]},
+    "manufacturing_grid_um": {"$ref": "#/$defs/positive_um", "x-capability-set": ["A"]},
+    "layer_properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lyp", "lyt"],
+      "x-capability-set": ["A"],
+      "description": "Set A. The KLayout layer sheet and its technology file.",
+      "properties": {
+        "lyp": {"$ref": "#/$defs/member_path"},
+        "lyt": {"$ref": "#/$defs/member_path"}
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted", "default_variant", "variants"],
+      "x-capability-set": ["A", "C"],
+      "description": "Sets A and C. The routing tech descriptors (schema interposer_routing_tech, owned by interposer-pnr), one file per variant. Paths inside a descriptor resolve against the package root. Set C reads the resistance slots of every variant, so a variant that cannot be read fails set C as well.",
+      "properties": {
+        "accepted": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["major", "min_minor"],
+          "description": "Descriptor versions this package is written for: the given major, at or above the given minor. A descriptor's requires_reader, when it carries one, must name the same major; whether a reader is new enough for it is that reader's own refusal.",
+          "properties": {
+            "major": {"type": "integer", "minimum": 0},
+            "min_minor": {"type": "integer", "minimum": 0}
+          }
+        },
+        "default_variant": {"$ref": "#/$defs/name"},
+        "variants": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {"$ref": "#/$defs/name"},
+          "additionalProperties": {"$ref": "#/$defs/digested_member"}
+        }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "x-capability-set": ["A"],
+      "description": "Set A. The physical stack: substrate, metal z ranges and the attachment plane. The body thickness lives only here. Never an aesthetic (display) stack.",
+      "properties": {"path": {"$ref": "#/$defs/member_path"}}
+    },
+    "attach": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["side", "methods"],
+      "x-capability-set": ["A"],
+      "description": "Set A. How dies attach to the carrier: methods by id from the interconnect method registry, never their parameters.",
+      "properties": {
+        "side": {"enum": ["top"]},
+        "methods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/name"}
+        }
+      }
+    },
+    "external": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "x-capability-set": ["A"],
+      "description": "Set A. How the carrier connects outside the assembly. Only wire_bond is modelled; a package naming another method is refused by the schema.",
+      "properties": {
+        "wire_bond": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pad_layer", "opening_layer"],
+          "properties": {
+            "pad_layer": {"$ref": "#/$defs/layer_name"},
+            "opening_layer": {"$ref": "#/$defs/layer_name"}
+          }
+        }
+      }
+    },
+    "occupied_pairs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "pairs"],
+      "x-capability-set": ["A"],
+      "description": "Set A. The GDS (layer, datatype) pairs the carrier and its decks read, which a die must not reuse when it is composed as-is. Only a measured state passes set A, and a measured state names what measured it.",
+      "properties": {
+        "state": {"enum": ["declared", "measured"]},
+        "pairs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {"type": "integer", "minimum": 0},
+              {"type": "integer", "minimum": 0}
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "measured_by": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The run or test that measured the pairs."
+        }
+      }
+    },
+    "escape_capacity": {
+      "type": "array",
+      "minItems": 1,
+      "x-capability-set": ["A"],
+      "x-capability-optional": true,
+      "description": "Set A, optional: absent means not measured. How deep a die's signal pillars may sit behind one edge and still escape, one entry per (method, crossing_axis, supply), each measured by the escape capacity command of interposer-pnr. Depth is the number of signal pillars in a line perpendicular to the crossing edge; the planner compares depth, never a pad count.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["method", "crossing_axis", "supply", "pitch_um", "depth_clean", "depth_failing",
+                     "edge_load_per_mm", "reading", "bounds", "router", "coupon", "measured_by",
+                     "report_sha256"],
+        "properties": {
+          "method": {"$ref": "#/$defs/name", "description": "One of this package's attach methods."},
+          "crossing_axis": {
+            "enum": ["horizontal", "vertical"],
+            "description": "Preferred direction of the wires that cross the edge: horizontal for an edge at constant x. The layers are the named descriptor's route_layers with that preferred direction."
+          },
+          "supply": {"$ref": "#/$defs/name", "description": "bare: no supply lines or mesh in the array. Another supply arrangement is another key."},
+          "pitch_um": {"$ref": "#/$defs/positive_um", "description": "The pitch the coupon was measured at; equal to the method's pitch."},
+          "depth_clean": {"type": "integer", "minimum": 1, "description": "Largest depth that routed clean."},
+          "depth_failing": {"type": "integer", "minimum": 2, "description": "First depth that did not."},
+          "edge_load_per_mm": {"$ref": "#/$defs/positive_um", "description": "depth_clean x 1000 / pitch_um, for reading only."},
+          "reading": {"enum": ["escape_limited", "router_limited", "inconclusive"]},
+          "bounds": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["lower", "upper"],
+            "properties": {
+              "lower": {"type": "string", "minLength": 1},
+              "upper": {"type": "string", "minLength": 1}
+            }
+          },
+          "router": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["engine", "engine_version", "setting"],
+            "properties": {
+              "engine": {"type": "string", "minLength": 1},
+              "engine_version": {"type": "string", "minLength": 1},
+              "setting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["descriptor", "drt_iterations"],
+                "properties": {
+                  "descriptor": {"type": "string", "minLength": 1, "description": "identity.name of the routing descriptor the coupon was routed with, one of this package's variants."},
+                  "drt_iterations": {"type": "integer", "minimum": 1}
+                }
+              }
+            }
+          },
+          "coupon": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["shape", "far_end", "pairing", "end_margin_um", "margin_rule", "channel_um",
+                         "interposer_margin_um", "flank_margin_um"],
+            "properties": {
+              "shape": {"enum": ["square"]},
+              "far_end": {"type": "string", "minLength": 1},
+              "pairing": {"type": "string", "minLength": 1},
+              "end_margin_um": {"type": "number", "minimum": 0},
+              "margin_rule": {"type": "string", "minLength": 1},
+              "channel_um": {"$ref": "#/$defs/positive_um"},
+              "interposer_margin_um": {"type": "number", "minimum": 0},
+              "flank_margin_um": {"type": "number", "minimum": 0}
+            }
+          },
+          "measured_by": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["repo", "sha", "argv"],
+            "properties": {
+              "repo": {"type": "string", "minLength": 1},
+              "sha": {"type": "string", "pattern": "^[0-9a-f]{7,64}(?![\\s\\S])"},
+              "argv": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+            }
+          },
+          "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}(?![\\s\\S])", "description": "Checked for shape only: a re-run's report carries its own dates and paths."}
+        }
+      }
+    },
+    "drc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main_deck", "deck_folder", "runner"],
+      "x-capability-set": ["B"],
+      "description": "Set B. The carrier DRC entry. The deck tree digest covers deck_folder.",
+      "properties": {
+        "main_deck": {"$ref": "#/$defs/member_path"},
+        "deck_folder": {"$ref": "#/$defs/member_folder"},
+        "runner": {"$ref": "#/$defs/member_path"},
+        "density_deck": {"$ref": "#/$defs/member_path"}
+      }
+    },
+    "fill": {
+      "x-capability-set": ["B"],
+      "description": "Set B. none, or the halo tool; the fill and halo layers are descriptor facts.",
+      "oneOf": [
+        {"const": "none"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["halo_tool"],
+          "properties": {"halo_tool": {"$ref": "#/$defs/member_path"}}
+        }
+      ]
+    },
+    "seal_ring": {
+      "x-capability-set": ["B"],
+      "description": "Set B. none, or the cell that draws the seal ring.",
+      "oneOf": [
+        {"const": "none"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["library", "cell"],
+          "properties": {
+            "library": {"type": "string", "minLength": 1},
+            "cell": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "pcells": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["library"],
+      "x-capability-set": ["B"],
+      "x-capability-optional": true,
+      "description": "Set B, optional. Without it, the export draws vias and pads as rectangles from the descriptor's rules and says so in its log.",
+      "properties": {
+        "library": {"type": "string", "minLength": 1},
+        "via": {"type": "string", "minLength": 1},
+        "bondpad": {"type": "string", "minLength": 1},
+        "landing_pad": {"type": "string", "minLength": 1}
+      }
+    },
+    "kicad_template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["board", "project", "rules"],
+      "x-capability-set": ["B"],
+      "description": "Set B. The KiCad board template a carrier design starts from.",
+      "properties": {
+        "board": {"$ref": "#/$defs/member_path"},
+        "project": {"$ref": "#/$defs/member_path"},
+        "rules": {"$ref": "#/$defs/member_path"}
+      }
+    },
+    "em_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "x-capability-set": ["C"],
+      "description": "Set C. The electromigration limits file. Set C also needs the resistance slots of every routing layer and via filled in each descriptor variant, and a variant with no routing layer or no via fails it.",
+      "properties": {"path": {"$ref": "#/$defs/member_path"}}
+    }
+  },
+  "$defs": {
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(?![\\s\\S])"},
+    "layer_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A layer name of the package's layer sheet, without its purpose."
+    },
+    "positive_um": {"type": "number", "exclusiveMinimum": 0},
+    "member_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A file relative to the package root, with forward slashes; no absolute path or drive, no '..', no '~', no variables, and no link that leads out of the root."
+    },
+    "member_folder": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A member_path that names a folder rather than a file."
+    },
+    "digested_member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/member_path"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}(?![\\s\\S])"}
+      }
+    }
+  }
+}

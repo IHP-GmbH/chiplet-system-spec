@@ -1,0 +1,151 @@
+{
+ "version": 1,
+ "chiplet_name": "two_die_route_chiplet",
+ "source": "tests/fixtures/ihp_two_die_route.chiplet (hand-authored CLI fixture)",
+ "source_type": "hand_authored",
+ "dbu_um": 0.001,
+ "timestamp": "",
+ "die_bbox_dbu": {"x_min": 0, "y_min": 0, "x_max": 1000000, "y_max": 2000000},
+ "pins": [
+  {
+   "name": "A0",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 0,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 150000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "A1",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 1,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 150000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "A2",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 2,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 400000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "A3",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 3,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 400000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "A4",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 4,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 650000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "A5",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 5,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 650000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "B0",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 6,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 900000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "B1",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 7,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 900000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "B2",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 8,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 1150000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "B3",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 9,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 1150000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "B4",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 10,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 1400000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "B5",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 11,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 1400000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "VDD",
+   "type": "passive",
+   "side": "left",
+   "pad_index": 12,
+   "center_x_dbu": 200000.0,
+   "center_y_dbu": 1650000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  },
+  {
+   "name": "GND",
+   "type": "passive",
+   "side": "right",
+   "pad_index": 13,
+   "center_x_dbu": 800000.0,
+   "center_y_dbu": 1650000.0,
+   "width_dbu": 40000.0,
+   "height_dbu": 40000.0
+  }
+ ]
+}

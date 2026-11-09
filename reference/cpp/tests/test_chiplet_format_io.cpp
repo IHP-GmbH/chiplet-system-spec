@@ -134,7 +134,7 @@ const YAML::Node& version_oracle() {
     return node;
 }
 
-// The carry-rule oracle (SPEC-32), on the same terms as the other two: a
+// The carry-rule oracle, on the same terms as the other two: a
 // compile-time default from this source tree, CHIPLET_VOCABULARY_ORACLE
 // overrides at run time, and main() fails the run if the file is not there
 // rather than letting the cross product report green over cells it never read.
@@ -234,7 +234,7 @@ void test_dump_roundtrips_components_order() {
     check(ids.size() >= 2, "example has the expected components");
 }
 
-// Inverted by the SPEC-32 ruling, and the parity assertion is RESTATED rather
+// Inverted by the carry-rule ruling, and the parity assertion is RESTATED rather
 // than deleted, because parity is what the original test was really about. It
 // asserted that an unknown type throws here, so that a document refused by one
 // reference reader was refused by the other. The verdict moved, the property did
@@ -365,19 +365,66 @@ void test_unknown_vocabulary_is_carried_across_the_cross_product() {
 // the four copies of the LIST agree (this reader, the schema, the spec prose,
 // the Python constant) is checked by conformance/test_interface_types.py on the
 // text; what a text comparison cannot show is that the reader actually accepts
-// each member, which is this. solder_bump is the member added by SPEC-23.
+// each member, which is this. solder_bump is the member added at 1.1.
 void test_every_known_interface_type_is_accepted() {
     for (const std::string& type : {std::string("micro_bump"),
                                     std::string("copper_pillar"),
                                     std::string("tsv"),
                                     std::string("wire_bond"),
                                     std::string("solder_bump")}) {
+        // Stamped at the member's own minor: solder_bump is 1.1.
+        const std::string stamp = type == "solder_bump" ? "1.1" : "1.0";
         const std::string doc =
-            "format_version: \"1.0\"\nassembly:\n  name: a\n"
+            "format_version: \"" + stamp + "\"\nassembly:\n  name: a\n"
             "interfaces:\n- id: i1\n  type: " + type + "\n";
         check_no_throw([&] { cfio::loads(doc); },
                        "interface type " + type + " accepted");
     }
+}
+
+// solder_bump is format 1.1: refused in a 1.0 document, and the lossy writer,
+// which otherwise stamps SUPPORTED_FORMAT_VERSION, stamps 1.1 when it writes
+// one, so a 1.1 document read and written back is never labelled 1.0.
+// assembly.units is closed to "um" and must be understood: any other value,
+// a present empty one included, is refused; absent reads as the default.
+void test_units_are_closed_to_um() {
+    const std::string head = "format_version: \"1.1\"\nassembly:\n  name: a\n";
+    check_no_throw([&] { cfio::loads(head); }, "absent units read as um");
+    check_no_throw([&] { cfio::loads(head + "  units: um\n"); }, "um reads");
+    for (const std::string& bad : {std::string("mm"), std::string("\"\""),
+                                   std::string("UM"), std::string("[um]")}) {
+        check_throws([&] { cfio::loads(head + "  units: " + bad + "\n"); },
+                     "units " + bad + " is refused");
+    }
+    cfio::LoadOptions lax;
+    lax.validate = false;
+    check_no_throw([&] { cfio::loads(head + "  units: mm\n", lax); },
+                   "validate = false does not judge units");
+}
+
+void test_solder_bump_is_held_to_its_minor() {
+    check(cfio::content_format_floor(cfio::ChipletDocument{}).empty(),
+          "an empty document has no content floor");
+    check_throws([] {
+        cfio::loads("format_version: \"1.0\"\nassembly:\n  name: a\n"
+                    "interfaces:\n- id: i1\n  type: solder_bump\n");
+    }, "solder_bump in a 1.0 document is refused");
+    cfio::ChipletDocument doc = cfio::loads(
+        "format_version: \"1.6\"\nassembly:\n  name: a\n"
+        "interfaces:\n- id: i1\n  type: solder_bump\n");
+    check(cfio::content_format_floor(doc) == "1.1",
+          "solder_bump raises the content floor to 1.1");
+    const cfio::ChipletDocument back = cfio::loads(cfio::dumps(doc));
+    check(back.format_version == "1.1",
+          "the lossy writer stamps the content floor, not 1.0");
+    cfio::LoadOptions plain;
+    plain.validate = false;
+    cfio::ChipletDocument micro = cfio::loads(
+        "format_version: \"1.6\"\nassembly:\n  name: a\n"
+        "interfaces:\n- id: i1\n  type: micro_bump\n", plain);
+    check(cfio::loads(cfio::dumps(micro)).format_version ==
+              cfio::SUPPORTED_FORMAT_VERSION,
+          "with no later member the lossy writer still stamps SUPPORTED");
 }
 
 // The flow block is the exact source slice, which is what flow rule 4 needs and
@@ -436,7 +483,7 @@ void test_flow_block_is_re_emitted_byte_for_byte() {
           "the case under test carries the comment a node dump would drop");
 }
 
-// SPEC-41, the C++ half of it. The Python reference could emit a document its
+// The writer's key grammar, the C++ half of it. The Python reference could emit a document its
 // OWN splitter mis-attributes: a top-level key it cannot write bare came out as
 // an explicit key (`? "a\Lb"` with a separate `: x: 1` line) or as `a b:`, both
 // at column zero and neither a key line, so the split reported two top-level
@@ -644,6 +691,120 @@ void test_quoted_key_at_column_zero_loads_and_may_refuse_to_write() {
     check(has_non_space_tab_blank, "oracle requires a non-SPACE/TAB blank line");
 }
 
+// The PUBLIC key-sequence API, measured against the same oracle the
+// private splitter is. Three claims. (1) Every document the oracle says splits
+// comes back splittable with exactly the oracle's keys, preamble excluded, in
+// order. (2) Every document a SPLITTER refuses comes back in the form that
+// document calls for: a repeated top-level key throws, as loads() does; the rest
+// report `not_splittable` with NO keys, and still load when the oracle says so.
+// (3) The API is not a loader and the split alone is not an emission check: a
+// reader-only refusal (forbidden line break) splits here and is refused by
+// loads(); a key-shaped continuation inside a quoted scalar is a key to this
+// grammar and a scalar to the parser, so the host must compare against the keys
+// it intended to write. The Python reference runs the same rows in
+// conformance/test_top_level_keys.py.
+void test_split_top_level_keys_matches_the_oracle() {
+    const YAML::Node& oracle = block_oracle();
+    int splits = 0, raises = 0, reports = 0, reader_only = 0;
+    for (const auto& c : oracle["splits"]) {
+        ++splits;
+        const std::string name = c["name"].as<std::string>();
+        std::vector<std::string> expected;
+        for (const auto& b : c["blocks"]) {
+            const std::string key = b["key"].as<std::string>();
+            if (!key.empty()) expected.push_back(key);  // "" is the preamble
+        }
+        cfio::TopLevelKeys verdict;
+        check_no_throw([&] { verdict = cfio::split_top_level_keys(
+                                 c["doc"].as<std::string>()); },
+                       name + ": a split document does not throw");
+        check(verdict.not_splittable.empty(), name + ": reported splittable");
+        check(verdict.keys == expected,
+              name + ": exactly the oracle's keys, preamble excluded, in order");
+    }
+    // Refusals: the FIELD says who refuses, never the group name.
+    std::vector<YAML::Node> splitter_cases;
+    for (const auto& c : oracle["refuse"]) splitter_cases.push_back(c);
+    for (const auto& c : oracle["not_delimitable"]) splitter_cases.push_back(c);
+    for (const auto& c : splitter_cases) {
+        const std::string name = c["name"].as<std::string>();
+        const std::string doc = c["doc"].as<std::string>();
+        std::set<std::string> refused_by;
+        for (const auto& who : c["refused_by"]) {
+            refused_by.insert(who.as<std::string>());
+        }
+        if (!refused_by.count("splitter")) {
+            if (refused_by == std::set<std::string>{"reader"}) {
+                // (3) not a loader: the grammar has an answer for these bytes.
+                ++reader_only;
+                cfio::TopLevelKeys verdict;
+                check_no_throw([&] { verdict = cfio::split_top_level_keys(doc); },
+                               name + ": reader-only refusal still splits");
+                check(verdict.not_splittable.empty() && !verdict.keys.empty(),
+                      name + ": splittable with keys");
+                check_throws([&] { cfio::loads(doc); },
+                             name + ": and loads() is where it is refused");
+            }
+            continue;
+        }
+        if (c["kind"].as<std::string>() == "repeated_top_level_key") {
+            ++raises;
+            check_throws([&] { cfio::split_top_level_keys(doc); },
+                         name + ": a repeated top-level key throws");
+            check_throws([&] { cfio::loads(doc); },
+                         name + ": as loads() does");
+            continue;
+        }
+        ++reports;
+        cfio::TopLevelKeys verdict;
+        check_no_throw([&] { verdict = cfio::split_top_level_keys(doc); },
+                       name + ": a not-splittable document does not throw");
+        check(!verdict.not_splittable.empty(), name + ": reports why");
+        check(verdict.keys.empty(), name + ": and hands back no keys");
+        check(verdict.not_splittable.find("docs/CHIPLET_FORMAT_SPEC.md") !=
+                  std::string::npos,
+              name + ": the reason cites the grammar");
+        if (c["loads"] && c["loads"].as<bool>()) {
+            check_no_throw([&] { cfio::loads(doc); },
+                           name + ": splittability is not loadability");
+        }
+    }
+    check(splits >= 5, "the oracle still carries the split cases");
+    check(raises >= 1, "the oracle still carries a repeated-key case");
+    check(reports >= 3, "the oracle still carries not-splittable cases");
+    check(reader_only >= 1, "the oracle still carries a reader-only refusal");
+
+    // The document a host must not be able to bless with the API alone: a
+    // continuation line of a double-quoted scalar, key-shaped at column zero.
+    // Valid YAML; two keys to the parser, three to the grammar.
+    const std::string phantom =
+        "format_version: \"1.0\"\nassembly:\n  name: \"demo\nflow: injected\"\n";
+    const YAML::Node parsed = YAML::Load(phantom);
+    check(parsed.size() == 2 && parsed["assembly"]["name"].as<std::string>() ==
+                                    "demo flow: injected",
+          "phantom premise: the parser reads two keys and one folded scalar");
+    const cfio::TopLevelKeys verdict = cfio::split_top_level_keys(phantom);
+    const std::vector<std::string> grammar_sees{"format_version", "assembly",
+                                                "flow"};
+    const std::vector<std::string> intended{"format_version", "assembly"};
+    check(verdict.not_splittable.empty(), "phantom: splittable to the grammar");
+    check(verdict.keys == grammar_sees,
+          "phantom: the grammar names a key the parser never sees");
+    check(verdict.keys != intended,
+          "phantom: a host comparing against its intended keys refuses it");
+
+    // Order is part of the verdict.
+    const cfio::TopLevelKeys swapped =
+        cfio::split_top_level_keys("assembly:\n  name: d\nformat_version: \"1.0\"\n");
+    check(swapped.keys == std::vector<std::string>{"assembly", "format_version"},
+          "order: same set, different order, different emission");
+    // The preamble is never a key.
+    const cfio::TopLevelKeys preamble = cfio::split_top_level_keys(
+        "# comment first\n\nformat_version: \"1.0\"\nassembly:\n  name: d\n");
+    check(preamble.keys == std::vector<std::string>{"format_version", "assembly"},
+          "preamble: lines before the first key own no key");
+}
+
 // A flow block the grammar cannot delimit: a flow-style document, or a key line
 // spelled `flow :`, which YAML reads as the key `flow` and the grammar does not
 // see at all. Either way the block has no slice, so re-emitting it byte for byte
@@ -848,9 +1009,8 @@ void test_crlf_survives_the_carriage_return_rule() {
 // yaml-cpp writes NEL, U+2028 and U+2029 as RAW bytes in every style,
 // double-quoted included (measured on 0.8.0), so a document a host built with
 // one in a field would be written out as a file neither reference reader will
-// open again. CR is the member yaml-cpp escapes on its own (measured: an emitted
-// scalar carrying one comes out as "demo\rx"), and it is asserted on the same
-// terms rather than trusted, because that is a fact about a version.
+// open again. yaml-cpp 0.7 also emits CR raw, unlike the observed 0.8 behavior;
+// the generated-mapping retry must provide the same round-trip guarantee on both.
 //
 // The subjects come off the ORACLE, so a fifth member of the set arrives here as
 // a failing check rather than as a silently untested one.
@@ -893,12 +1053,63 @@ void test_the_writer_escapes_what_the_reader_refuses() {
               cp + ": every one of them, not just the first");
     }
     // The ordinary document is untouched by the rule: the retry that quotes
-    // every string runs only for a document that has one of the three in it.
+    // every string runs only when generated output contains a forbidden break.
     cfio::ChipletDocument plain;
     plain.format_version = cfio::SUPPORTED_FORMAT_VERSION;
     plain.assembly.name = "demo";
     check(cfio::dumps(plain).find("\"name\":") == std::string::npos,
           "a document without a forbidden line break keeps its nested keys bare");
+}
+
+void test_writer_cr_retry_preserves_fields_and_flow() {
+    cfio::ChipletDocument doc;
+    doc.format_version = cfio::SUPPORTED_FORMAT_VERSION;
+    doc.assembly.name = "actual\rCR";
+    doc.assembly.description = "actual\r\nCRLF versus literal \\r";
+    cfio::Component component;
+    component.id = "U1";
+    component.type = "die";
+    component.metadata = {{"key\rCR", "value\rCR"},
+                          {"literal\\r", "literal\\r"}};
+    doc.components.push_back(component);
+
+    const std::string text = cfio::dumps(doc);
+    check(text.find('\r') == std::string::npos,
+          "generated mapping has no raw CR in keys or values");
+    cfio::ChipletDocument reloaded;
+    check_no_throw([&] { reloaded = cfio::loads(text); },
+                   "CR-bearing generated fields load");
+    check(reloaded.assembly.name == doc.assembly.name,
+          "actual CR in assembly name round-trips");
+    check(reloaded.assembly.description == doc.assembly.description,
+          "scalar CRLF and literal backslash-r remain distinct");
+    check(reloaded.components.size() == 1,
+          "CR-bearing metadata retains its component");
+    if (reloaded.components.size() == 1) {
+        check(reloaded.components.front().metadata == component.metadata,
+              "metadata keys and values preserve actual CR and literal escapes");
+    }
+
+    doc.has_flow = true;
+    doc.flow_source = cfio::FlowSource::Slice;
+    doc.flow_yaml = "flow:\r\n  # preserve source CRLF\r\n  steps: []\r\n";
+    const std::string with_flow = cfio::dumps(doc);
+    const std::size_t flow_at = with_flow.find("flow:\r\n");
+    check(flow_at != std::string::npos,
+          "quoted retry retains the CRLF flow key line");
+    if (flow_at != std::string::npos) {
+        check(with_flow.substr(flow_at) == doc.flow_yaml,
+              "flow source remains byte-identical after generated CR retry");
+        check(with_flow.substr(0, flow_at).find('\r') == std::string::npos,
+              "only preserved flow source contains raw CRLF");
+    }
+    cfio::ChipletDocument with_flow_reloaded;
+    check_no_throw([&] { with_flow_reloaded = cfio::loads(with_flow); },
+                   "escaped generated CR and preserved source CRLF load together");
+    check(with_flow_reloaded.flow_yaml == doc.flow_yaml,
+          "reader retains the exact CRLF flow slice");
+    check(with_flow_reloaded.assembly.description == doc.assembly.description,
+          "generated CRLF scalar survives alongside CRLF flow source");
 }
 
 // A document assembled in memory, not read from a file, may still carry the
@@ -957,15 +1168,17 @@ void test_pad_usage_rule_refuses_a_mismatched_pad() {
                                   "TopMetal2"));
     }, "a flipped_bump pad under a copper_pillar interface is accepted");
 
-    // solder_bump is in the flipped_bump row, which is the SPEC-23 member
-    // meeting the SPEC-22 table.
+    // solder_bump is in the flipped_bump row, which is the 1.1 member
+    // meeting the pad usage table.
     check_no_throw([] {
-        cfio::loads(pad_usage_doc("flipped_bump", "TopMetal2", "solder_bump",
-                                  "TopMetal2"));
+        std::string doc = pad_usage_doc("flipped_bump", "TopMetal2",
+                                        "solder_bump", "TopMetal2");
+        doc.replace(doc.find("\"1.0\""), 5, "\"1.1\"");  // its minor
+        cfio::loads(doc);
     }, "a flipped_bump pad under a solder_bump interface is accepted");
 
     // An endpoint whose component carries no inline pads (every die endpoint)
-    // is out of scope by decision, until SPEC-24 gives interfaces a pad binding.
+    // is out of scope by decision, until interfaces get a pad binding.
     check_no_throw([] {
         cfio::loads("format_version: \"1.0\"\nassembly:\n  name: a\n"
                     "components:\n- id: U1\n  type: die\n"
@@ -1130,8 +1343,8 @@ void test_attachment_surface_z_roundtrip() {
     if (interposer) {
         check(interposer->attachment_surface_z.has_value(),
               "interposer carries attachment_surface_z");
-        check(near(interposer->attachment_surface_z.value_or(0.0), 13.83),
-              "interposer attachment_surface_z is 13.83");
+        check(near(interposer->attachment_surface_z.value_or(0.0), 10.8103),
+              "interposer attachment_surface_z is 10.8103");
         // thickness is now the physical body, decoupled from the mount plane.
         check(near(interposer->dimensions.thickness, 300.0),
               "interposer thickness is the physical body, not the mount ref");
@@ -1151,19 +1364,135 @@ void test_attachment_surface_z_roundtrip() {
     const cfio::Component* interposer2 = find_component(reloaded, "interposer");
     check(interposer2 != nullptr &&
               interposer2->attachment_surface_z.has_value() &&
-              near(interposer2->attachment_surface_z.value(), 13.83),
+              near(interposer2->attachment_surface_z.value(), 10.8103),
           "attachment_surface_z survives dump/load");
 }
 
 // --- H-B: tolerant format_version policy (parity with the Python matrix) ---
 
-void test_higher_minor_warns_and_accepts() {
+// The since-minor rule, run over the shared oracle with each row's own map, so
+// the rule is measured while kMemberSince is still small. The Python twin is
+// conformance/test_member_since.py; both are compared to the file, never to
+// each other.
+void test_member_since_matches_the_oracle() {
+    const std::string path = kFixturesDir + "/member_since_cases.json";
+    YAML::Node oracle;
+    try {
+        oracle = YAML::LoadFile(path);
+    } catch (const YAML::Exception&) {
+        ++g_checks;
+        ++g_failures;
+        std::cerr << "  FAIL: no member-since oracle at " << path << "\n";
+        return;
+    }
+    int ran = 0;
+    for (const auto& c : oracle["cases"]) {
+        std::vector<std::string> storage;
+        for (const auto& row : c["since"]) {
+            for (const auto& cell : row) storage.push_back(cell.as<std::string>());
+        }
+        std::vector<cfio::MemberSince> since;
+        for (std::size_t i = 0; i + 2 < storage.size(); i += 3) {
+            since.push_back({storage[i].c_str(), storage[i + 1].c_str(),
+                             storage[i + 2].c_str()});
+        }
+        const std::string name = c["name"].as<std::string>();
+        const std::string declared = c["declared"].as<std::string>();
+        const std::string field = c["field"].as<std::string>();
+        const std::string member = c["member"].as<std::string>();
+        const std::string verdict = c["verdict"].as<std::string>();
+        ++ran;
+        if (verdict == "refuse") {
+            check_throws([&] {
+                cfio::check_member_since(declared, field, member, since);
+            }, "member-since oracle: " + name);
+        } else {
+            bool threw = false;
+            try {
+                cfio::check_member_since(declared, field, member, since);
+            } catch (...) {
+                threw = true;
+            }
+            check(!threw, "member-since oracle: " + name);
+        }
+    }
+    check(ran >= 5, "the member-since oracle ran its rows");
+}
+
+void test_implemented_minor_reads_silently() {
+    // 1.1 is the highest minor this reader implements, so it does not warn,
+    // although the assembly stamp is still "1.0".
     const std::string text = "format_version: \"1.1\"\nassembly:\n  name: a\n";
     std::vector<std::string> sink;
     cfio::LoadOptions opts;
     opts.on_warn = [&sink](const std::string& m) { sink.push_back(m); };
     cfio::ChipletDocument doc = cfio::loads(text, opts);
-    check(doc.format_version == "1.1",
+    check(doc.format_version == "1.1", "the implemented minor is accepted");
+    check(doc.warnings.empty() && sink.empty(),
+          "the implemented minor reads without a warning");
+}
+
+void test_source_document_is_refused_whatever_the_options() {
+    // A top-level `system` block makes a SOURCE document (format 1.1), which
+    // this reader refuses before any option is consulted.
+    const std::string text = read_file(kFixturesDir + "/v1_1_system_source.chiplet");
+    check(!text.empty(), "the source fixture is readable");
+    for (int mode = 0; mode < 4; ++mode) {
+        cfio::LoadOptions opts;
+        opts.allow_intermediate = (mode & 1) != 0;
+        opts.validate = (mode & 2) == 0;
+        ++g_checks;
+        bool right = false;
+        try {
+            cfio::loads(text, opts);
+        } catch (const cfio::SourceDocumentError& e) {
+            right = std::string(e.what()).find("source .chiplet") !=
+                    std::string::npos;
+        } catch (...) {
+            right = false;
+        }
+        if (!right) {
+            ++g_failures;
+            std::cerr << "  FAIL: source document not refused with "
+                         "SourceDocumentError in mode " << mode << "\n";
+        }
+    }
+}
+
+void test_an_assembly_never_carries_unplaced() {
+    // The root `unplaced` is a source's (format 1.3); refused under the
+    // validate gate, intermediate files allowed or not.
+    const std::string text = read_file(kFixturesDir + "/v1_3_unplaced_assembly.chiplet");
+    check(!text.empty(), "the unplaced assembly fixture is readable");
+    cfio::LoadOptions intermediate;
+    intermediate.allow_intermediate = true;
+    for (const cfio::LoadOptions& opts : {cfio::LoadOptions(), intermediate}) {
+        ++g_checks;
+        bool right = false;
+        try {
+            cfio::loads(text, opts);
+        } catch (const cfio::ChipletFormatError& e) {
+            right = std::string(e.what()).find("belongs to a source") !=
+                    std::string::npos;
+        }
+        if (!right) {
+            ++g_failures;
+            std::cerr << "  FAIL: an assembly carrying unplaced is not refused\n";
+        }
+    }
+    cfio::LoadOptions plain;
+    plain.validate = false;
+    check_no_throw([&] { cfio::loads(text, plain); },
+                   "an assembly carrying unplaced loads unvalidated");
+}
+
+void test_higher_minor_warns_and_accepts() {
+    const std::string text = "format_version: \"1.6\"\nassembly:\n  name: a\n";
+    std::vector<std::string> sink;
+    cfio::LoadOptions opts;
+    opts.on_warn = [&sink](const std::string& m) { sink.push_back(m); };
+    cfio::ChipletDocument doc = cfio::loads(text, opts);
+    check(doc.format_version == "1.6",
           "same-major higher minor is accepted");
     check(!doc.warnings.empty(),
           "higher minor records a per-document warning");
@@ -1190,10 +1519,10 @@ void test_malformed_version_rejected() {
 
 void test_typed_writer_stamps_supported_for_higher_minor() {
     // The C++ struct writer is lossy (unknown top-level keys are not carried),
-    // so a "1.1" input is written back as the supported "1.0" -- the OPPOSITE of
+    // so a "1.6" input is written back as the supported "1.0" -- the OPPOSITE of
     // the Python passthrough writer, and the impl-class distinction the
     // conformance manifest encodes.
-    const std::string text = "format_version: \"1.1\"\nassembly:\n  name: a\n";
+    const std::string text = "format_version: \"1.6\"\nassembly:\n  name: a\n";
     cfio::LoadOptions opts;
     opts.allow_intermediate = true;
     cfio::ChipletDocument doc = cfio::loads(text, opts);
@@ -1231,7 +1560,7 @@ void test_reader_release_is_declared() {
 
 }  // namespace
 
-// The version policy's transition window (SPEC-21), driven by
+// The version policy's transition window, driven by
 // conformance/fixtures/version_policy_cases.json: the same rows the Python
 // reference runs in conformance/test_version_policy.py, so the two references
 // are measured against one file instead of against each other.
@@ -1450,10 +1779,18 @@ int main() {
     test_crlf_survives_the_carriage_return_rule();
     test_the_splits_load_verdict_is_executed_both_ways();
     test_the_writer_escapes_what_the_reader_refuses();
+    test_writer_cr_retry_preserves_fields_and_flow();
     test_flow_block_the_grammar_cannot_delimit_loads_but_does_not_write();
+    test_split_top_level_keys_matches_the_oracle();
     test_hand_built_flow_value_without_a_key_line_still_emits();
     test_interconnect_adapter_and_technology();
     test_technology_stackup_roundtrip();
+    test_member_since_matches_the_oracle();
+    test_solder_bump_is_held_to_its_minor();
+    test_units_are_closed_to_um();
+    test_implemented_minor_reads_silently();
+    test_source_document_is_refused_whatever_the_options();
+    test_an_assembly_never_carries_unplaced();
     test_higher_minor_warns_and_accepts();
     test_lower_and_higher_major_rejected();
     test_malformed_version_rejected();

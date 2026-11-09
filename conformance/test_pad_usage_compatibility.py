@@ -24,7 +24,7 @@ What a green here does NOT cover (META-2):
   not run it; the assembly-stage hosts do.
 * whether any real assembly mixes usage classes on one layer under one
   interface, which rule 8 would refuse. The corpus was measured before the rule
-  landed (55 documents in chiplet-spec, adk-tools examples, the studio fixtures
+  landed (55 documents in this repository, adk-tools examples, the studio fixtures
   and the plugin trees; one tripped, the all-blocks coverage fixture, and it was
   corrected in the same commit).
 """
@@ -114,9 +114,10 @@ def _doc(io_class, pad_layer, iface_type, port_layer):
 
     Hand-built rather than mutated from a corpus specimen: a fixture is a
     document, not the specification, and a test that reads the rule off one pins
-    whatever that file happens to contain.
+    whatever that file happens to contain. Stamped at the content's floor, so a
+    1.1 member (``solder_bump``) tests rule 8 rather than its own minor.
     """
-    return {
+    doc = {
         "format_version": "1.0",
         "assembly": {"name": "rule 8"},
         "components": [
@@ -132,6 +133,8 @@ def _doc(io_class, pad_layer, iface_type, port_layer):
              "to": {"component": "interposer", "port_layer": port_layer}},
         ],
     }
+    doc["format_version"] = cfio.content_format_floor(doc) or "1.0"
+    return doc
 
 
 @pytest.mark.parametrize("io_class,allowed", sorted(

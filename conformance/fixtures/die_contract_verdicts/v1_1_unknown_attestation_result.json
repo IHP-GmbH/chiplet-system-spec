@@ -1,0 +1,82 @@
+{
+  "schema": "die-output-contract",
+  "version": "1.1",
+  "die": {
+    "name": "driver",
+    "layout": "driver.gds",
+    "layout_sha256": "29ac5253d28dc73a33e9aa462087de07258b6d63fa999f299af9a290f97b0701",
+    "top_cell": "DRIVER",
+    "dbu_um": 0.001,
+    "bbox_um": [
+      0.0,
+      0.0,
+      500.0,
+      400.0
+    ],
+    "frame": "die_local_gds_origin"
+  },
+  "process": {
+    "pdk": "ihp-sg13g2",
+    "pdk_version": "dev-0de0a17"
+  },
+  "build_record": {
+    "path": "build_record.json",
+    "sha256": "513414a34b8a9b05f79a2b6785f9565254e7a23f4e3958f56b6e7aea0b79d6da"
+  },
+  "inventory": {
+    "kind": "pins_json",
+    "path": "pins.json",
+    "sha256": "7eba1e00921629f95795057123df0632d0958ef4b18f8b888c00aac0b157b15c"
+  },
+  "terminals": [
+    {
+      "name": "d2d_fclk",
+      "pad_index": 0,
+      "role": "signal",
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "octagon"
+      },
+      "direction": "input"
+    },
+    {
+      "name": "vss_0",
+      "pad_index": 0,
+      "role": "ground",
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "octagon"
+      },
+      "supply_domain": "vss"
+    },
+    {
+      "name": "vss_1",
+      "pad_index": 0,
+      "role": "ground",
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "octagon"
+      },
+      "supply_domain": "vss"
+    }
+  ],
+  "attestation": [
+    {
+      "check": "drc",
+      "result": "waived",
+      "execution": "completed",
+      "tool": "klayout 0.30.5",
+      "layout_sha256": "29ac5253d28dc73a33e9aa462087de07258b6d63fa999f299af9a290f97b0701",
+      "deck": "sg13g2_maximal",
+      "deck_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "evidence": "drc.rdb",
+      "evidence_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ]
+}

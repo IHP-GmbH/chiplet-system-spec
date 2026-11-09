@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "pdk": "interconnect_pdk",
   "description": "Interconnect method registry. Single source of truth for the post-fabrication interconnection elements (Cu pillars, solder bumps, microbumps) that join chiplets to an interposer. Decoupled from the interposer PDK so the bumping method can come from any vendor, not only IHP. Tools read this instead of hardcoding cupillar_opt1/2/3.",
   "default_method": "cupillar_opt2",
@@ -38,6 +38,7 @@
       "description": "PacTech Cu Pillar, Table 6.1 Option 1 (35um opening)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_cupillar_anchor",
+      "die_processes": ["sg13g2"],
       "body_diameter_um": 44,
       "layers_3d": ["CuPillar", "SnAgCap"],
       "connection_stack": {
@@ -56,6 +57,7 @@
       "description": "PacTech Cu Pillar, Table 6.1 Option 2 (40um opening)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_cupillar_anchor",
+      "die_processes": ["sg13g2"],
       "body_diameter_um": 49,
       "layers_3d": ["CuPillar", "SnAgCap"],
       "connection_stack": {
@@ -74,6 +76,7 @@
       "description": "PacTech Cu Pillar, Table 6.1 Option 3 (45um opening)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_cupillar_anchor",
+      "die_processes": ["sg13g2"],
       "body_diameter_um": 54,
       "layers_3d": ["CuPillar", "SnAgCap"],
       "connection_stack": {
@@ -92,6 +95,7 @@
       "description": "PacTech SAC305 solder bump (80um ball)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_sbump_anchor",
+      "die_processes": ["sg13g2"],
       "body_diameter_um": 80,
       "layers_3d": ["SolderBall"],
       "connection_stack": {

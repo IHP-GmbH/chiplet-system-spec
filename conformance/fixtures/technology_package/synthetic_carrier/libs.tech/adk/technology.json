@@ -1,0 +1,93 @@
+{
+  "schema": "technology-package",
+  "schema_version": "1.0",
+  "id": "synthetic_carrier",
+  "roles": [
+    "carrier"
+  ],
+  "revision": "0.1.0",
+  "description": "Synthetic carrier package, a conformance fixture that describes no process.",
+  "dbu_um": 0.001,
+  "manufacturing_grid_um": 0.005,
+  "layer_properties": {
+    "lyp": "libs.tech/klayout/tech/synthetic_carrier.lyp",
+    "lyt": "libs.tech/klayout/tech/synthetic_carrier.lyt"
+  },
+  "routing": {
+    "accepted": {
+      "major": 1,
+      "min_minor": 3
+    },
+    "default_variant": "base",
+    "variants": {
+      "base": {
+        "path": "libs.tech/adk/routing/synthetic_carrier.routing_tech.json",
+        "sha256": "72f5e1bd700ffb13676b0d0f31549d6e1ab4ce7dcc2b0b109bd2202a78299bb6"
+      }
+    }
+  },
+  "stack": {
+    "path": "libs.tech/synthetic_carrier_stack.json"
+  },
+  "attach": {
+    "side": "top",
+    "methods": [
+      "vendorx_microbump"
+    ]
+  },
+  "external": {
+    "wire_bond": {
+      "pad_layer": "R2",
+      "opening_layer": "Opening"
+    }
+  },
+  "occupied_pairs": {
+    "state": "measured",
+    "pairs": [
+      [
+        230,
+        0
+      ],
+      [
+        230,
+        2
+      ],
+      [
+        231,
+        0
+      ],
+      [
+        232,
+        0
+      ],
+      [
+        232,
+        2
+      ],
+      [
+        233,
+        0
+      ],
+      [
+        234,
+        0
+      ]
+    ],
+    "measured_by": "conformance/test_technology_package.py::test_synthetic_occupied_pairs_are_the_measured_ones"
+  },
+  "drc": {
+    "main_deck": "drc/synthetic_carrier.drc",
+    "deck_folder": "drc/rule_decks",
+    "runner": "drc/run_drc.py"
+  },
+  "fill": "none",
+  "seal_ring": "none",
+  "kicad_template": {
+    "board": "libs.tech/kicad/carrier_template.kicad_pcb",
+    "project": "libs.tech/kicad/carrier_template.kicad_pro",
+    "rules": "libs.tech/kicad/carrier_template.kicad_dru"
+  },
+  "em_limits": {
+    "path": "libs.tech/adk/em_limits.json"
+  }
+}

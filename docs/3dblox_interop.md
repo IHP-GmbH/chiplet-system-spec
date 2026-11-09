@@ -109,7 +109,7 @@ A mechanical, **lossy-by-declaration** export is feasible. Field by field:
 | `die` component | `ChipletDef` (`.3dbv`) + instance (`.3dbx`) | one def per distinct die, one instance per placement |
 | `dimensions.width` / `height` | design area | |
 | `dimensions.thickness` | def thickness | **always** the physical thickness; never derived from any visualization stackup |
-| `position` (geometric **center**) | instance placement | 3Dblox places by corner: convert center -> corner via the outline before emitting |
+| `position` (the **anchor** reference point) | instance placement | 3Dblox places by corner: convert the anchor point to the corner via the outline before emitting |
 | `orientation: face_up` (default) | `R0` | |
 | `orientation: flip_chip` | `MZ` (flipped mounting) | see section 6.3 |
 | `orientation: face_down` | (none) | deliberately unmapped; an exporter must pin and verify its own convention (section 6.3) |
@@ -146,29 +146,32 @@ and fails the target linter (or worse, passes with wrong geometry).
 ### 6.1 Connection thickness is the stack height, exactly
 
 The `.chiplet` z-mounting rule (contract, section 3) is
-`z_die = mounting_surface + connection.total_height()`. The connection
+`z_die = interposer.position.z + mounting_surface + connection.total_height()`.
+The connection
 stack's `total_height()` **is** the vertical gap between the attachment
 surface and the die bottom. OpenROAD's linter asserts that a connection's
 declared thickness equals that gap **exactly**. Therefore: emit
 `thickness := connection.total_height()`, never a rounded or nominal value,
 and never a gap re-derived from body outlines.
 
-Two caveats from the contract (section 3.4). First, the equality is
+Three caveats from the contract (section 3.4). First, the equality is
 guaranteed only when the die's z defers to auto-calculation; a `.chiplet`
 may carry an **explicit** `position.z`, which readers honor as-is, so an
-exporter MUST verify `z_die == mounting_surface + total_height()` and fail
+exporter MUST verify `z_die == interposer.position.z + mounting_surface + total_height()` and fail
 loudly on mismatch rather than emit a thickness inconsistent with the actual
 gap. Second, when a die's `connection:` id does not resolve to a stack (the
 contract's fallback rows), there is no thickness source, and the export must
-likewise fail loudly.
+likewise fail loudly. Third, a file with no mount plane is refused (contract,
+section 3.4).
 
 ### 6.2 The attachment surface is not the maximum z
 
-The `mounting_surface` resolves to the technology's **attachment surface**
-(the pad top through the passivation opening), which is generally **not** the
+The `mounting_surface` resolves to the file's **attachment surface**, the
+interposer's `attachment_surface_z` (the pad top through the passivation
+opening), which is generally **not** the
 substrate's maximum z: passivation can rise above the attachment surface
 (in the reference interposer stackup of the contract's worked example, the
-attachment surface sits at 13.83 um while the passivation top lies above
+attachment surface sits at 10.8103 um while the passivation top lies above
 it). A converter that derives the die-to-substrate
 gap from outline max-z instead of the attachment surface disagrees with
 `total_height()` by the passivation height and fails the exact-equality

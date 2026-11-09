@@ -42,9 +42,40 @@ cfio::ChipletDocument d = cfio::loads(text);                // from string
 cfio::validate(doc);                                        // throws on error
 ```
 
+`ACCEPTED_FORMAT_VERSIONS` (`{"1.5"}`) is the highest minor the reader implements:
+a document at or below it reads silently, a higher minor of the same major warns,
+another major is refused. A source document (a top-level `system` block) is
+always refused with `SourceDocumentError`; this reader has no source path. A
+document with the root key `unplaced` (a source's, format 1.3) and no `system`
+block is refused too.
+
 `cfio::load`/`loads` take an optional `LoadOptions{allow_intermediate, validate}`;
 `cfio::dump`/`dumps` take an optional `DumpOptions{validate}`. Errors are reported
 by throwing `cfio::ChipletFormatError`.
+
+### Parser-attested source capture (development candidate)
+
+`cfio::capture_top_level_blocks(text)` returns `TopLevelBlockCapture`: `safe`,
+`preamble`, owned `blocks`, `reason_code`, `reason`, and optional `byte_offset`.
+Each `CapturedTopLevelBlock` owns `key` and `raw`, with half-open UTF-8 byte
+offsets `byte_start` and `byte_end`. Read the source in binary mode and use the
+same unchanged buffer for `loads` and capture. For safe results, concatenating
+the preamble and all raw blocks reconstructs the input exactly.
+
+Unlike the existing lexical `split_top_level_keys`, this API attests actual
+parser key identity, order and source position, then checks each slice can
+stand alone. Unsafe documents return a diagnostic with no partial blocks or
+preamble; capture success is not schema or lifecycle validation. Version-one
+capture deliberately refuses ambiguous keys, actual anchors/aliases, explicit
+tags/directives and unsupported encoding or boundary-line forms. Existing
+reader/writer APIs keep their previous behavior. The precise subset and shared
+conformance obligations are in the [capture contract](../../docs/ROOT_BLOCK_CAPTURE_DESIGN.md).
+
+Hosts must separately preserve ownership and intentional deletion, validate the
+composed output, protect destination identity and implement atomic recovery.
+An omitted writer-owned block is not unknown content to restore. This API
+does not promise general nested-field preservation. Both readers run the shared
+capture cases in `conformance/fixtures/root_capture_cases.json`.
 
 Validation strictness matches the C++ host reader it can replace: missing
 `component.id`/`type`, missing `interface.id`/`type`, an unknown interface type,

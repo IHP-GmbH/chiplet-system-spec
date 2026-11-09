@@ -1,0 +1,92 @@
+* CMP7345, locally patched; not the upstream release.
+* Source: https://github.com/KrzysztofHerman/IHP__CMP7345 at 688ee1cfb81b82e6058699e429825682b25d3002,
+* file CMP7345-main/netlist/layout/CMP7345.spice.
+* SPDX-License-Identifier: Apache-2.0
+* Changed (Apache-2.0 section 4(b)): four Xschem path comments are removed, and
+* eleven cards expose the body nets sub! and nw: three .subckt pin lists, three
+* x cards and five bulk terminals. See PROVENANCE.md beside this file.
+.subckt CMP7345 vdd vout1 vout2 v+ v- clk vss
+*.PININFO v-:B v+:B vss:B vdd:B clk:B vout2:B vout1:B
+MM7 net1 clk vss sub! sg13_lv_nmos w=6u l=0.13u ng=6 m=1
+MMS4 vout2 clk vdd nw sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1
+MMS1 P clk vdd nw sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1
+MMS2 Q clk vdd nw sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1
+MMS3 vout1 clk vdd nw sg13_lv_pmos w=3.0u l=0.13u ng=3 m=1
+x2 vout2 vout1 vss P Q vdd sub! cc_pair_nmos
+x3 vout2 vout1 vdd vdd vdd vss nw cc_pair_pmos
+x1 P Q v+ v- vdd net1 vss sub! diff_pair
+.ends
+
+.subckt diff_pair Id1 Id2 v+ v- vdd tail vss sub!
+*.PININFO v-:B v+:B vss:B tail:B Id2:B Id1:B vdd:B
+MMA1 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA2 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA3 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA4 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB1 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB2 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB3 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB4 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA5 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA6 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA7 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA8 Id2 v- tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB5 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB6 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB7 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB8 Id1 v+ tail sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA9 vss vss Id2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA10 vss vss Id1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA11 vss vss Id1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA12 vss vss Id2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA13 Id2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA14 Id1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA15 Id1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA16 Id2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+RR1 vss sub! ptap1 A=17.8p P=71.2u
+DD1 sub! vdd dantenna A=20.88p P=83.52u m=1
+.ends
+.subckt cc_pair_nmos Id2 Id1 vss Is1 Is2 vdd sub!
+*.PININFO vss:B Id2:B Id1:B Is2:B Is1:B vdd:B
+MMA1 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA2 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA3 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA4 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB1 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB2 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB3 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB4 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA5 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA6 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA7 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA8 Id1 Id2 Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB5 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB6 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB7 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMB8 Id2 Id1 Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA9 vss vss Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA10 vss vss Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA11 vss vss Is2 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA12 vss vss Is1 sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA13 Is1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA14 Is2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA15 Is2 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+MMA16 Is1 vss vss sub! sg13_lv_nmos w=1.0u l=0.26u ng=1 m=1
+DD1 sub! vdd dantenna A=19.53p P=78.12u m=1
+RR1 vss sub! ptap1 A=16.45p P=65.8u
+.ends
+.subckt cc_pair_pmos Id2 Id1 Is2 Is1 vdd vss nw
+*.PININFO vdd:B Id2:B Id1:B Is2:B Is1:B vss:B
+MMA1 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMB1 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMA2 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMB2 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMA3 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMA4 Id1 Id2 Is1 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMB3 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMB4 Id2 Id1 Is2 nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMD1 vdd vdd vdd nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+MMD2 vdd vdd vdd nw sg13_lv_pmos w=1.0u l=0.26u ng=1 m=1
+DD1 vss nw dpantenna A=22.48p P=89.92u m=1
+RR1 vdd nw ntap1 A=18.2p P=72.8u
+.ends

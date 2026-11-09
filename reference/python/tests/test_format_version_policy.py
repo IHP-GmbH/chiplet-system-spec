@@ -43,6 +43,22 @@ def test_accept_baseline_no_warn():
         assert cfio.check_format_version("1.0") == "1.0"
 
 
+def test_accept_implemented_minor_no_warn():
+    # 1.1 is the highest minor these readers implement (ACCEPTED), so it reads
+    # silently even though the assembly stamp is still "1.0".
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert cfio.check_format_version("1.1") == "1.1"
+
+
+def test_every_writer_stamp_reads_silently():
+    # Each kind of document has its own stamp; none of them may warn here.
+    for stamp in (cfio.SUPPORTED_FORMAT_VERSION, cfio.SOURCE_FORMAT_VERSION):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert cfio.check_format_version(stamp) == stamp
+
+
 def test_accept_unquoted_numeric_coerced():
     # PyYAML turns unquoted 1.0 into float 1.0; the reader coerces via str().
     with warnings.catch_warnings():
@@ -63,14 +79,14 @@ def test_accept_additive_unknown_key_roundtrips():
 
 def test_higher_minor_warns_and_accepts():
     with pytest.warns(cfio.FormatVersionWarning):
-        assert cfio.check_format_version("1.1") == "1.1"
+        assert cfio.check_format_version("1.6") == "1.6"
 
 
 def test_warn_once_deduped_default_channel():
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
-        cfio.check_format_version("1.1")
-        cfio.check_format_version("1.1")
+        cfio.check_format_version("1.6")
+        cfio.check_format_version("1.6")
     fired = [w for w in rec if issubclass(w.category, cfio.FormatVersionWarning)]
     assert len(fired) == 1  # deduped per distinct version
 
@@ -79,8 +95,8 @@ def test_on_warn_callback_is_undeduped():
     events = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        cfio.check_format_version("1.1", on_warn=events.append)
-        cfio.check_format_version("1.1", on_warn=events.append)
+        cfio.check_format_version("1.6", on_warn=events.append)
+        cfio.check_format_version("1.6", on_warn=events.append)
     assert len(events) == 2  # every event, undeduped
 
 
@@ -106,17 +122,19 @@ def test_reject_missing_version():
 # --- the crux: passthrough writer preserves higher minor -----------------
 
 def test_roundtrip_preserves_higher_minor():
-    """load "1.1" then write -> "1.1" out, NOT "1.0" (the flipped assertion).
+    """load "1.6" then write -> "1.6" out, NOT "1.0" (the flipped assertion).
 
-    A stamp-down here would forge a "1.0" label over 1.1 content and suppress
-    the higher-minor warning at every downstream reader.
+    A stamp-down here would forge a "1.0" label over 1.6 content and suppress
+    the higher-minor warning at every downstream reader. The same holds for an
+    accepted minor above the assembly stamp ("1.1").
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        data = cfio.loads(_doc('"1.1"'))
-        out = cfio.dumps(data)
-        reloaded = cfio.loads(out)
-    assert str(reloaded["format_version"]) == "1.1"
+    for fv in ("1.1", "1.6"):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            data = cfio.loads(_doc(f'"{fv}"'))
+            out = cfio.dumps(data)
+            reloaded = cfio.loads(out)
+        assert str(reloaded["format_version"]) == fv
 
 
 def test_write_stamps_supported_when_equal():
@@ -134,8 +152,8 @@ def test_write_stamps_supported_when_missing_and_unvalidated():
 
 
 def test_dumps_does_not_mutate_caller_dict():
-    d = {"format_version": "1.1", "assembly": {"name": "a"}}
+    d = {"format_version": "1.6", "assembly": {"name": "a"}}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         cfio.dumps(d)
-    assert d["format_version"] == "1.1"  # shallow copy, caller untouched
+    assert d["format_version"] == "1.6"  # shallow copy, caller untouched

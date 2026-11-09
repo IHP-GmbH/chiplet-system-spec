@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+format_version: "1.3"
+assembly:
+  name: baseline
+unplaced:
+  pins: [U1.CLK]

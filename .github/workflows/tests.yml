@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  # The Python reference is the one installable package in the ecosystem, and it
+  # The Python reference is installed by every reader in the ecosystem, and it
   # is vendored verbatim into IHP-Open-ADK. Install it the way a consumer would
   # rather than putting the source directory on sys.path, so a packaging mistake
   # fails here and not in the consumer.
@@ -86,6 +86,42 @@ jobs:
         working-directory: build
         run: ctest --output-on-failure
 
+  # The system description installs from its own pyproject and runs its hermetic
+  # suite. It reads the reference and the conformance cases from this checkout,
+  # so those checks never skip here. The sibling cases (interposer-pnr,
+  # interconnect_pdk) and the live openroad cases skip on a runner, which has
+  # none of them. HCDP_STRICT_LIVE and HCDP_CI stay unset: either one turns those
+  # skips into failures, which would report the runner, not the code. A wheel
+  # install then runs the command from outside the tree, so a wheel that drops
+  # the vendored reader fails here and not in a reader's install.
+  description:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: description/pyproject.toml
+
+      - name: Install the package and its test extra
+        working-directory: description
+        run: pip install -e ".[test]"
+
+      - name: Run tests
+        working-directory: description
+        run: python -m pytest -q
+
+      - name: The wheel installs and runs on its own
+        run: |
+          python -m venv "$RUNNER_TEMP/wheel"
+          "$RUNNER_TEMP/wheel/bin/pip" install ./description
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/wheel/bin/python" -I -c 'import chiplet_system_description._cfio as c; assert "site-packages" in c.cfio.__file__'
+          "$RUNNER_TEMP/wheel/bin/chiplet-system-description" check --tier 0 \
+            "$GITHUB_WORKSPACE/conformance/fixtures/v1_1_system_source.chiplet"
+
   # Machine-readable artifacts are the point of this repository, so a file that
   # does not parse is a release-blocking defect, not a style problem.
   static:
@@ -122,7 +158,7 @@ jobs:
           reuse lint
 
   ci-gate:
-    needs: [python, conformance, cpp, static]
+    needs: [python, conformance, cpp, description, static]
     if: always()
     runs-on: ubuntu-24.04
     steps:
@@ -131,8 +167,10 @@ jobs:
           echo "python:      ${{ needs.python.result }}"
           echo "conformance: ${{ needs.conformance.result }}"
           echo "cpp:         ${{ needs.cpp.result }}"
+          echo "description: ${{ needs.description.result }}"
           echo "static:      ${{ needs.static.result }}"
           test "${{ needs.python.result }}" = "success"
           test "${{ needs.conformance.result }}" = "success"
           test "${{ needs.cpp.result }}" = "success"
+          test "${{ needs.description.result }}" = "success"
           test "${{ needs.static.result }}" = "success"

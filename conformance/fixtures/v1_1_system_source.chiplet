@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: Apache-2.0
+# A source document: two dies on a carrier, every system key used once.
+format_version: "1.1"
+_metadata:
+  finalize_required: true
+  finalizer: "packaging-flow run"
+assembly:
+  name: "two_die_source"
+  description: "Two dies on a carrier, wire-bonded out"
+  units: "um"
+interposer:
+  adapter: "intm4tm2"
+system:
+  carrier: {technology: "intm4tm2", top_cell: "CF_CARRIER", size: [2000, 3500]}
+  registry: "registry/interconnect_pdk"
+  dies:
+    - {id: "U1", die: "dies/CF_DRIVER", at: [1000, 2500], rotation: 0, method: "cupillar_opt1", thickness: 750}
+    - {id: "U2", die: "dies/CF_ECHO", at: [1000, 1000], rotation: 180, method: "cupillar_opt1"}
+  buses:
+    - {ends: ["U1", "U2"], ports: ["d2d_f[0..9]", "d2d_fclk", "d2d_r[0..9]"], net_suffix: "_n"}
+  links:
+    - {a: "U1.TEST_OUT", b: "U2.TEST_IN", net: "test_loop"}
+  rails:
+    - {name: "GND", class: ground, ports: ["U1.VSS", "U2.VSS"]}
+    - {name: "VDD", class: power, ports: ["U1.VDD", "U2.VDD"]}
+  alone:
+    - "U2.STATUS"
+  open:
+    - "U1.SPARE"
+  external:
+    profile: "intm4tm2_wire_bond_v0"
+    edges:
+      north: ["U1.CLK", "U1.RSTN"]
+      east: ["VDD", "GND"]
+  fill_keepout: {halo_um: {M4: 20, TM1: 60}}

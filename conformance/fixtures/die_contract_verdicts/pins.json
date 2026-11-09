@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "source_type": "hand_authored",
+  "dbu_um": 0.001,
+  "die_bbox_dbu": {
+    "x_min": 0,
+    "y_min": 0,
+    "x_max": 500000,
+    "y_max": 400000
+  },
+  "pins": [
+    {
+      "name": "d2d_fclk",
+      "pad_index": 0,
+      "center_x_dbu": 1000,
+      "center_y_dbu": 2000,
+      "width_dbu": 40000,
+      "height_dbu": 40000
+    },
+    {
+      "name": "vss_0",
+      "pad_index": 0,
+      "center_x_dbu": 1000,
+      "center_y_dbu": 2000,
+      "width_dbu": 40000,
+      "height_dbu": 40000
+    },
+    {
+      "name": "vss_1",
+      "pad_index": 0,
+      "center_x_dbu": 1000,
+      "center_y_dbu": 2000,
+      "width_dbu": 40000,
+      "height_dbu": 40000
+    }
+  ]
+}

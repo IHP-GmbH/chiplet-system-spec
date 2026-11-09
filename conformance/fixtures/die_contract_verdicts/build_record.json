@@ -1,0 +1,7 @@
+{
+  "template": "chiplet-full",
+  "inputs": [],
+  "outputs": [
+    "driver.gds"
+  ]
+}

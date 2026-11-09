@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+# A source as a sheet import leaves it (format 1.3): U1 not placed, no carrier
+# size, and the external entries on no edge yet.
+format_version: "1.3"
+_metadata:
+  finalize_required: true
+  finalizer: "packaging-flow run"
+assembly:
+  name: "two_die_unplaced"
+  units: "um"
+system:
+  carrier: {technology: "intm4tm2", top_cell: "CF_CARRIER"}
+  dies:
+    - {id: "U1", die: "dies/CF_DRIVER", method: "cupillar_opt1"}
+    - {id: "U2", die: "dies/CF_ECHO", at: [1000, 1000], rotation: 180, method: "cupillar_opt1"}
+  rails:
+    - {name: "GND", class: ground, ports: ["U1.VSS", "U2.VSS"]}
+    - {name: "VDD", class: power, ports: ["U1.VDD", "U2.VDD"]}
+  external:
+    profile: "intm4tm2_wire_bond_v0"
+unplaced:
+  pins: ["U1.CLK", "U2.STATUS", "VDD", "GND"]

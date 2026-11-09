@@ -1,0 +1,49 @@
+{
+  "check": {
+    "word": "not_run"
+  },
+  "chiplet": "../base/cf_two_die_wire_bond.chiplet",
+  "chiplet_sha256": "e958abf391125f64f24aa3b9b31f989fead7368b9d8ef2cc2518c62cae3483fe",
+  "components": [
+    {
+      "id": "interposer",
+      "terminals": 8,
+      "top_cell": "CF_CARRIER",
+      "type": "interposer"
+    },
+    {
+      "id": "U1",
+      "terminals": 34,
+      "top_cell": "CF_DRIVER_BONDPAD",
+      "type": "die"
+    },
+    {
+      "id": "U2",
+      "terminals": 32,
+      "top_cell": "CF_ECHO_BONDPAD",
+      "type": "die"
+    }
+  ],
+  "format": "gds2kicad.system-schematic",
+  "nets": 30,
+  "pins": {
+    "U1": {
+      "path": "../../trees/pf/examples/two_die_wire_bond/inputs/dies/CF_DRIVER_BONDPAD/pins.json",
+      "sha256": "44fd9de8535455150532b3eeb489b36c47b91c86c7622c8ecfc77bed56881f7e"
+    },
+    "U2": {
+      "path": "../../trees/pf/examples/two_die_wire_bond/inputs/dies/CF_ECHO_BONDPAD/pins.json",
+      "sha256": "9fcee1e9886a7418cdbb46713e691acd27bdb5b50c864cc6a0a8b1ca6cad7533"
+    },
+    "interposer": {
+      "path": "interposer.carrier_pins.json",
+      "sha256": "4fa631f0bc0ee107ab0218ff037f373f601f6f00712c0ccd7db2b4ee932bfc88"
+    }
+  },
+  "refusals": [],
+  "schematic": "cf_two_die_wire_bond.kicad_sch",
+  "schematic_sha256": "148f1dca5def2766bf21c0f0cc482fab29723c920cada661dcd341d589debc87",
+  "unconnected_terminals": 0,
+  "version": "1.0",
+  "word": "written"
+}

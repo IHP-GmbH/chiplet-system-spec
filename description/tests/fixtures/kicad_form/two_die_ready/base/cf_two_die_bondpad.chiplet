@@ -1,0 +1,328 @@
+format_version: '1.0'
+assembly:
+  name: cf_two_die_bondpad
+  description: DRIVER/ECHO bondpad pair placed from emitted die contracts on a plain
+    IntM4TM2 carrier
+  units: um
+technologies:
+  intm4tm2:
+    description: IHP 130nm IntM4TM2 aluminium BEOL interposer
+    layer_properties: ${INTERPOSER_PDK_ROOT}/libs.tech/klayout/tech/intm4tm2.lyp
+    stackup: ${CHIPLET_STUDIO_ROOT}/configs/stackups/intm4tm2.yaml
+    dbu: 0.001
+  sg13g2:
+    description: IHP SG13G2 130nm BiCMOS die
+    layer_properties: ${PDK_ROOT}/ihp-sg13g2/libs.tech/klayout/tech/sg13g2.lyp
+    stackup: ${CHIPLET_STUDIO_ROOT}/configs/stackups/ihp-sg13g2.yaml
+    dbu: 0.001
+components:
+- id: interposer
+  type: interposer
+  technology: intm4tm2
+  anchor: bbox_center
+  top_cell: CF_CARRIER
+  position:
+    x: 1000.0
+    y: 1600.0
+    z: 0.0
+  dimensions:
+    width: 2000.0
+    height: 3200.0
+    thickness: 10.8103
+  attachment_surface_z: 10.8103
+- id: U1
+  type: die
+  technology: sg13g2
+  anchor: bbox_center
+  orientation: flip_chip
+  connection: cupillar_opt1
+  top_cell: CF_DRIVER_BONDPAD
+  position:
+    x: 1000.0
+    y: 2200.0
+    z: 54.8103
+  dimensions:
+    width: 1000.0
+    height: 1000.0
+    thickness: 750.0
+  rotation:
+    z: 0.0
+- id: U2
+  type: die
+  technology: sg13g2
+  anchor: bbox_center
+  orientation: flip_chip
+  connection: cupillar_opt1
+  top_cell: CF_ECHO_BONDPAD
+  position:
+    x: 1000.0
+    y: 1000.0
+    z: 54.8103
+  dimensions:
+    width: 1000.0
+    height: 1000.0
+    thickness: 750.0
+  rotation:
+    z: 0.0
+netlist:
+  nets:
+  - name: d2d_f0_n
+    connections:
+    - component: U1
+      pin: PAD_F0
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F0
+      layer: TopMetal2
+  - name: d2d_f1_n
+    connections:
+    - component: U1
+      pin: PAD_F1
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F1
+      layer: TopMetal2
+  - name: d2d_f2_n
+    connections:
+    - component: U1
+      pin: PAD_F2
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F2
+      layer: TopMetal2
+  - name: d2d_f3_n
+    connections:
+    - component: U1
+      pin: PAD_F3
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F3
+      layer: TopMetal2
+  - name: d2d_f4_n
+    connections:
+    - component: U1
+      pin: PAD_F4
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F4
+      layer: TopMetal2
+  - name: d2d_f5_n
+    connections:
+    - component: U1
+      pin: PAD_F5
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F5
+      layer: TopMetal2
+  - name: d2d_f6_n
+    connections:
+    - component: U1
+      pin: PAD_F6
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F6
+      layer: TopMetal2
+  - name: d2d_f7_n
+    connections:
+    - component: U1
+      pin: PAD_F7
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F7
+      layer: TopMetal2
+  - name: d2d_f8_n
+    connections:
+    - component: U1
+      pin: PAD_F8
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F8
+      layer: TopMetal2
+  - name: d2d_f9_n
+    connections:
+    - component: U1
+      pin: PAD_F9
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_F9
+      layer: TopMetal2
+  - name: d2d_fclk_n
+    connections:
+    - component: U1
+      pin: PAD_FCLK
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_FCLK
+      layer: TopMetal2
+  - name: d2d_frst_n_n
+    connections:
+    - component: U1
+      pin: PAD_FRSTN
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_FRSTN
+      layer: TopMetal2
+  - name: d2d_r0_n
+    connections:
+    - component: U2
+      pin: PAD_R0
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R0
+      layer: TopMetal2
+  - name: d2d_r1_n
+    connections:
+    - component: U2
+      pin: PAD_R1
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R1
+      layer: TopMetal2
+  - name: d2d_r2_n
+    connections:
+    - component: U2
+      pin: PAD_R2
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R2
+      layer: TopMetal2
+  - name: d2d_r3_n
+    connections:
+    - component: U2
+      pin: PAD_R3
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R3
+      layer: TopMetal2
+  - name: d2d_r4_n
+    connections:
+    - component: U2
+      pin: PAD_R4
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R4
+      layer: TopMetal2
+  - name: d2d_r5_n
+    connections:
+    - component: U2
+      pin: PAD_R5
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R5
+      layer: TopMetal2
+  - name: d2d_r6_n
+    connections:
+    - component: U2
+      pin: PAD_R6
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R6
+      layer: TopMetal2
+  - name: d2d_r7_n
+    connections:
+    - component: U2
+      pin: PAD_R7
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R7
+      layer: TopMetal2
+  - name: d2d_r8_n
+    connections:
+    - component: U2
+      pin: PAD_R8
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R8
+      layer: TopMetal2
+  - name: d2d_r9_n
+    connections:
+    - component: U2
+      pin: PAD_R9
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_R9
+      layer: TopMetal2
+  - name: U1_PAD_CFG_MODE
+    connections:
+    - component: U1
+      pin: PAD_CFG_MODE
+      layer: TopMetal2
+  - name: U1_PAD_CLK
+    connections:
+    - component: U1
+      pin: PAD_CLK
+      layer: TopMetal2
+  - name: U1_PAD_STATUS
+    connections:
+    - component: U1
+      pin: PAD_STATUS
+      layer: TopMetal2
+  - name: U1_PAD_RSTN
+    connections:
+    - component: U1
+      pin: PAD_RSTN
+      layer: TopMetal2
+  - name: U2_PAD_CFG_MODE
+    connections:
+    - component: U2
+      pin: PAD_CFG_MODE
+      layer: TopMetal2
+  - name: U2_PAD_STATUS
+    connections:
+    - component: U2
+      pin: PAD_STATUS
+      layer: TopMetal2
+  - name: VDD
+    class: power
+    connections:
+    - component: U1
+      pin: PAD_VDD_E0
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_VDD_E1
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_VDD_W0
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_VDD_W1
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VDD_E0
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VDD_E1
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VDD_W0
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VDD_W1
+      layer: TopMetal2
+  - name: VSS
+    class: ground
+    connections:
+    - component: U1
+      pin: PAD_VSS_E0
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_VSS_E1
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_VSS_W0
+      layer: TopMetal2
+    - component: U1
+      pin: PAD_VSS_W1
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VSS_E0
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VSS_E1
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VSS_W0
+      layer: TopMetal2
+    - component: U2
+      pin: PAD_VSS_W1
+      layer: TopMetal2

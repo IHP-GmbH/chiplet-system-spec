@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# A length unit outside the closed set: refused, because no reader converts.
+format_version: "1.1"
+assembly:
+  name: "units_other"
+  units: "mm"
+components:
+  - id: "U1"
+    type: "die"
+    position: {x: 1.0, y: 2.0, z: 0.0}

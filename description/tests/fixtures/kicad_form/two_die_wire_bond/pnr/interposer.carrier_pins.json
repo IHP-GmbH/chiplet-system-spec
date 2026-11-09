@@ -1,0 +1,96 @@
+{
+  "chiplet_sha256": "e958abf391125f64f24aa3b9b31f989fead7368b9d8ef2cc2518c62cae3483fe",
+  "component": "interposer",
+  "format": "gds2kicad.carrier-pins",
+  "pins": [
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_U1_PAD_CFG_MODE",
+      "net": "U1_PAD_CFG_MODE",
+      "port": "J_U1_PAD_CFG_MODE",
+      "side": "left",
+      "type": "passive",
+      "x_um": 140.0,
+      "y_um": 1375.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_U1_PAD_CLK",
+      "net": "U1_PAD_CLK",
+      "port": "J_U1_PAD_CLK",
+      "side": "left",
+      "type": "passive",
+      "x_um": 140.0,
+      "y_um": 1525.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_U1_PAD_STATUS",
+      "net": "U1_PAD_STATUS",
+      "port": "J_U1_PAD_STATUS",
+      "side": "left",
+      "type": "passive",
+      "x_um": 140.0,
+      "y_um": 1675.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_U1_PAD_RSTN",
+      "net": "U1_PAD_RSTN",
+      "port": "J_U1_PAD_RSTN",
+      "side": "left",
+      "type": "passive",
+      "x_um": 140.0,
+      "y_um": 1825.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_U2_PAD_CFG_MODE",
+      "net": "U2_PAD_CFG_MODE",
+      "port": "J_U2_PAD_CFG_MODE",
+      "side": "right",
+      "type": "passive",
+      "x_um": 1860.0,
+      "y_um": 1375.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_U2_PAD_STATUS",
+      "net": "U2_PAD_STATUS",
+      "port": "J_U2_PAD_STATUS",
+      "side": "right",
+      "type": "passive",
+      "x_um": 1860.0,
+      "y_um": 1525.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_VDD",
+      "net": "VDD",
+      "port": "J_VDD",
+      "side": "right",
+      "type": "passive",
+      "x_um": 1860.0,
+      "y_um": 1675.0
+    },
+    {
+      "io_class": "wire_bond",
+      "layer": "TopMetal2",
+      "name": "J_VSS",
+      "net": "VSS",
+      "port": "J_VSS",
+      "side": "right",
+      "type": "passive",
+      "x_um": 1860.0,
+      "y_um": 1825.0
+    }
+  ],
+  "version": "1.0"
+}

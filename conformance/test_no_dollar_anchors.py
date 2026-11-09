@@ -85,7 +85,8 @@ def test_an_end_anchored_regex_rejects_a_trailing_newline(where, regex):
         pytest.skip(f"{where}: not end-anchored, nothing to police")
     compiled = re.compile(regex)
     sample = None
-    for candidate in ("1.0", "A_B", "abc", "a", "9/35", "0", "id-1", "x.y"):
+    for candidate in ("1.0", "A_B", "abc", "a", "9/35", "0", "id-1", "x.y",
+                      "0" * 64):
         if compiled.search(candidate):
             sample = candidate
             break

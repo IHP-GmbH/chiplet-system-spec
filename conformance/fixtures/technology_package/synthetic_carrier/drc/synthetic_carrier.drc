@@ -1,0 +1,2 @@
+# Placeholder main deck of the synthetic carrier; validated, never run.
+eval(File.read(File.join(File.dirname(__FILE__), 'rule_decks', 'width.drc')))

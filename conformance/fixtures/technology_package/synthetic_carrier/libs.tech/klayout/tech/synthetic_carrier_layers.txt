@@ -1,0 +1,8 @@
+# Synthetic carrier layer set (name purpose layer datatype), test fixture only
+R1 drawing 230 0
+R1 pin 230 2
+V1 drawing 231 0
+R2 drawing 232 0
+R2 pin 232 2
+Opening drawing 233 0
+Outline drawing 234 0

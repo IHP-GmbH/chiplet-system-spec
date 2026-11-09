@@ -1,0 +1,97 @@
+{
+  "$comment": "Bare strings in a source .chiplet (format 1.1, the one exception to validation rule 7; docs/CHIPLET_FORMAT_SPEC.md). A string value goes bare when it matches PATTERN and its lowercased form is not in RETYPED_WORDS; everything else is quoted. Each case is one dies item line. 'refuse': a source reader refuses the bare value on that line and gives WRITE, the same line with the value quoted; 'reads_as' is what a YAML 1.1 loader (PyYAML) makes of the bare value, which is why it cannot go bare ('str' where only the rule refuses it). 'accept': no finding. conformance/test_source_bare_strings.py proves the file against the spec text and PyYAML; description/ runs every case through its source reader. Add a case here, never in a consumer.",
+  "pattern": "[A-Za-z_][A-Za-z0-9_./-]*",
+  "retyped_words": [
+    "y",
+    "n",
+    "yes",
+    "no",
+    "true",
+    "false",
+    "on",
+    "off",
+    "null"
+  ],
+  "cases": [
+    {
+      "key": "id",
+      "bare": "no",
+      "line": "- {id: no, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "bool",
+      "write": "- {id: \"no\", die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "id",
+      "bare": "0755",
+      "line": "- {id: 0755, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "int",
+      "write": "- {id: \"0755\", die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "id",
+      "bare": "on",
+      "line": "- {id: on, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "bool",
+      "write": "- {id: \"on\", die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "id",
+      "bare": "2026-03-22",
+      "line": "- {id: 2026-03-22, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "date",
+      "write": "- {id: \"2026-03-22\", die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "id",
+      "bare": "y",
+      "line": "- {id: y, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "str",
+      "write": "- {id: \"y\", die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "id",
+      "bare": "NULL",
+      "line": "- {id: NULL, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "null",
+      "write": "- {id: \"NULL\", die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "die",
+      "bare": "dies/ECHO 2",
+      "line": "- {id: U2, die: dies/ECHO 2, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "refuse",
+      "reads_as": "str",
+      "write": "- {id: U2, die: \"dies/ECHO 2\", at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}"
+    },
+    {
+      "key": "id",
+      "bare": "U2",
+      "line": "- {id: U2, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "accept"
+    },
+    {
+      "key": "die",
+      "bare": "dies/ECHO",
+      "line": "- {id: U2, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "accept"
+    },
+    {
+      "key": "method",
+      "bare": "cupillar_opt1",
+      "line": "- {id: U2, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: cupillar_opt1, thickness: 750}",
+      "verdict": "accept"
+    },
+    {
+      "key": "method",
+      "bare": "_x.y/z-1",
+      "line": "- {id: U2, die: dies/ECHO, at: [1000, 1000], rotation: 180, method: _x.y/z-1, thickness: 750}",
+      "verdict": "accept"
+    }
+  ]
+}

@@ -2,15 +2,12 @@
 SPDX-License-Identifier: Apache-2.0
 SPDX-FileCopyrightText: 2026 IHP GmbH
 
-This specification is published under the Apache License 2.0. Anyone may implement
-readers, writers, or tools that consume or produce .chiplet files, under ANY license
-(open-source or proprietary). IHP asserts no patents over the .chiplet format itself.
-See README.md for the full implementer-rights / non-assertion grant.
+This specification is published under the Apache License 2.0. See README.md.
 -->
 
 # Chiplet File Format Specification
 
-**Version:** 1.0
+**Version:** 1.5
 **File Extension:** `.chiplet`
 **Format:** YAML
 
@@ -83,9 +80,10 @@ second source of truth for placement (see the interop appendix).
 ## File Structure
 
 A `.chiplet` file always carries `format_version` and an `assembly` block; every
-other top-level block is optional. The reference reader recognizes eleven
-top-level keys in total (the full list, with required/optional status, is the
-[Root Level Keys](#root-level-keys) table below). The most common skeleton is:
+other top-level block is optional. The format defines thirteen top-level keys in
+total: the reference reader recognizes twelve, and a source reader the
+thirteenth, `unplaced` (format 1.3). The full list, with required/optional
+status, is the [Root Level Keys](#root-level-keys) table below. The most common skeleton is:
 
 ```yaml
 format_version: "1.0"   # required
@@ -106,7 +104,7 @@ components:              # optional
 
 | Key | Required | Type | Description |
 |-----|----------|------|-------------|
-| `format_version` | **YES** | String | Quoted `"MAJOR.MINOR"`; baseline `"1.0"`. Readers are tolerant of a same-major higher minor (warn), reject a different major. See the validation rules below. |
+| `format_version` | **YES** | String | Quoted `"MAJOR.MINOR"`; an assembly is written `"1.0"`, a source the lowest minor its content needs (`"1.1"` to `"1.3"`). Readers are tolerant of a same-major higher minor (warn), reject a different major. See the validation rules below. |
 | `assembly` | **YES** | Object | Assembly metadata |
 | `technologies` | NO | Map | Technology definitions |
 | `connection_stacks` | NO | Map | Named interconnect stacks (see [Connection Stacks](#connection-stacks)) |
@@ -116,7 +114,9 @@ components:              # optional
 | `interfaces` | NO | Array | Typed die-to-die / bond interfaces (see [Interfaces](#interfaces)) |
 | `netlist` | NO | Object | Optional assembly netlist (see [Netlist](#netlist)) |
 | `flow` | NO | Object | Optional, opaque build/flow block (see [Flow](#flow)) |
+| `system` | NO | Object | Format 1.1. Makes the document a SOURCE, not an assembly (see [System](#system-format-11)) |
 | `_metadata` | NO | Object | Intermediate-file marker (see [Intermediate files](#intermediate-files-_metadata)) |
+| `unplaced` | NO | Object | Format 1.3, sources only, written after `system`: the external entries no edge carries yet (see [Format 1.3: the unplaced source](#format-13-the-unplaced-source)) |
 
 Key order is not significant: readers are key-driven and accept the sections in
 any order. (The reference writer emits them in the order `format_version`,
@@ -147,6 +147,14 @@ and the readers export their vocabulary
 (`chiplet_format_io.KNOWN_INTERFACE_TYPES`, the C++ `kKnownInterfaceTypes`) so a
 consumer has the list to refuse an element against.
 
+A member added to a closed vocabulary after 1.0 is tagged with the minor that
+added it, in an `x-since` object beside the enum (`{"member": "1.1"}`); a member
+with no tag is since 1.0, so the tag appears only from the first member added by
+a later minor. JSON Schema validators ignore the keyword, so the schema alone
+does not refuse a member below its minor; the reference validators do (rule 1),
+reading the same map, which they export as `MEMBER_SINCE` (Python) and
+`kMemberSince` (C++).
+
 The **reference reader stays normative for semantics**: the tolerant
 `format_version` policy, the `_metadata.finalize_required` refusal, the absent
 `anchor` default-and-warn, the `1e5` um leak guard, and every cross-reference
@@ -174,7 +182,7 @@ The `assembly` section contains metadata about the chiplet package.
 | `author` | NO | String | `""` | Author/designer name |
 | `created` | NO | String | `""` | Creation date (ISO 8601) |
 | `modified` | NO | String | `""` | Last modification date (ISO 8601) |
-| `units` | NO | String | `""` | Unit of measurement. The format sets no default; tools conventionally use `um`. |
+| `units` | NO | String | `"um"` | Unit of every length in the document. Closed to `um` (format 1.1), which is also the normative default when the key is absent. A reader MUST refuse any other value: it does not convert, and a length read in the wrong unit is wrong, not incomplete. |
 | `assembly_gds` | NO | String | `""` | Path to a merged/flattened GDS of the whole assembly, when one is produced |
 | `io_technology` | NO | String | `""` | Technology id used for assembly-level I/O pads |
 
@@ -260,7 +268,7 @@ The `components` section is an array of component definitions. Each component re
 | `orientation` | NO | String | `face_up` | Mounting orientation of a die: `face_up`, `flip_chip`, or `face_down`. Absent is treated as `face_up`. (`die` / `die_array`.) |
 | `connection` | NO | String | `""` | Interconnect method id this die mounts on (e.g. `cupillar_opt1`); references an entry in the interconnect method registry (`interconnect_methods.json`). Drives per-die z-mounting (contract section 3). (`die` / `die_array`.) |
 | `dimensions` | NO | Object | `{width:0, height:0, thickness:0}` | Physical size |
-| `attachment_surface_z` | NO | Float | - | **Interposer only.** Z of the die-attachment (BEOL-top) surface in the component-local frame: the plane dies mount on (`z_die = attachment_surface_z + connection height`). Decouples the mount reference from `dimensions.thickness` (the physical body). When absent, consumers fall back to `dimensions.thickness`. See the [coordinate-frame contract](./coord_frame_contract.md), sections 1.5 and 3. |
+| `attachment_surface_z` | NO | Float | - | **Interposer only.** Z of the die-attachment (BEOL-top) surface in the component-local frame: the plane dies mount on (`z_die = interposer.position.z + attachment_surface_z + connection height`). Decouples the mount reference from `dimensions.thickness` (the physical body). Optional in the schema; an interposer that seats dies without it has no mount plane, and nothing stands in for it. See the [coordinate-frame contract](./coord_frame_contract.md), sections 1.5 and 3. |
 | `io_pads` | NO | Array | `[]` | Assembly-level I/O pads (e.g. wire-bond pads), nested under the `interposer`. See [io_pads](#io_pads-interposer-only). |
 | `metadata` | NO | Map | `{}` | Custom key-value pairs |
 | `array` | NO | Object | - | Array config (die_array only) |
@@ -312,11 +320,10 @@ the body extends upward from `position.z` (the seating plane; see
 For an **interposer**, `thickness` is the physical substrate body
 (Si + BEOL), and the die-mount plane is given separately by
 [`attachment_surface_z`](#common-fields); the body extends *downward*
-from that surface. Legacy interposer files omit `attachment_surface_z`
-and overload `thickness` as the mount reference (its historical
-meaning); readers fall back to `thickness` when the field is absent, so
-those files still seat dies correctly. See `coord_frame_contract.md`
-sections 1.5 and 3.4.
+from that surface. `thickness` is never a mount plane: an interposer
+that seats dies without `attachment_surface_z` has none (an exporter
+refuses the file; a viewer may show the dies on `thickness` as a display
+guess, with a warning). See `coord_frame_contract.md` sections 1.5 and 3.4.
 
 ### Array Configuration (for `die_array` type)
 
@@ -376,9 +383,9 @@ Summary of what the contract fixes:
   element after it, and its meaning never depends on the component's type.
 - **`connection:`** selects a die's interconnect method (an id in
   `interconnect_methods.json`). Z-mounting is per-die:
-  `z_die = mounting_surface + connection.total_height()`, so one assembly can
-  mix methods. A die with no `connection:` falls back to the interposer
-  thickness (contract section 3).
+  `z_die = interposer.position.z + mounting_surface + connection.total_height()`, so one assembly can
+  mix methods. A die with no `connection:` mounts on the file's plane with
+  connection height 0 (contract section 3.4).
 - **Leak guard.** A reader MUST warn (or reject) when `|position.x|` or
   `|position.y|` exceeds `1e5` um, a heuristic that absolute (un-converted)
   coordinates have leaked through.
@@ -533,6 +540,12 @@ A reader MUST refuse to load a file with `_metadata.finalize_required: true`
 unless explicitly allowed; the finalizer converts positions into the canonical
 frame and strips the block. Canonical `.chiplet` files carry no `_metadata`
 block. See the contract, section 4.
+
+A source document (one with a top-level [`system`](#system-format-11) block)
+carries the same marker for a different reason: its finalizer does not re-frame
+an assembly, it derives one. It is written `finalize_required: true`, a
+`finalizer` naming the elaborating tool, and no `frame` key, because every
+position in a source is in the canonical frame already.
 
 ### Component Example
 
@@ -698,8 +711,9 @@ the closed vocabulary below.
 
 **Known `type` values:** `micro_bump`, `copper_pillar`, `tsv`, `wire_bond`,
 `solder_bump` (the C4-class reflowed solder ball, the interconnect manifest's
-`sbump_sac305`). Producers emit `solder_bump` only from format 1.1; until that
-stamp the value in a 1.0 document is out of contract.
+`sbump_sac305`). `solder_bump` is format 1.1 (`x-since` in the schema): a
+document carrying it is stamped at least `"1.1"`, and one stamped `"1.0"` is out
+of contract and refused by the reference validators (rule 1).
 
 The list binds WRITERS and is closed by the schema. The reference readers carry
 whatever string the document holds, report an unrecognised member on their warn
@@ -789,6 +803,281 @@ flow:
     - {name: export, tool: kicad}
     - {name: assemble, tool: hyp_to_gds}
 ```
+
+## System (format 1.1)
+
+Optional top-level block, and the one that changes what a document IS. A
+document with a top-level `system` key is a **source**: it names the dies, where
+they sit and how their ports are wired, and a tool (the elaborator) derives the
+assembly from it and from each die's contract. A source is never an assembly.
+
+A source carries exactly `format_version` (at least `"1.1"`), `_metadata`,
+`assembly` (`name`, optional `description`), optionally `interposer` and `flow`,
+and `system`. It carries none of the blocks the elaborator derives:
+`technologies`, `connection_stacks`, `components`, `interconnect`, `interfaces`,
+`netlist`. The schema states both rules, and the reference readers export the
+second list as `DERIVED_BLOCKS`.
+
+**Readers.** Every assembly reader refuses a source, whatever else it is told:
+`allow_intermediate` and `validate = false` do not let one through, and the
+refusal comes before the version check, so the message says what the file is.
+The error is `SourceDocumentError`, a `ChipletFormatError`, in both references.
+Only a source reader reads one; the Python reference has that path behind an
+explicit `allow_source=True`, which nothing but the source tooling passes, and
+the C++ reference has none. The reason is the reader written before 1.1: it warns
+on the higher minor and carries an undeclared root key additively, so without the
+`_metadata` marker it reads a source as an assembly with no components, and with
+the marker, any caller that allows intermediate files still would.
+
+**Keys.** `system` is a closed mapping, written in this order: `carrier`,
+`registry`, `dies`, `buses`, `links`, `rails`, `alone`, `open`, `external`,
+`fill_keepout`. Only `carrier` and `dies` are required, and from format 1.3
+`dies` may be absent or empty (see [Format 1.3](#format-13-the-unplaced-source)).
+
+| Key | Holds |
+|-----|-------|
+| `carrier` | `technology`, `top_cell`, `size: [w, h]` in um (optional from 1.3) |
+| `registry` | interconnect registry root, relative to the file; absent means the consuming flow's own |
+| `dies` | one item per instance: `id`, `die` (the folder holding its contract, relative), `at: [x, y]` (die centre, canonical frame, um; optional from 1.3), `rotation` (0, 90, 180 or 270, default 0; never written without `at`), `method` (interconnect method id), `thickness` (um, as written; absent is 0.0), `admission` (optional, format 1.4: a relative `.json` holding the die's admission, see [Format 1.4](#format-14-a-dies-admission)) |
+| `buses` | `ends: [inst, inst]`, `ports`, optional `net_prefix`, `net_suffix` |
+| `links` | `a`, `b` (port refs), optional `net` |
+| `rails` | `name`, `class` (`power` or `ground`), `volts` (optional, format 1.2: the rail's nominal supply in volts, a positive number, on a `power` rail only), `width_um`, `amps`, `current_density_ma_per_um` (optional, format 1.5, on a rail of either class: the width it is routed at in um, or the current in A with the density in mA/um it is drawn at, never both forms, see [Format 1.5](#format-15-a-rails-routing-requirement)), `ports` |
+| `alone` | port refs whose pads each get their own net |
+| `open` | port refs that get no net and no connection |
+| `external` | `profile` (a shipped profile name or a relative `.json`), `edges` (`north`, `south`, `west`, `east`, each at most once, each a list of port refs or rail names; optional from 1.3) |
+| `fill_keepout` | `halo_um`, a map of layer name to um |
+
+**Keys added after 1.1.** A key a later minor adds to the system block is
+optional, and the minor that adds it is schema data (`x-since` on the property;
+`SOURCE_KEY_SINCE` in the Python reference). A source stamped below that minor
+is refused, and a writer stamps the highest minor among the keys it writes, so a
+source that writes none stays `"1.1"`. A source reader reading a source stamped
+ABOVE the minor it implements skips an item or `system` key it does not know and
+reports it,
+because the minor's promise is that a reader may skip it; at or below its own
+minor an unknown key is still refused. The keys are `rails[].volts` (1.2),
+`dies[].admission` (1.4), and `rails[].width_um`, `rails[].amps` and
+`rails[].current_density_ma_per_um` (1.5). Format 1.3 adds no `system` key: it adds the root key `unplaced` and lets
+a source leave keys out, and a writer stamps `"1.3"` only when the file uses one
+of those, so the rule is the same one, the lowest minor the content needs.
+
+A port reference is `<instance>.<port>`, where `<port>` is the die inventory's
+port name, not a pad name. Inside a port or net name, `[a..b]` (inclusive,
+decimal, either order) is the only shorthand and expands to one name per index.
+Paths are relative to the file: no `${VAR}`, no absolute path, no `..` segment.
+
+**Line rules** (held by the source reader on the text, like the
+[top-level block grammar](#top-level-block-grammar-normative), because a schema
+cannot state them): every item of `dies`, `buses`, `links`, `rails`, `alone` and
+`open` is one line, a block-sequence entry holding a flow mapping (a port
+reference for `alone` and `open`); the keys inside an item appear in the order
+above; `external` is a block mapping and each edge one line holding a flow
+sequence. A string value goes bare when it matches `[A-Za-z_][A-Za-z0-9_./-]*`
+and is not a word a YAML 1.1 reader takes for a bool or a null (`y`, `n`, `yes`,
+`no`, `true`, `false`, `on`, `off`, `null`, in any case form); every other string
+is quoted, ranges and `format_version` included. The source reader reads both
+forms and refuses a bare value outside the rule, giving the line to write with
+that value quoted. This is the one exception to validation rule 7, and the
+reason sits there.
+
+**What the elaborator derives, and in what order.** Membership is always
+derived; net NAMES are the author's, which is why the optional affixes exist.
+- Every die port appears exactly once across `buses`, `links`, `rails`, `alone`,
+  `open` and the port refs of `external`.
+- A bus port has the same name on both ends (a differently named pair is a
+  `link`) and is one typed link with one lane per pad, oriented output end
+  first. Its net is `<net_prefix><port><net_suffix>`, lane-indexed.
+- A link's net is `net`, default `<a instance>_<a port>`.
+- An `alone` port gets one net per pad, `<instance>_<pad>`, emitted in inventory
+  order (dies in `dies` order, ports in first-named order, pads by ordinal), so
+  inserting or deleting an `alone` line never reorders the netlist. An `external`
+  port ref is the same, emitted with the `alone` nets.
+- A rail joins every pad of its ports into one net named `name`. A rail with one
+  pad in total is emitted as a tie of its class, after the `alone` ties, in
+  `rails` order.
+- `buses`, `links` and `rails` are emitted in file order; io_pads are derived per
+  edge, in the order the edges are written.
+- Never written, always derived: die z, die dimensions and technology (from the
+  contract), carrier position and thickness, pad coordinates, the netlist, every
+  digest.
+
+**Supply voltage (format 1.2, checked with the die folders).** The domains a
+rail reaches are the `supply_domain` of each power or ground terminal of every
+pad of every port it names, and their volts are the die contract's
+`supply_domains` (die contract 1.2). Values compare as written, with no
+tolerance, since they are nominal.
+1. A power rail reaching domains of different volts is refused, naming each
+   instance, domain and value.
+2. A power rail whose `volts` is not that of the domains it reaches is refused.
+3. A ground rail reaching a domain whose volts are not 0 is refused.
+4. A power rail with no `volts`, a die whose contract declares no
+   `supply_domains`, or a pad whose terminal names no domain is a note on the
+   rail ("voltage not checked for <rail>: <what is missing>"), never a refusal,
+   so a source or a die from before 1.2 checks as it did.
+
+A die folder whose contract carries `supply_domains` that admission would refuse
+(a 1.0 or 1.1 contract, or one breaking a supply-domain rule of
+STRICT_ADMISSION_API.md revision 4, which `chiplet_format_io.supply_domains`
+holds for both readers) is refused as unreadable. Rule 3 therefore meets only a pad the inventory serves as
+ground whose terminal the contract names as power. The Python reference gives
+the labels these checks rest on as
+`chiplet_system_description.source.supply_pins(path)`: one row per supply pin on
+a rail, sorted by instance then pad, `{instance, pad, port, domain, rail,
+volts}`, where `volts` is the domain's as the die declares it, 0 on a ground
+pin, and null when the die declares none, even where the rail states its own:
+null is exactly the pin rule 4 leaves unchecked. The row shape is stable.
+
+## Format 1.3: the unplaced source
+
+A source drawn on a schematic sheet says what the system is, its dies and how
+their ports are wired, and nothing about where anything sits. From format 1.3 a
+source may leave its placement to `packaging-flow place`:
+
+- a `dies` item may omit `at` and `rotation`, both or neither (a `rotation`
+  without `at` is refused at every minor);
+- `carrier` may omit `size`;
+- `external` may omit `edges`;
+- `system.dies` may be absent or empty (a project file before its first sheet
+  import);
+- the root key `unplaced`, written after `system`, holds `pins`: one line, a flow
+  list of the external entries (port refs, ranges allowed, and rail names) that
+  no edge carries yet. Each entry appears once across `unplaced.pins` and the
+  edges, and `unplaced` needs an `external` block, which names the profile.
+
+```yaml
+format_version: "1.3"
+# _metadata and assembly as in any source
+system:
+  carrier: {technology: intm4tm2, top_cell: CF_CARRIER}
+  dies:
+    - {id: U1, die: dies/DRIVER, method: wire_bond}
+  external:
+    profile: intm4tm2_wire_bond_v0
+unplaced:
+  pins: [U1.CLK, VDD, VSS]
+```
+
+Each of these in a source stamped below `"1.3"` is refused, and the finding
+names the minor. `unplaced` is a source's key: a document that carries it
+without a `system` block is refused at every stamp. A writer stamps `"1.3"` only when the file leaves something
+unplaced; once placement fills every `at`, the `size`, and moves every entry of
+`unplaced.pins` onto an edge row (deleting `unplaced`), the stamp drops back to
+what the rest of the file needs.
+
+**Who reads it.** The source reader (tier 0) reads an unplaced source. Tier 1,
+the check against the die folders, refuses it, one finding per unplaced thing
+(an unplaced die, a carrier with no size, unplaced pins, no dies), each naming
+`packaging-flow place` as the fix, unless the caller opts in; then each is a
+note, placement is checked for the placed dies only, the carrier outline only
+when it has a size, and the entries of `unplaced.pins` count as external ports
+do. `check` opts in, so it reports an unplaced source as notes. The elaborator,
+and so `run` and `interposer-pnr`, always refuses one: there is no assembly
+without positions.
+
+**Why a root key.** A source reader before 1.3 refuses an unknown ROOT key at any
+minor, while it skips an unknown item or `system` key of a higher minor with a
+note (see [Keys added after 1.1](#system-format-11)). Had the unplaced entries
+been a `system.external` key, such a reader would skip it and read on without
+those externals: wrong, not incomplete. As a root key, it refuses the file.
+
+## Format 1.4: a die's admission
+
+A die this run does not build arrives with its producer's own results: a die
+from a stock pad-ring flow, from another group, or from a foundry. From format
+1.4 its `dies` item may name an admission file, `admission`, the last key of the
+item: a relative path to a `.json` file under the path rule (not absolute, no
+variable, no `..` segment), resolved against the source's folder. The file
+holds one JSON object:
+
+| Key | Holds |
+|-----|-------|
+| `reason` | a non-empty string: why the die is placed |
+| `scope` | a non-empty string: what the admission covers, and what it does not |
+| `not_verified` | a non-empty list of non-empty strings: the checks the run does not verify for this die |
+
+Any other key is the file's own and is not read. The format has no key for who
+admits the die; the consuming flow takes that when the run starts, and a key the
+file adds for it is not read.
+
+```yaml
+format_version: "1.4"
+# _metadata and assembly as in any source
+system:
+  carrier: {technology: intm4tm2, top_cell: CF_CARRIER, size: [3000, 2000]}
+  dies:
+    - {id: U1, die: dies/IO_RING, at: [1500, 1000], method: cupillar_opt1, admission: admission.json}
+```
+
+A source stamped below `"1.4"` that writes `admission` is refused, and the
+finding names the minor. A writer stamps `"1.4"` only when a die names one.
+
+**Who reads it.** The source reader (tier 0) holds the key to the path rule and
+the `.json` suffix. Tier 1, which reads the die folders, reads the file too and
+refuses, on that die's line, one that is absent, is not a JSON object, or lacks
+one of the three keys or holds one of the wrong shape. Elaboration hands the
+flow each admitted die's instance and file. What an
+admission allows is the consuming flow's to decide; the format states no
+verdict, and an admitted die is never one the run built.
+
+**Why an item key.** A source reader before 1.4 skips `admission` with a note,
+as it skips any item key of a higher minor, and reads on with the die not
+admitted. Unlike the unplaced entries, that reading fails closed: a flow that
+places a die it did not build only on an admission refuses the die, so no root
+key is needed.
+
+## Format 1.5: a rail's routing requirement
+
+A rail with no requirement is routed at the narrowest width its layers allow,
+which is right for a signal and wrong for a supply that carries current. From
+format 1.5 a `rails` item of either class may state what it needs, in one of two
+forms, written after `volts` and before `ports`:
+
+| Key | Holds |
+|-----|-------|
+| `width_um` | the width the rail is routed at, um |
+| `amps` | the current the rail carries, A; only with `current_density_ma_per_um` |
+| `current_density_ma_per_um` | the current density it is drawn at, mA per um of width; only with `amps` |
+
+Each value is a positive, finite number (a bool is not a number). A rail states
+`width_um` or the pair, never both forms: `amps` without the density, the
+density without `amps`, and `width_um` beside either are refused at every minor
+that has the keys. The source never computes a width from the pair; the router
+does, as `amps * 1000 / current_density_ma_per_um`.
+
+```yaml
+format_version: "1.5"
+# _metadata and assembly as in any source
+system:
+  # carrier, dies and the other wiring as in any source
+  rails:
+    - {name: GND, class: ground, width_um: 20, ports: [U1.VSS, U2.VSS]}
+    - {name: VDD, class: power, volts: 1.2, amps: 1.5, current_density_ma_per_um: 75, ports: [U1.VDD, U2.VDD]}
+```
+
+A source stamped below `"1.5"` that writes any of the three is refused, and the
+finding names the minor. A writer stamps `"1.5"` only when a rail states one.
+
+**Who reads it.** The source reader holds the pairing and value rules above, the
+same refusals as a row of interposer-pnr's `net_requirements` (version 1), so
+a rail the source refuses is one the router refuses for the same reason; the
+schema states them too, all but finite, which a schema cannot say (the reader
+also refuses an integer too large for a float). What the source does not
+state is the router's to judge: the width it rounds to its grid, the maximum
+width of each route layer (a deck rule, not a constant of the format), whether
+the net exists and reaches two endpoints, and whether the backend routes a width
+at all. A flow hands each rail that states a requirement to its router under
+the rail's name.
+
+**Why an item key.** A source reader before 1.5 skips the three keys with a
+note, as it skips any item key of a higher minor, and a router fed that reading
+draws the rail at the layer minimum: wrong, not incomplete, the reason 1.3 made
+`unplaced` a root key. They stay item keys because the rail is the one place a
+requirement belongs, and the only consumer that turns the reading into copper
+fails closed: a flow that routes from a source checks that the readers it uses
+carry the three keys, and refuses a reading that skipped any `rails` key, before
+it builds anything. A root key would restate every rail name in a second place
+that can drift from the first. See VERSION_POLICY.md, "Stamps per document
+kind".
 
 ## Top-level block grammar (normative)
 
@@ -1125,6 +1414,17 @@ what makes flow rule 4 implementable:
   document order, and `top_level_block(text, "flow")` returns one or `None`.
 - C++: `ChipletDocument::flow_yaml` is the source slice of the `flow` block, key
   line included.
+- Both, the key SEQUENCE alone (reader release 1.5.0): Python
+  `chiplet_format_io.split_top_level_keys(text)` and C++
+  `chiplet_format_io::split_top_level_keys(text)` return `TopLevelKeys { keys,
+  not_splittable }`, a thin wrapper over the same splitter, for a host that writes
+  a document itself and must check that the bytes it is about to write split into
+  exactly the top-level keys it intended, in order. `keys` excludes the preamble and
+  is unreadable when `not_splittable` is set; a repeated top-level key raises as a
+  load does. It is not a loader: a forbidden line break splits here and is refused at
+  load, and a key-shaped continuation inside a quoted scalar is a key to this grammar
+  and a scalar to the parser, so the host compares against its own intended list and
+  never reads a non-empty result as success.
 
 ### A block the grammar cannot delimit
 
@@ -1249,8 +1549,10 @@ ones that need a reader, not a schema.
 **Enforced by the reference validator (hard errors):**
 
 1. `format_version` is checked by a tolerant policy, not by exact-string equality.
-   The on-disk baseline stays `"1.0"` (the format grows additively under it). A
-   reader accepts the same major with a minor at or below the one it supports;
+   The on-disk baseline stays `"1.0"` (the format grows additively under it); a
+   writer stamps the lowest minor its content needs, so an assembly is still
+   written `"1.0"` and a source `"1.1"`. A reader accepts the same major with a
+   minor at or below the highest it implements;
    accepts a same-major *higher* minor with a warning (reading it as the
    supported version and ignoring unknown additions); and rejects a different
    major (higher or lower) or a malformed value as a hard error. The field MUST
@@ -1260,12 +1562,17 @@ ones that need a reader, not a schema.
    writer preserves a same-major higher minor it was handed (the stamped version
    must describe the bytes written); a *lossy* writer that reconstructs from a
    struct model stamps the supported version, because it may have dropped
-   fields it did not understand.
+   fields it did not understand. A member of a closed vocabulary added after 1.0
+   carries the minor that added it (the schema's `x-since`, see [Machine-readable
+   schema](#machine-readable-schema)). A document stamped below that minor is out
+   of contract and refused, whether or not the reader knows the member, and no
+   writer, lossy or not, stamps below the highest such minor among the members
+   it writes.
 2. `assembly.name` is required and must not be empty.
 3. Every component has a non-empty `id` and a non-empty `type`.
 4. Every `interfaces[]` entry has an `id` and a non-empty `type`. Both reference validators enforce that much and no more: WHICH type is a closed vocabulary the schema enforces on producers (`micro_bump`, `copper_pillar`, `tsv`, `wire_bond`, `solder_bump`), and the readers carry an unrecognised member as the string it was written as, report it on the warn channel and refuse nothing over it. Refusing the document would make every future addition to the list a MAJOR; refusing the ELEMENT is the consumer's call and is what keeps it a MINOR. This is a VALIDATOR rule, not a parser rule, in both readers: the C++ reference used to enforce it inside `parse_interface`, where `LoadOptions::validate = false` did not reach it, so the two readers disagreed on the same document with validation off.
 5. Every `netlist.nets[]` entry has a `name`. *C++ reference only; the Python reference validator does not check this and accepts a nameless net.*
-6. A file whose top-level `_metadata.finalize_required` is `true` is refused unless intermediate files are explicitly allowed (it is not yet in the canonical frame; run the named `finalizer`).
+6. A file whose top-level `_metadata.finalize_required` is `true` is refused unless intermediate files are explicitly allowed (it is not yet in the canonical frame; run the named `finalizer`). A file with a top-level `system` block is a source and is refused by every assembly read path, before this rule and whatever it allows (`SourceDocumentError`, see [System](#system-format-11)). A source reader in turn refuses a source stamped below `"1.1"`, one that is not marked `finalize_required: true`, and one carrying a derived block.
 7. Quoting is document semantics, not an emitter default. A writer MUST quote EVERY
    scalar the format defines as a string (`format_version`, component and pad `id`s,
    `assembly.name`, `created`, `modified` and other names and dates, `technologies`
@@ -1299,6 +1606,23 @@ ones that need a reader, not a schema.
    Keys stay bare; values are quoted. The examples in this specification and in
    `examples/` quote every such field, because writers are copied from examples.
 
+   A source (a document with a top-level `system` block) is the one exception, for
+   its string values only: a person writes and revises it line by line, and in a
+   fully quoted line the names drown. Its strings go bare by a closed allowlist,
+   never by "when needed": a value matching `[A-Za-z_][A-Za-z0-9_./-]*` whose
+   lowercased form is none of `y`, `n`, `yes`, `no`, `true`, `false`, `on`, `off`,
+   `null` is written bare, and everything else is quoted (`"d2d_f[0..2]"`,
+   `"1.1"`, `"0755"`, `"2026-03-22"`, `"no"`). The concern above still holds,
+   because both reader families agree on every allowlisted word: a word that starts
+   with a letter or `_` is never a number, a date, `.inf` or a merge key to either,
+   and the bool and null words are out in every case form, so a YAML 1.1 loader and
+   yaml-cpp read each one as the same string. The allowlist is a pattern and a word
+   list, not a model of any loader's tables, and the self-test is the one above. A
+   source reader accepts a string bare or quoted, refuses a bare value outside the
+   allowlist, and gives the line to write with it quoted
+   (`conformance/fixtures/source_bare_strings_cases.json`). An assembly, and with it
+   every `design.chiplet` an elaborator writes, keeps this rule unchanged.
+
 8. A pad's `io_class` must allow the `type` of every interface it takes part in,
    per the normative table under [Usage class and interface
    type](#usage-class-and-interface-type-normative). For each interface and each of
@@ -1329,7 +1653,7 @@ manifest; the reference validators state this rule and do NOT run it):**
    are the hosts that hold both halves. The KiCad plugin refuses to WRITE an
    inconsistent binding at export, because the writer that creates a binding is
    the cheapest place to refuse one; adk-tools' assembly DRC, the Mosaic loader
-   and chiplet-system validate at LOAD, so a document that arrived by another
+   and chiplet-system-description validate at LOAD, so a document that arrived by another
    route is still caught. The two reference validators (`chiplet-format-io`,
    Python and C++) hold no manifest, so they state this rule without running it:
    a green from a reference reader says nothing about rule 9, and
@@ -1339,7 +1663,7 @@ manifest; the reference validators state this rule and do NOT run it):**
    the BINDING (component -> method -> interface type) and nothing behind it,
    neither the geometry of the stack nor the pads it lands on, and only for a
    component that carries `connection:`; a component without one mounts on the
-   interposer fallback (rule 11) and there is no method to disagree with. It is
+   interposer's plane (rule 11) and there is no method to disagree with. It is
    independent of [rule 8](#validation-rules): rule 8 relates a pad's usage class
    to the interface type inside one document, rule 9 relates the method to the
    interface type across two artifacts, and a document can pass either one and
@@ -1348,7 +1672,7 @@ manifest; the reference validators state this rule and do NOT run it):**
 **Reader behavior (warnings / fallbacks, not hard errors):**
 
 10. New files SHOULD declare `anchor:` on every component; a reader defaults an absent `anchor` to `bbox_center` and warns.
-11. If `connection` is specified it SHOULD name a known interconnect method; an absent or unresolved `connection` falls back to the interposer's `attachment_surface_z` (or `dimensions.thickness` when that field is absent, for legacy files) -- see the [coordinate-frame contract](./coord_frame_contract.md), section 3.
+11. If `connection` is specified it SHOULD name a known interconnect method; an absent or unresolved `connection` mounts on the interposer's `attachment_surface_z` with connection height 0 -- see the [coordinate-frame contract](./coord_frame_contract.md), section 3.
 12. A reader MUST warn (or reject) when any `position.x` or `position.y` exceeds `1e5` um in magnitude (heuristic for un-converted absolute coordinates).
 
 **Consumer / tool-level (NOT enforced by the reference library, which never touches the filesystem):**
@@ -1357,6 +1681,7 @@ manifest; the reference validators state this rule and do NOT run it):**
 14. Component `type` is expected to be one of the canonical values `die`, `die_array`, `interposer`, `substrate`; the reference reader accepts any non-empty string, so other values are allowed but not recommended.
 15. If `technology` is specified it should reference a defined technology id.
 16. If `layout` or `layer_properties` is specified, the referenced file should exist at the resolved path.
+17. An interposer that seats dies and declares no `attachment_surface_z` has no mount plane. A tool that places dies in z for another tool refuses the file; a viewer may show the dies on `dimensions.thickness`, with a warning naming the file. See the [coordinate-frame contract](./coord_frame_contract.md), section 3.4.
 
 ---
 
@@ -1500,3 +1825,9 @@ components:
 | 1.0 | 2026-09-04 | Defined the format's line-break set as LF and CRLF, and made ill-formed every character a YAML parser breaks a line on that this grammar does not: NEL (`U+0085`), `U+2028` and `U+2029` anywhere, and a CR (`U+000D`) not immediately followed by LF, end of file included. Both reference readers refuse such a document on the text before any YAML parse, with the refusal naming the code point and the line, and the set is derived by executing a parser over a code-point range rather than listed by hand. This is an INTENTIONAL behaviour change, not a regression: `name: demo<U+2028>trailing` loads today in yaml-cpp 0.8.0 and stops loading after this release, and a consumer meets that through its next vendoring bump. It is a clarification rather than a MAJOR because the format had never defined its line-break set, so those bytes were never legal; yaml-cpp accepting them was implementation behaviour that PyYAML already refused on the same bytes; and no conforming producer can write one, since the writer rule escapes them and the escaped form carries any value that needs one (measured: all 19 `.chiplet` here dumped through the writer before and after the rule give zero differing files). The sweeps corroborate rather than establish that, and they bound a corpus of committed machine-written output: zero occurrences across every `.chiplet` outside build trees plus the YAML and stackups shipped with them, zero in the KiCad plugin's 187 `.chiplet`, and zero lone CR across 183 `.chiplet` with build trees included. Added the matching writer rule (escape them inside a double-quoted scalar) and fixed the Python reference writer, which emitted them raw into a single-quoted scalar and then folded them on the next read, so the value did not survive its own round trip. No document shape changed and `format_version` stays `"1.0"`. |
 | 1.0 | 2026-09-04 | Stated who enforces a closed vocabulary, and corrected three sentences that said the wrong thing. A closed vocabulary (component `anchor`, component `orientation`, `interfaces[].type`, `io_pads[].io_class`) binds WRITERS and is enforced by [`schemas/chiplet.schema.json`](../schemas/chiplet.schema.json); the reference readers carry every one of them as the string the document wrote, report an unrecognised member on their warn channel, and refuse nothing over it, so a consumer that cannot act on a member refuses the ELEMENT that carries it. That is what keeps an addition to one of these lists a MINOR: a reader refusing the DOCUMENT would make every future addition a MAJOR for everyone downstream. Rule 4 accordingly drops the clause about refusing an unlisted type and moves TIER in the C++ reference, from the parser to the validator, which is what its own text under "Enforced by the reference validator" always said; it had lived in `parse_interface`, where `LoadOptions::validate = false` did not reach it, so the two readers loaded different documents from one file. The prose list of closed vocabularies gains `io_pads[].io_class` (it closed four, the prose named three), and the gloss saying the reference readers accepted `solder_bump` before the 1.1 stamp is gone: it stated a prohibition in terms of what a reader knows rather than what a document may carry. The `solder_bump` format MINOR is untouched and still owed at 1.1. Reader release 1.1.0 to 1.2.0; no document shape changed and `format_version` stays `"1.0"`. |
 | 1.0 | 2026-09-04 | Defined the anchor of a `die_array`, which the format had never stated (SPEC-30). `anchor` applies PER ELEMENT: `array.start_position` places the FIRST element's anchor point and every element is placed by that same anchor, so a `die_array` has one definition of `anchor` and its effect does not depend on the component's type. The gap was live rather than theoretical: the frame contract, which this document names as the source of truth for the anchor convention, defined the anchor for a component's own mesh and never mentioned `die_array` or `start_position`, so both readings of `start_position` were admissible and consumers had silently picked one, with three interposer-pnr tests declaring `gds_origin` on an array and then asserting the centre reading. A MINOR clarification that reinterprets zero existing documents: exactly two `die_array` components exist across the ecosystem, and the other declares no anchor, so `conformance/fixtures/v1_0_all_blocks.chiplet` moves from `gds_origin` to `bbox_center` in the same commit rather than have its meaning restated after the fact. No document shape changed and `format_version` stays `"1.0"`. |
+| 1.0 | 2026-11-09 | Withdrew the stand-ins for a missing interposer `attachment_surface_z` that the 2026-07-21 row introduced: neither `dimensions.thickness` nor a technology stackup's plane is a mount plane any more. An interposer that seats dies without the field has none; an exporter refuses the file and a viewer may show the dies on `thickness` with a warning (rule 17; coordinate-frame contract, section 3.4). The field stays optional and the reference readers do not change; `format_version` stays `"1.0"`. |
+| 1.1 | 2026-10-18 | Added the optional top-level `system` block, taking the root key count from eleven to twelve, and with it a second kind of document: a SOURCE, which names dies, placements and wiring and from which a tool derives the assembly (see [System](#system-format-11)). A source is stamped `"1.1"`, carries `_metadata.finalize_required: true` and none of the derived blocks; an assembly is still stamped `"1.0"`, because a writer stamps the lowest minor its content needs. Every assembly read path in both reference readers refuses a source with `SourceDocumentError`, whatever `allow_intermediate` or `validate` say; the Python reference reads one only under `allow_source=True`. Readers now implement 1.1, so a `"1.1"` document reads without a warning. In the same minor: each closed-vocabulary member added after 1.0 carries the minor that added it (`x-since`), `solder_bump` is format 1.1, and `assembly.units` is closed to `um`, its default when absent, with any other value refused. Reader release 1.14.0. |
+| 1.2 | 2026-10-26 | Added the optional `volts` key to a `power` rail of the `system` block: the rail's nominal supply, a positive number in volts, refused on a `ground` rail, which is 0 by its class. It is the first source key added after 1.1, so each such key now carries the minor that added it as schema data (`x-since` on the property, `SOURCE_KEY_SINCE`): a source stamped below it is refused, and a writer stamps a source that writes `volts` `"1.2"` and one that writes none `"1.1"`. A source reader reading a source above its own minor now skips an unknown item key and reports it, as this policy always promised; at or below its minor the key is still refused. Readers implement 1.2, so a `"1.2"` document reads without a warning and `"1.3"` is the first that warns. No assembly key changed; an assembly is still stamped `"1.0"`. Reader release 1.15.0. |
+| 1.3 | 2026-10-26 | Added the unplaced source, so a source drawn on a schematic sheet is a `.chiplet` before anything is placed: a die may omit `at` and `rotation` (together; `rotation` alone is refused at every minor), the carrier may omit `size`, `external` may omit `edges`, `system.dies` may be absent or empty, and the new root key `unplaced: {pins: [...]}`, written after `system`, holds the external entries no edge carries yet. Each is refused in a source stamped below 1.3. A writer stamps `"1.3"` only when the content needs it, and drops back once placement has filled everything in. The source reader reads it; tier 1 refuses it unless the caller opts in, `check` opts in, and the elaborator always refuses it. `unplaced` is a root key so that a reader before 1.3 refuses the file rather than reading on without those externals. The schema relaxes the four requirements from 1.3 on and keeps them below. No assembly key changed. Both reference readers implement 1.3, so a `"1.3"` document reads without a warning and `"1.4"` is the first that warns; the Python reference holds what a source may leave open by its stamp (`SOURCE_KEY_SINCE` gains `unplaced`). Reader release 1.16.0. |
+| 1.4 | 2026-10-29 | Added the optional `admission` key to a `dies` item of the `system` block: a relative `.json` naming the die's admission, for a die the run does not build. The file holds `reason`, `scope` and `not_verified` (see [Format 1.4](#format-14-a-dies-admission)); the format has no key for who admits the die. The key carries its minor as schema data (`x-since` on the property, `SOURCE_KEY_SINCE`), so a source stamped below 1.4 that writes it is refused, and a writer stamps a source that writes it `"1.4"`; the schema states the same as an `allOf` branch on the stamp. Tier 1 of the source reader reads the file and refuses an absent or malformed one on the die's line. A source reader before 1.4 skips the key with a note, which fails closed: the die is not admitted. Readers implement 1.4, so a `"1.4"` document reads without a warning and `"1.5"` is the first that warns. No assembly key changed; an assembly is still stamped `"1.0"`. Reader release 1.18.0. |
+| 1.5 | 2026-10-30 | Added the optional routing requirement of a rail of the `system` block, on either class: `width_um`, or `amps` with `current_density_ma_per_um` (see [Format 1.5](#format-15-a-rails-routing-requirement)), written after `volts` and before `ports`. `amps` without the density, the density without `amps`, `width_um` beside either, and a value that is not a positive finite number are refused at every minor that has the keys. Each key carries its minor as schema data (`x-since` on the property, `SOURCE_KEY_SINCE`), so a source stamped below 1.5 that writes one is refused, and a writer stamps a source that writes one `"1.5"`; the schema states the same as an `allOf` branch on the stamp. The width a rail is routed at, its rounding and the cap of each layer are the router's; the format holds none of them. A source reader before 1.5 skips the keys with a note, which would route the rail narrow, so the consumer that routes from the source refuses such a reading. Readers implement 1.5, so a `"1.5"` document reads without a warning and `"1.6"` is the first that warns. No assembly key changed; an assembly is still stamped `"1.0"`. Reader release 1.20.0. |

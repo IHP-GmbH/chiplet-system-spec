@@ -1,0 +1,43 @@
+# Workshop example 1: DRIVER with level shifters on sg13g2 and ECHO on gf180mcu, wire-bonded out.
+format_version: "1.1"
+_metadata:
+  finalize_required: true
+  finalizer: "packaging-flow run"
+assembly:
+  name: cf_two_die_echo_shifted_gf180
+  description: "DRIVER/ECHO pair with a level shifter on every lane, ECHO built on gf180mcu, placed from emitted die contracts on an IntM4TM2 carrier with three shared rails and nine wire-bond pads"
+  units: um
+interposer:
+  adapter: intm4tm2
+
+# --- the system: everything below is edited by its one writer ---
+system:
+  carrier: {technology: intm4tm2, top_cell: CF_CARRIER, size: [2000, 3500]}
+  # the carrier is centred; dies are placed from its lower-left corner
+  registry: inputs/registry/interconnect_pdk
+  dies:
+    # U1 drives, U2 echoes
+    - {id: U1, die: inputs/dies/CF_DRIVER_LS, at: [1000, 2500], rotation: 0, method: cupillar_opt1, thickness: 750}  # sg13g2, 750 um bulk
+    - {id: U2, die: inputs/dies/CF_ECHO_CX_BONDPAD, at: [1010, 1000], rotation: 0, method: gf180mcu_flow_demo_pillar, thickness: 725}
+
+  # twenty-two lanes, one level shifter each
+  buses:
+    - {ends: [U1, U2], ports: ["d2d_f[0..9]", d2d_fclk, d2d_frst_n, "d2d_r[0..9]"], net_suffix: _n}
+  rails:   # three shared rails
+    - {name: GND, class: ground, ports: [U1.VSS, U2.VSS]}
+    - {name: V12, class: power, ports: [U1.VDD]}   # core, U1 only
+    - {name: V33, class: power, ports: [U1.IOVDD, U2.VDD]}
+  external:
+    profile: intm4tm2_wire_bond_v0
+    edges:
+      # nine wire-bond pads
+      north: [U1.CFG_MODE, U1.CLK, U1.STATUS]
+      south: [U2.CFG_MODE, U2.STATUS]
+      west: [U1.RSTN, V12]
+      east: [V33, GND]
+  fill_keepout: {halo_um: {M4: 20, M5: 20, TM1: 60, TM2: 60}}
+# the flow block is the flow's: never rewritten here
+flow:
+  packaging_flow:
+    route: {tech: ihp_sg13g2_intm4tm2_rdl2, interconnect_adapter: ihp_cupillar}
+    checks: {template: workshop}   # the workshop template

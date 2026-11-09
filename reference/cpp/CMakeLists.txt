@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.16)
 # VERSION is the reader release, kept equal to READER_RELEASE in the header and
 # to chiplet_format_io.__version__ on the Python side.
-project(chiplet_format_io LANGUAGES CXX VERSION 1.4.0)
+project(chiplet_format_io LANGUAGES CXX VERSION 1.22.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,7 +40,7 @@ if(CHIPLET_FORMAT_IO_BUILD_TESTS)
   add_executable(test_chiplet_format_io tests/test_chiplet_format_io.cpp)
   target_link_libraries(test_chiplet_format_io PRIVATE chiplet_format_io)
   # The repository root, derived from THIS source directory rather than from
-  # CMAKE_SOURCE_DIR, so the paths below still point at chiplet-spec when
+  # CMAKE_SOURCE_DIR, so the paths below still point at this repository when
   # reference/cpp is pulled into a superproject with add_subdirectory().
   get_filename_component(_chiplet_spec_root "${CMAKE_CURRENT_SOURCE_DIR}/../.."
                          ABSOLUTE)
@@ -60,7 +60,7 @@ if(CHIPLET_FORMAT_IO_BUILD_TESTS)
     # CHIPLET_VERSION_ORACLE overrides at run time, absence fails the run):
     # the Python reference runs the same rows in conformance/test_version_policy.py.
     CHIPLET_VERSION_ORACLE_DEFAULT="${_chiplet_spec_root}/conformance/fixtures/version_policy_cases.json"
-    # The carry-rule oracle (SPEC-32): the cross product of implementation,
+    # The carry-rule oracle: the cross product of implementation,
     # LoadOptions::validate and load vs load-then-dump, over the same documents
     # conformance/test_unknown_vocabulary_roundtrip.py runs. Same terms again
     # (default here, CHIPLET_VOCABULARY_ORACLE overrides, absence fails the run),
@@ -70,4 +70,9 @@ if(CHIPLET_FORMAT_IO_BUILD_TESTS)
     CHIPLET_VOCABULARY_ORACLE_DEFAULT="${_chiplet_spec_root}/conformance/fixtures/unknown_vocabulary_cases.json"
     CHIPLET_FIXTURES_DIR="${_chiplet_spec_root}/conformance/fixtures")
   add_test(NAME chiplet_format_io COMMAND test_chiplet_format_io)
+  add_executable(test_root_capture tests/test_root_capture.cpp)
+  target_link_libraries(test_root_capture PRIVATE chiplet_format_io)
+  target_compile_definitions(test_root_capture PRIVATE
+    CHIPLET_CAPTURE_FIXTURES="${_chiplet_spec_root}/conformance/fixtures")
+  add_test(NAME chiplet_root_capture COMMAND test_root_capture)
 endif()

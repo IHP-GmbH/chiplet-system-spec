@@ -1,0 +1,53 @@
+{
+  "format": "chiplet-eda-views-transistor/v1",
+  "dialect": "spice",
+  "netlist_kind": "schematic",
+  "top": "OTA1336",
+  "top_form": "commented",
+  "pins": [
+    {
+      "name": "vdd",
+      "role": "supply"
+    },
+    {
+      "name": "iout",
+      "role": "signal"
+    },
+    {
+      "name": "vout",
+      "role": "signal"
+    },
+    {
+      "name": "v-",
+      "role": "signal"
+    },
+    {
+      "name": "v+",
+      "role": "signal"
+    },
+    {
+      "name": "vss",
+      "role": "supply"
+    }
+  ],
+  "devices": [
+    "sg13_lv_nmos",
+    "sg13_lv_pmos",
+    "cap_cmim",
+    "ntap1",
+    "ptap1"
+  ],
+  "local_subckts": [
+    "diff_pair"
+  ],
+  "pdk": {
+    "name": "ihp-sg13g2",
+    "revision": "bf0790268f00fd9ebf5625d273a68f24e21bbb8f"
+  },
+  "files": [
+    {
+      "file": "OTA1336-final.spice",
+      "sha256": "483638c4ddc0ec0eb23f9920da946e3359fa9b57e8b5a3036b892cd4f8611ddf"
+    }
+  ]
+}

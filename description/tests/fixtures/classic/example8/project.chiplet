@@ -1,0 +1,21 @@
+# Workshop example 1 drawn from blank: the project file a classic sheet is read into.
+format_version: "1.3"
+_metadata:
+  finalize_required: true
+  finalizer: "packaging-flow run"
+assembly:
+  name: cf_two_die_echo_shifted_gf180
+  description: "DRIVER/ECHO pair with a level shifter on every lane, drawn on a classic sheet"
+  units: um
+interposer:
+  adapter: intm4tm2
+system:
+  carrier: {technology: intm4tm2, top_cell: CF_CARRIER}
+  registry: inputs/registry/interconnect_pdk
+  external:
+    profile: intm4tm2_wire_bond_v0
+  fill_keepout: {halo_um: {M4: 20, M5: 20, TM1: 60, TM2: 60}}
+flow:
+  packaging_flow:
+    route: {tech: ihp_sg13g2_intm4tm2_rdl2, interconnect_adapter: ihp_cupillar}
+    checks: {template: workshop}

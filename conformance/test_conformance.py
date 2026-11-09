@@ -26,7 +26,7 @@ def test_manifest_covers_the_required_seed_fixtures():
     files = {e["file"] for e in manifest["fixtures"]}
     required = {
         "v1_0_baseline.chiplet", "v1_0_unquoted_numeric.chiplet",
-        "v1_0_additive_unknown_key.chiplet", "v1_1_higher_minor.chiplet",
+        "v1_0_additive_unknown_key.chiplet", "v1_6_higher_minor.chiplet",
         "v2_0_higher_major.chiplet", "v0_9_lower_major.chiplet",
         "v1_0_missing_version.chiplet", "v1_0_malformed_version.chiplet",
     }

@@ -44,9 +44,8 @@ CHIPLET_SCHEMA = json.loads(
 CORPUS = sorted(EXAMPLES.glob("*.chiplet")) + sorted(FIXTURES.glob("*.chiplet"))
 
 #: Corpus documents the schema REFUSES, each with the reason. Everything else in
-#: the corpus must validate. Two of these are refused by the reader as well (they
-#: are version negatives); the other two are the deliberate structure-vs-semantics
-#: divergences below.
+#: the corpus must validate. Those the reader accepts are the deliberate
+#: structure-vs-semantics divergences below; the reader refuses the rest as well.
 SCHEMA_NEGATIVE = {
     "v1_0_additive_unknown_key.chiplet": "an undeclared root key",
     "v1_0_unquoted_numeric.chiplet": "format_version written unquoted",
@@ -56,6 +55,8 @@ SCHEMA_NEGATIVE = {
         "an interfaces[].type outside the closed enum",
     "v1_0_unknown_type_meets_known_io_class.chiplet":
         "the same, on an interface that meets a pad with a known io_class",
+    "v1_1_units_other.chiplet": "assembly.units outside the closed set",
+    "v1_3_unplaced_assembly.chiplet": "the root unplaced without a system block",
 }
 
 #: The ONLY documents where the structural schema and the reference reader
@@ -106,6 +107,14 @@ DIVERGENCES = {
                "of neither is outside its domain, so it is skipped the way an "
                "unrecognised io_class already was.",
     },
+    "v1_0_system_block.chiplet": {
+        "schema": True, "reader": False,
+        "why": "A source document stamped 1.0. The schema validates the system "
+               "block's structure and does not pin the minor it appeared in, "
+               "for the reason it does not pin the major: version tolerance is "
+               "reader semantics. The reader, asked to read a source, refuses "
+               "it because the system block does not exist before 1.1.",
+    },
     "v1_0_interface_pad_mismatch.chiplet": {
         "schema": True, "reader": False,
         "why": "A wire_bond pad on the layer a copper_pillar interface lands "
@@ -144,15 +153,21 @@ def _doc(name: str) -> dict:
 #: negative always starts from something that really validates.
 ALL_BLOCKS = _doc("v1_0_all_blocks.chiplet")
 
+#: The same for the system block (format 1.1): every system key, used once.
+SYSTEM_SOURCE = _doc("v1_1_system_source.chiplet")
+
 
 def _reader_accepts(data) -> bool:
     """Whether the reference reader loads this document (intermediate allowed).
 
     allow_intermediate=True so the _metadata guard, which is a workflow rule and
-    not a structural one, never shows up as a cross-parse divergence.
+    not a structural one, never shows up as a cross-parse divergence. Likewise
+    allow_source=True: refusing a source document on the assembly path is a
+    workflow rule too, and the schema describes both kinds.
     """
     try:
-        cfio.validate(copy.deepcopy(data), allow_intermediate=True)
+        cfio.validate(copy.deepcopy(data), allow_intermediate=True,
+                      allow_source=True)
     except cfio.ChipletFormatError:
         return False
     return True
@@ -165,14 +180,14 @@ def test_chiplet_schema_is_wellformed_draft07():
     cls.check_schema(CHIPLET_SCHEMA)
 
 
-def test_root_is_closed_and_declares_the_eleven_spec_keys():
+def test_root_is_closed_and_declares_the_thirteen_spec_keys():
     # The root key table in docs/CHIPLET_FORMAT_SPEC.md is the contract; this is
     # that table, executable. A key added to one and not the other fails here.
     assert CHIPLET_SCHEMA["additionalProperties"] is False
     assert set(CHIPLET_SCHEMA["properties"]) == {
         "format_version", "assembly", "technologies", "connection_stacks",
         "components", "interconnect", "interposer", "interfaces", "netlist",
-        "flow", "_metadata",
+        "flow", "system", "unplaced", "_metadata",
     }
     assert set(CHIPLET_SCHEMA["required"]) == {"format_version", "assembly"}
 
@@ -207,8 +222,13 @@ def test_every_committed_chiplet_validates_except_pinned_divergences():
 def test_all_blocks_fixture_exercises_every_root_key():
     # A coverage fixture that stops covering is worse than none: it reports green
     # over blocks nothing validates any more.
+    # `system` and `unplaced` are the root keys it cannot carry: they are a
+    # source document's, which holds no derived block, so the system block has
+    # its own coverage fixture.
     present = set(ALL_BLOCKS) | {"_metadata"}
-    assert present == set(CHIPLET_SCHEMA["properties"])
+    assert present == set(CHIPLET_SCHEMA["properties"]) - {"system", "unplaced"}
+    system_keys = set(CHIPLET_SCHEMA["definitions"]["system"]["properties"])
+    assert set(SYSTEM_SOURCE["system"]) == system_keys
 
 
 def test_intermediate_metadata_block_validates():
@@ -582,3 +602,165 @@ def test_schema_valid_documents_load_with_the_reference_reader():
         checked += 1
         assert _reader_accepts(data), path.name
     assert checked, "no schema-valid same-major document left to check"
+
+
+# --- (h) the system block (format 1.1) -------------------------------------
+def test_system_source_fixture_validates():
+    assert _valid(SYSTEM_SOURCE), [e.message for e in _errors(SYSTEM_SOURCE)]
+
+
+@pytest.mark.parametrize("block", list(cfio.DERIVED_BLOCKS))
+def test_system_beside_a_derived_block_is_rejected(block):
+    # A source names what the elaborator derives; a file that holds both has two
+    # authorities for one fact.
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc[block] = copy.deepcopy(ALL_BLOCKS[block])
+    assert not _valid(doc)
+
+
+def test_derived_blocks_match_the_schema_root():
+    assert set(cfio.DERIVED_BLOCKS) < set(CHIPLET_SCHEMA["properties"])
+    assert not {"format_version", "assembly", "interposer", "flow", "system",
+                "_metadata"} & set(cfio.DERIVED_BLOCKS)
+
+
+def test_system_requires_finalize_required_true():
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    del doc["_metadata"]
+    assert not _valid(doc)
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["_metadata"]["finalize_required"] = False
+    assert not _valid(doc)
+
+
+def test_system_needs_a_carrier_and_dies():
+    for key in ("carrier", "dies"):
+        doc = copy.deepcopy(SYSTEM_SOURCE)
+        del doc["system"][key]
+        assert not _valid(doc), key
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["dies"] = []
+    assert not _valid(doc)
+
+
+def test_unknown_system_key_is_rejected():
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["nets"] = []
+    assert not _valid(doc)
+
+
+def test_die_rotation_is_a_right_angle():
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["dies"][0]["rotation"] = 45
+    assert not _valid(doc)
+
+
+@pytest.mark.parametrize("path", ["/abs/die", "../die", "a/../b", "${HOME}/die"])
+def test_system_paths_are_relative_and_literal(path):
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["dies"][0]["die"] = path
+    assert not _valid(doc), path
+
+
+def test_a_port_ref_names_an_instance_and_a_port():
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["alone"] = ["STATUS"]
+    assert not _valid(doc)
+
+
+def test_rail_class_is_closed():
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["rails"][0]["class"] = "signal"
+    assert not _valid(doc)
+
+
+def test_an_edge_outside_the_four_is_rejected():
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["system"]["external"]["edges"]["top"] = ["U1.CLK"]
+    assert not _valid(doc)
+
+
+# --- (i) the unplaced source (format 1.3) ----------------------------------
+def _unplaced_pins(system, doc):
+    doc["unplaced"] = {"pins": system.pop("alone")}
+
+
+#: Each thing a 1.3 source may leave to placement, as an edit of SYSTEM_SOURCE.
+LEFT_OPEN = {
+    "no dies": lambda s, d: s.pop("dies"),
+    "empty dies": lambda s, d: s.update(dies=[]),
+    "a die with no at": lambda s, d: [s["dies"][0].pop(k) for k in ("at", "rotation")],
+    "a carrier with no size": lambda s, d: s["carrier"].pop("size"),
+    "external with no edges": lambda s, d: s["external"].pop("edges"),
+    "the root unplaced": _unplaced_pins,
+}
+#: Edits refused at every stamp, by the schema and the reader alike.
+NEVER = {
+    "a rotation with no at": lambda s, d: s["dies"][0].pop("at"),
+    "unplaced with no external": lambda s, d: (_unplaced_pins(s, d), s.pop("external")),
+    "unplaced with no pins": lambda s, d: d.update(unplaced={"pins": []}),
+    "unplaced as a list": lambda s, d: d.update(unplaced=["U2.STATUS"]),
+}
+
+
+@pytest.mark.filterwarnings("ignore::chiplet_format_io.FormatVersionWarning")
+@pytest.mark.parametrize("stamp", ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"])
+@pytest.mark.parametrize("edit", sorted(LEFT_OPEN) + sorted(NEVER))
+def test_schema_and_reader_agree_on_what_a_stamp_lets_a_source_leave_open(edit, stamp):
+    """The schema's 1.3 branch and the reference reader give one verdict on
+    each thing a source may leave to placement, at each stamp: refused below
+    1.3, read from 1.3 on; and on the edits refused at every stamp."""
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["format_version"] = stamp
+    {**LEFT_OPEN, **NEVER}[edit](doc["system"], doc)
+    expected = edit in LEFT_OPEN and \
+        cfio.parse_format_version(stamp) >= cfio.parse_format_version(cfio.UNPLACED_SINCE)
+    assert (_valid(doc), _reader_accepts(doc)) == (expected, expected)
+
+
+@pytest.mark.filterwarnings("ignore::chiplet_format_io.FormatVersionWarning")
+@pytest.mark.parametrize("stamp", ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"])
+@pytest.mark.parametrize("admission, shaped", [
+    ("admission.json", True), ("admissions/U1.json", True), ("C:/admission.json", True),
+    ("dies\\admission.json", True), ("x:a.json", True), ("\\\\srv\\a.json", True),
+    ("admission.yaml", False), ("../admission.json", False), ("dies/../a.json", False),
+    ("/abs/admission.json", False), ("${HOME}/a.json", False), ("", False), (3, False),
+])
+def test_schema_and_reader_agree_on_a_die_s_admission(admission, shaped, stamp):
+    """A die row's admission (format 1.4): the schema and the reference reader
+    refuse it below 1.4, and from 1.4 read it when it names a relative .json
+    file, at each stamp. The forms a source reader may refuse on its own
+    (drive letters, backslashes) are in the list, so the two rules stay one."""
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["format_version"] = stamp
+    doc["system"]["dies"][0]["admission"] = admission
+    expected = shaped and \
+        cfio.parse_format_version(stamp) >= cfio.parse_format_version("1.4")
+    assert (_valid(doc), _reader_accepts(doc)) == (expected, expected)
+
+
+@pytest.mark.filterwarnings("ignore::chiplet_format_io.FormatVersionWarning")
+@pytest.mark.parametrize("stamp", ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"])
+@pytest.mark.parametrize("rail, requirement, shaped", [
+    (1, {"width_um": 20}, True), (1, {"width_um": 0.5}, True),
+    (0, {"width_um": 20}, True), (1, {"amps": 1.5, "current_density_ma_per_um": 75}, True),
+    (1, {"amps": 1.5}, False), (1, {"current_density_ma_per_um": 75}, False),
+    (1, {"width_um": 20, "amps": 1.5}, False),
+    (1, {"width_um": 20, "current_density_ma_per_um": 75}, False),
+    (1, {"width_um": 20, "amps": 1.5, "current_density_ma_per_um": 75}, False),
+    (1, {"width_um": 0}, False), (1, {"width_um": -1}, False), (1, {"width_um": "20"}, False),
+    (1, {"width_um": True}, False), (1, {"amps": 0, "current_density_ma_per_um": 75}, False),
+    (1, {"amps": 1.5, "current_density_ma_per_um": -1}, False),
+])
+def test_schema_and_reader_agree_on_a_rail_s_requirement(rail, requirement, shaped, stamp):
+    """A rail's routing requirement (format 1.5), on the ground rail (0) and
+    the power rail (1): the schema and the reference reader refuse it below
+    1.5, and from 1.5 read a width or a current with its density, each
+    positive. Non-finite values are the reader's alone, since a schema cannot
+    say finite, and are in its own tests."""
+    doc = copy.deepcopy(SYSTEM_SOURCE)
+    doc["format_version"] = stamp
+    doc["system"]["rails"][rail].update(requirement)
+    expected = shaped and \
+        cfio.parse_format_version(stamp) >= cfio.parse_format_version("1.5")
+    assert (_valid(doc), _reader_accepts(doc)) == (expected, expected)
