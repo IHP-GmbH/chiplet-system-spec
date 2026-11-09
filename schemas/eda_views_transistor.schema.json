@@ -1,0 +1,88 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://heterogenic-chip-design-project/chiplet-spec/schema/eda_views_transistor.schema.json",
+    "title": "Transistor-level view of a block (chiplet-eda-views-transistor/v1)",
+    "description": "Names a block's netlist files by relative path and sha256, in listing order, and states what a consumer binds: the top subcircuit as written, whether the netlist holds it as a .subckt card or as the commented **.subckt pair Xschem writes, the top's pins in order with a declared role each, the library subcircuits the netlist instantiates (devices) and the ones it defines besides the top (local_subckts). It stands alone beside its files, paths relative to its own directory, or sits in an eda-views.json record as one transistor_view row plus the spice or cdl rows it names, paths relative to the record. Structural validation only: the reader derives the pins, local_subckts and devices from the files and refuses any difference, refuses a path that resolves outside its root, and refuses a dialect it does not read.",
+    "type": "object",
+    "required": [
+        "format",
+        "dialect",
+        "netlist_kind",
+        "top",
+        "top_form",
+        "pins",
+        "devices",
+        "local_subckts",
+        "pdk",
+        "files"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "format": {
+            "const": "chiplet-eda-views-transistor/v1"
+        },
+        "dialect": {
+            "enum": ["spice", "cdl"]
+        },
+        "netlist_kind": {
+            "enum": ["schematic", "pnr", "extracted", "pex"]
+        },
+        "top": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The top subcircuit's name as the netlist writes it. A consumer binds the reader's mapped top, never this value."
+        },
+        "top_form": {
+            "enum": ["subckt", "commented"]
+        },
+        "pins": {
+            "type": "array",
+            "description": "The top's pins in its order. Roles are declared, not derived.",
+            "items": {
+                "type": "object",
+                "required": ["name", "role"],
+                "additionalProperties": false,
+                "properties": {
+                    "name": {"type": "string", "minLength": 1},
+                    "role": {"enum": ["signal", "supply", "internal"]}
+                }
+            }
+        },
+        "devices": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+        },
+        "local_subckts": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+        },
+        "pdk": {
+            "type": "object",
+            "required": ["name", "revision"],
+            "additionalProperties": false,
+            "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "revision": {"type": "string", "minLength": 1}
+            }
+        },
+        "files": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["file", "sha256"],
+                "additionalProperties": false,
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A relative POSIX path with no .. component."
+                    },
+                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}(?![\\s\\S])"}
+                }
+            }
+        }
+    }
+}

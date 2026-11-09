@@ -1,5 +1,5 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: chiplet-spec
+Upstream-Name: chiplet-system-spec
 Upstream-Contact: IHP GmbH
 Source: https://github.com/IHP-GmbH
 
@@ -12,3 +12,34 @@ Copyright: 2026 IHP GmbH
 License: Apache-2.0
 Comment: JSON/YAML data files cannot carry inline SPDX comment headers without
  risking strict parsers; their license is declared here (REUSE DEP5).
+
+Files: conformance/fixtures/transistor_view/cmp7345/CMP7345-final.spice
+Copyright: The authors of the IHP__CMP7345 repository, https://github.com/KrzysztofHerman/IHP__CMP7345
+License: Apache-2.0
+Comment: Vendored at commit 688ee1cfb81b82e6058699e429825682b25d3002 with the
+ sch_path and sym_path comment lines removed; the file header says so.
+
+Files: conformance/fixtures/transistor_view/cmp7345/CMP7345.cdl
+Copyright: The authors of the IHP__CMP7345 repository, https://github.com/KrzysztofHerman/IHP__CMP7345
+License: Apache-2.0
+Comment: Vendored at commit 688ee1cfb81b82e6058699e429825682b25d3002 with the
+ sch_path comment lines removed; the file header says so.
+
+Files: conformance/fixtures/transistor_view/cmp7345/CMP7345.amended.cdl
+Copyright: The authors of the IHP__CMP7345 repository, https://github.com/KrzysztofHerman/IHP__CMP7345
+License: Apache-2.0
+Comment: Derived from that repository at commit
+ 688ee1cfb81b82e6058699e429825682b25d3002 with the changes its header states,
+ and copied byte for byte so that the receipt beside it binds it by sha256.
+
+Files: conformance/fixtures/transistor_view/ota1336/OTA1336-final.spice conformance/fixtures/transistor_view/ota1336/OTA1336.spice.cdl
+Copyright: The authors of the IHP__OTA1336 repository, https://github.com/KrzysztofHerman/IHP__OTA1336
+License: Apache-2.0
+Comment: Vendored at commit 34a743da5b78b867554d3ee7a7b54770fae114b0 with the
+ sch_path and sym_path comment lines removed; the file headers say so.
+
+Files: conformance/fixtures/technology_package/intm4tm2/libs.tech/*
+Copyright: 2026 IHP PDK Authors
+License: Apache-2.0
+Comment: Copied from https://github.com/IHP-GmbH/OpenIntM4TM2, release
+ 0.4.0; the placeholders are empty files written here. provenance.json beside them lists which is which.

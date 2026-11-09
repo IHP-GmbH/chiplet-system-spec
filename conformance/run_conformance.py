@@ -42,19 +42,24 @@ def _load_manifest():
 
 
 def _normalized(fv):
-    parsed = cfio._parse_version(fv)
+    parsed = cfio.parse_format_version(fv)
     return None if parsed is None else f"{parsed[0]}.{parsed[1]}"
 
 
 # --- adapters: each returns (verdict, version_or_None, data_or_None) ------
+# A refusing adapter also leaves the exception on its own `last_error`, so an
+# expectation can name the error class and the sentence (`refusal:`), which
+# verdict parity alone does not check.
 
 def adapt_reference_python(text):
     cfio._reset_version_warnings()
+    adapt_reference_python.last_error = None
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
         try:
             data = cfio.loads(text, allow_intermediate=True)
-        except cfio.ChipletFormatError:
+        except cfio.ChipletFormatError as exc:
+            adapt_reference_python.last_error = exc
             return ("refuse", None, None)
     warned = any(issubclass(w.category, cfio.FormatVersionWarning) for w in rec)
     return ("warn" if warned else "accept",
@@ -64,10 +69,19 @@ def adapt_reference_python(text):
 def make_ir_adapter(ir):
     def adapt(text):
         import yaml
+        adapt.last_error = None
         data = yaml.safe_load(text)
         try:
             asm = ir.parse_assembly(data, allow_intermediate=True)
-        except ir.ChipletError:
+        except ir.ChipletError as exc:
+            # ir's base error is its counterpart of the reference's base (see
+            # the manifest header), so a refusal raised as the base is named as
+            # the reference's; a subclass (SourceDocumentError) keeps its own.
+            if type(exc) is ir.ChipletError:
+                named = cfio.ChipletFormatError(str(exc))
+                named.__cause__ = exc
+                exc = named
+            adapt.last_error = exc
             return ("refuse", None, None)
         warned = any("format_version" in w and "newer" in w
                      for w in getattr(asm, "warnings", []))
@@ -85,6 +99,9 @@ def check_impl(name, meta, adapt, manifest, *, passthrough_only_ok):
     writes = meta.get("writes", False)
     reads_source_text = meta.get("reads_source_text", False)
     checks_pad_usage = meta.get("checks_pad_usage", False)
+    refuses_sources = meta.get("refuses_source_documents", False)
+    refuses_units = meta.get("refuses_other_units", False)
+    refuses_unplaced = meta.get("refuses_unplaced_assemblies", False)
     for entry in manifest["fixtures"]:
         f = entry["file"]
         # A source-text expectation asks about the raw bytes (the top-level block
@@ -96,6 +113,13 @@ def check_impl(name, meta, adapt, manifest, *, passthrough_only_ok):
         # skipped rather than failed, and says so in the manifest.
         if entry.get("pad_usage_only") and not checks_pad_usage:
             continue
+        # And for the source refusal (format 1.1), the same way.
+        if entry.get("source_refusal_only") and not refuses_sources:
+            continue
+        if entry.get("units_refusal_only") and not refuses_units:
+            continue
+        if entry.get("unplaced_refusal_only") and not refuses_unplaced:
+            continue
         text = (FIXTURES / f).read_text(encoding="utf-8")
         verdict, version, data = adapt(text)
 
@@ -103,6 +127,16 @@ def check_impl(name, meta, adapt, manifest, *, passthrough_only_ok):
             failures.append(f"{name}: {f}: verdict {verdict!r}, "
                             f"expected {entry['expect']!r}")
             continue
+        refusal = entry.get("refusal")
+        if refusal and verdict == "refuse":
+            exc = getattr(adapt, "last_error", None)
+            if type(exc).__name__ != refusal["error"]:
+                failures.append(f"{name}: {f}: refused with "
+                                f"{type(exc).__name__}, expected "
+                                f"{refusal['error']}")
+            elif refusal["says"] not in str(exc):
+                failures.append(f"{name}: {f}: the refusal does not say "
+                                f"{refusal['says']!r}")
         if entry["expect"] in ("accept", "warn") and "version" in entry:
             if version is not None and version != entry["version"]:
                 failures.append(f"{name}: {f}: version {version!r}, "
@@ -183,11 +217,20 @@ def _check_cpp(cpp_bin, manifest):
     cpp = manifest["implementations"]["reference_cpp"]
     reads_source_text = cpp.get("reads_source_text", False)
     checks_pad_usage = cpp.get("checks_pad_usage", False)
+    refuses_sources = cpp.get("refuses_source_documents", False)
+    refuses_units = cpp.get("refuses_other_units", False)
+    refuses_unplaced = cpp.get("refuses_unplaced_assemblies", False)
     for entry in manifest["fixtures"]:
         f = entry["file"]
         if entry.get("source_text_only") and not reads_source_text:
             continue
         if entry.get("pad_usage_only") and not checks_pad_usage:
+            continue
+        if entry.get("source_refusal_only") and not refuses_sources:
+            continue
+        if entry.get("units_refusal_only") and not refuses_units:
+            continue
+        if entry.get("unplaced_refusal_only") and not refuses_unplaced:
             continue
         proc = subprocess.run([cpp_bin, str(FIXTURES / f)],
                               capture_output=True, text=True)
@@ -197,6 +240,11 @@ def _check_cpp(cpp_bin, manifest):
         if verdict != entry["expect"]:
             failures.append(f"reference_cpp: {f}: verdict {verdict!r}, "
                             f"expected {entry['expect']!r}")
+        elif verdict == "refuse" and entry.get("refusal") and \
+                entry["refusal"]["says"].lower() not in out:
+            # A binary reports a message, not a class: the sentence is checked.
+            failures.append(f"reference_cpp: {f}: the refusal does not say "
+                            f"{entry['refusal']['says']!r}")
     return failures
 
 

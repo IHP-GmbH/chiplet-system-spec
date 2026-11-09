@@ -39,10 +39,38 @@
 # be asked about it; an expectation tagged `source_text_only: true` is skipped
 # (not failed) for such a reader, the same way `passthrough_only` is skipped for a
 # typed one. Everything NOT so tagged applies to every reader, as before.
+#
+# A refusing expectation may carry `refusal: {error, says}`: the exception class
+# a Python-side reader raises and a sentence its message must contain. A reader
+# reached as a binary (reference_cpp) is held to the sentence only. ir's base
+# error (ChipletError) is its counterpart of the reference's ChipletFormatError
+# and is checked under that name; its subclasses keep their own.
+#
+# Units dimension (`refuses_other_units`): whether the reader refuses an
+# `assembly.units` outside the closed set (format 1.1: um only). An expectation
+# tagged `units_refusal_only: true` is skipped for a reader that does not
+# declare it. ir declares it from the interposer router's release that refuses
+# with the reference readers' sentence.
+#
+# Source dimension (`refuses_source_documents`): whether the reader refuses a
+# SOURCE document, one with a top-level `system` block (format 1.1), even when it
+# is told to accept intermediate files. A reader written before 1.1 reads such a
+# document as an assembly with no components, which is the hole this closes. An
+# expectation tagged `source_refusal_only: true` is skipped (not failed) for a
+# reader that does not declare it. ir declares it from the interposer router's
+# release that raises its own SourceDocumentError (a ChipletError) with the sentence
+# the reference readers use.
+#
+# Unplaced dimension (`refuses_unplaced_assemblies`): whether the reader refuses
+# a document with the root key `unplaced` and no `system` block. The key is a
+# source's (format 1.3) and the schema refuses it anywhere else; a reader that
+# implements 1.3 refuses it too. An expectation tagged `unplaced_refusal_only:
+# true` is skipped for a reader that does not declare it. ir declares it from the
+# interposer router's release that reads format 1.3.
 implementations:
-  reference_python:   {class: passthrough, writes: true, reads_source_text: true,  checks_pad_usage: true}
-  interposer_pnr_ir:  {class: passthrough, writes: true, reads_source_text: false, checks_pad_usage: false}
-  reference_cpp:      {class: typed,       writes: true, reads_source_text: true,  checks_pad_usage: true}
+  reference_python:   {class: passthrough, writes: true, reads_source_text: true,  checks_pad_usage: true,  refuses_source_documents: true, refuses_other_units: true, refuses_unplaced_assemblies: true}
+  interposer_pnr_ir:  {class: passthrough, writes: true, reads_source_text: false, checks_pad_usage: false, refuses_source_documents: true, refuses_other_units: true, refuses_unplaced_assemblies: true}
+  reference_cpp:      {class: typed,       writes: true, reads_source_text: true,  checks_pad_usage: true,  refuses_source_documents: true, refuses_other_units: true, refuses_unplaced_assemblies: true}
 
 fixtures:
   - file: v1_0_baseline.chiplet
@@ -83,15 +111,114 @@ fixtures:
       reader parity are proved on the SAME file instead of on two that drift.
       Format-level ACCEPT, class-agnostic (no round-trip or writer expectation).
 
-  - file: v1_1_higher_minor.chiplet
-    expect: warn
+  - file: v1_1_baseline.chiplet
+    expect: accept
     version: "1.1"
     writer: preserve_input
     writer_passthrough_only: true
     note: >-
-      Passthrough writers preserve "1.1" and re-warn; typed writers stamp "1.0"
-      because they may have dropped 1.1-only fields (the stamped version must
+      1.1 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.1" (the input is above the assembly stamp,
+      "1.0"); typed writers stamp "1.0".
+
+  - file: v1_2_baseline.chiplet
+    expect: accept
+    version: "1.2"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.2 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.2"; typed writers stamp "1.0".
+
+  - file: v1_3_baseline.chiplet
+    expect: accept
+    version: "1.3"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.3 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.3"; typed writers stamp "1.0".
+
+  - file: v1_4_baseline.chiplet
+    expect: accept
+    version: "1.4"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.4 is below the minor these readers implement, so it reads silently.
+      Passthrough writers preserve "1.4"; typed writers stamp "1.0".
+
+  - file: v1_5_baseline.chiplet
+    expect: accept
+    version: "1.5"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      1.5 is the minor these readers implement, so it reads silently. Passthrough
+      writers preserve "1.5"; typed writers stamp "1.0".
+
+  - file: v1_6_higher_minor.chiplet
+    expect: warn
+    version: "1.6"
+    writer: preserve_input
+    writer_passthrough_only: true
+    note: >-
+      Passthrough writers preserve "1.6" and re-warn; typed writers stamp "1.0"
+      because they may have dropped 1.6-only fields (the stamped version must
       describe the bytes written).
+
+  - file: v1_1_system_source.chiplet
+    expect: refuse
+    source_refusal_only: true
+    refusal:
+      error: SourceDocumentError
+      says: "this is a source .chiplet (it has a top-level 'system' block), not an assembly"
+    note: >-
+      A source document (top-level `system`, every system key used once). Refused
+      by every assembly reader, with intermediate files allowed, because it is not
+      an assembly. The Python reference reads it with allow_source=True, which only
+      chiplet_system_description.source passes; the C++ reference has no source path.
+
+  - file: v1_3_unplaced_source.chiplet
+    expect: refuse
+    source_refusal_only: true
+    refusal:
+      error: SourceDocumentError
+      says: "this is a source .chiplet (it has a top-level 'system' block), not an assembly"
+    note: >-
+      An unplaced source (format 1.3): a die with no at, a carrier with no size,
+      external with no edges and the root unplaced. Refused by every assembly
+      reader like any source. The Python reference reads it with
+      allow_source=True, and refuses the same file stamped below 1.3.
+
+  - file: v1_3_unplaced_assembly.chiplet
+    expect: refuse
+    unplaced_refusal_only: true
+    refusal:
+      error: ChipletFormatError
+      says: "the root key unplaced belongs to a source (format 1.3)"
+    note: >-
+      An assembly (no system block) carrying the root unplaced. The key is a
+      source's, its pins go on the system's external edges, so every reader
+      that implements 1.3 refuses it, and the schema does too.
+
+  - file: v1_1_units_other.chiplet
+    expect: refuse
+    units_refusal_only: true
+    note: >-
+      assembly.units "mm". The set is closed to um and must be understood: a
+      reader that does not convert would read every length wrong, so it refuses
+      the document rather than warn and continue.
+
+  - file: v1_0_system_block.chiplet
+    expect: refuse
+    source_refusal_only: true
+    refusal:
+      error: SourceDocumentError
+      says: "this is a source .chiplet (it has a top-level 'system' block), not an assembly"
+    note: >-
+      The same source stamped "1.0". Refused as a source, and refused by a source
+      reader too, because the system block does not exist before 1.1.
 
   - file: v2_0_higher_major.chiplet
     expect: refuse
@@ -169,7 +296,7 @@ fixtures:
   # fact rather than an endorsement: a reference reader has nothing to object to
   # in this document. `assembly_stage` carries the verdict the hosts that DO hold
   # the manifest owe (the plugin at export; adk-tools' assembly DRC, Mosaic and
-  # chiplet-system at load), so the three of them are measured against this one
+  # chiplet-system-description at load), so the three of them are measured against this one
   # file instead of against each other. Nothing in this repository checks that
   # verdict; conformance/test_interface_binding.py says exactly that.
   - file: v1_0_interface_inconsistent_binding.chiplet

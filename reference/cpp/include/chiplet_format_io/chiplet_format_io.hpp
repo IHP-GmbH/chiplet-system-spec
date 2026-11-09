@@ -29,6 +29,7 @@
 #define CHIPLET_FORMAT_IO_HPP
 
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <optional>
 #include <stdexcept>
@@ -38,38 +39,70 @@
 
 namespace chiplet_format_io {
 
-// The format_version this reference implementation WRITES, and the entry of
-// ACCEPTED_FORMAT_VERSIONS for the major it writes. The on-disk baseline stays
-// additive-stable at "1.0"; readers are tolerant of a same-major higher minor
-// (see check_format_version). Bump together with docs/CHIPLET_FORMAT_SPEC.md and
-// the Python reference library.
+// The format_version this reference implementation WRITES on an assembly
+// document. The on-disk baseline stays additive-stable at "1.0"; readers are
+// tolerant of a same-major higher minor (see check_format_version). Bump
+// together with docs/CHIPLET_FORMAT_SPEC.md and the Python reference library.
 inline constexpr const char* SUPPORTED_FORMAT_VERSION = "1.0";
 
-// The SET of majors this reader accepts, one MAJOR.MINOR floor per major
+// The stamp of a SOURCE document, one with a top-level `system` block (format
+// 1.1). This reader never writes one and refuses to read one (see
+// SourceDocumentError); the constant mirrors the Python reference, whose source
+// path does both, so the two references state one set of stamps.
+inline constexpr const char* SOURCE_FORMAT_VERSION = "1.1";
+
+// The SET of majors this reader accepts, one MAJOR.MINOR entry per major
 // (docs/VERSION_POLICY.md, "Changing the major"), mirroring the Python
-// ACCEPTED_FORMAT_VERSIONS. One entry is the ordinary state; a second appears
-// only while a major transition is open, and it is a promise that the code path
-// for that major exists here. The static_assert below is the half of the rule a
-// comment cannot keep: what this reader writes must be something it can read.
-inline constexpr std::array<const char*, 1> ACCEPTED_FORMAT_VERSIONS{{"1.0"}};
+// ACCEPTED_FORMAT_VERSIONS. Each entry is the highest minor implemented for its
+// major: a document at or below it reads silently, one above it warns. One
+// entry is the ordinary state; a second appears only while a major transition is
+// open, and it is a promise that the code path for that major exists here. The
+// static_assert below is the half of the rule a comment cannot keep: every stamp
+// this library states must be something it reads without a warning.
+inline constexpr std::array<const char*, 1> ACCEPTED_FORMAT_VERSIONS{{"1.5"}};
 
 namespace detail {
 constexpr bool same_text(const char* a, const char* b) {
     while (*a != '\0' && *a == *b) { ++a; ++b; }
     return *a == *b;
 }
-constexpr bool is_accepted(const char* v) {
+// The digits of one MAJOR or MINOR part, starting at *p and stopping at '.' or
+// the end; -1 when the part is empty or holds anything but a digit.
+constexpr int version_part(const char*& p) {
+    int value = 0;
+    bool any = false;
+    while (*p != '\0' && *p != '.') {
+        if (*p < '0' || *p > '9') return -1;
+        value = value * 10 + (*p - '0');
+        any = true;
+        ++p;
+    }
+    return any ? value : -1;
+}
+// Whether v is "MAJOR.MINOR" at or below the accepted entry for its major.
+constexpr bool is_readable(const char* v) {
+    const char* p = v;
+    const int major = version_part(p);
+    if (major < 0 || *p != '.') return false;
+    ++p;
+    const int minor = version_part(p);
+    if (minor < 0 || *p != '\0') return false;
     for (const char* entry : ACCEPTED_FORMAT_VERSIONS) {
-        if (same_text(entry, v)) return true;
+        const char* q = entry;
+        const int entry_major = version_part(q);
+        ++q;
+        const int entry_minor = version_part(q);
+        if (entry_major == major) return minor <= entry_minor;
     }
     return false;
 }
 }  // namespace detail
 
-static_assert(detail::is_accepted(SUPPORTED_FORMAT_VERSION),
-              "SUPPORTED_FORMAT_VERSION must be one of "
-              "ACCEPTED_FORMAT_VERSIONS: a writer that stamps a version its own "
-              "reader refuses is a version policy nobody can follow");
+static_assert(detail::is_readable(SUPPORTED_FORMAT_VERSION) &&
+                  detail::is_readable(SOURCE_FORMAT_VERSION),
+              "every stamp must be at or below an ACCEPTED_FORMAT_VERSIONS "
+              "entry: a writer that stamps a version its own reader refuses or "
+              "warns on is a version policy nobody can follow");
 
 // The release of THIS reference implementation, mirroring the Python library's
 // chiplet_format_io.__version__. Distinct from SUPPORTED_FORMAT_VERSION, which
@@ -77,7 +110,7 @@ static_assert(detail::is_accepted(SUPPORTED_FORMAT_VERSION),
 // a reader RELEASE, so a vendored mirror can be gated on a version instead of on
 // bytes. The two reference implementations ship one release number, and
 // conformance/test_version_policy.py fails if they drift apart.
-inline constexpr const char* READER_RELEASE = "1.4.0";
+inline constexpr const char* READER_RELEASE = "1.22.0";
 
 // The closed interfaces[].type vocabulary (spec validation rule 4), exported
 // because a consumer needs it. This library carries whatever string the document
@@ -92,6 +125,40 @@ inline constexpr const char* READER_RELEASE = "1.4.0";
 // reads all four.
 inline constexpr std::array<const char*, 5> kKnownInterfaceTypes = {
     {"micro_bump", "copper_pillar", "tsv", "wire_bond", "solder_bump"}};
+
+// Per closed vocabulary, the members added after 1.0 and the format minor that
+// added each; a member with no row is since 1.0. A document stamped below a
+// member's minor is out of contract and validate() refuses it, whether or not
+// this reader knows the member. Mirrors the Python MEMBER_SINCE; the map is
+// schema data first (an `x-since` object beside each enum in
+// schemas/chiplet.schema.json), and conformance/test_member_since.py holds the
+// three to one map. Field names: "interfaces[].type", "io_pads[].io_class",
+// "components[].anchor", "components[].orientation", "assembly.units".
+struct MemberSince {
+    const char* field;
+    const char* member;
+    const char* since;
+};
+inline constexpr std::array<MemberSince, 1> kMemberSince{{
+    {"interfaces[].type", "solder_bump", "1.1"},
+}};
+
+// Throw ChipletFormatError when `member` of vocabulary `field` appears in a
+// document stamped `declared` below the minor `since` gives it. A member with
+// no row, an unparsable version or another major passes: the version policy
+// decides those. The overload without `since` reads kMemberSince; the other is
+// how the shared oracle (conformance/fixtures/member_since_cases.json) runs.
+void check_member_since(const std::string& declared, const std::string& field,
+                        const std::string& member,
+                        const std::vector<MemberSince>& since);
+void check_member_since(const std::string& declared, const std::string& field,
+                        const std::string& member);
+
+// assembly.units, closed (format 1.1), and MUST-UNDERSTAND: a length read in a
+// unit the reader does not convert is wrong rather than incomplete, so validation
+// refuses any other value. Absent means "um", the normative default. Mirrors the
+// Python KNOWN_UNITS; conformance/test_units.py reads both and the schema enum.
+inline constexpr std::array<const char*, 1> kKnownUnits = {{"um"}};
 
 // Whether `t` is a member of kKnownInterfaceTypes. Exported with the array: a
 // consumer that has to write the loop itself will write it slightly differently
@@ -134,6 +201,16 @@ class ChipletFormatError : public std::runtime_error {
 public:
     explicit ChipletFormatError(const std::string& msg)
         : std::runtime_error(msg) {}
+};
+
+// Raised by loads() on a SOURCE document (a top-level `system` block, format
+// 1.1), whatever LoadOptions say: a source is not an assembly, and a reader that
+// read it as one would see an assembly with no components. Mirrors the Python
+// SourceDocumentError; unlike Python, this reader has no source path.
+class SourceDocumentError : public ChipletFormatError {
+public:
+    explicit SourceDocumentError(const std::string& msg)
+        : ChipletFormatError(msg) {}
 };
 
 // --- Plain value structs (a faithful, lossless view of the .chiplet schema) ---
@@ -413,6 +490,72 @@ std::string dumps(const ChipletDocument& doc, const DumpOptions& opts = {});
 // Serialize a document to a file.
 void dump(const ChipletDocument& doc, const std::string& path,
           const DumpOptions& opts = {});
+
+// The top-level block grammar's key sequence, as a public verdict.
+//
+// A host that writes a .chiplet on its own (the studio's save path) needs the
+// same question the writer here asks of its own output: does the text it is
+// about to write split into exactly the top-level keys it meant to write, in
+// order? Before this struct existed the splitter was reachable only through
+// `flow_source` and `dumps()`, so every host re-implemented the grammar or
+// trusted its serializer. This is a THIN WRAPPER over the reader's own
+// splitter, the one `loads()` and `dumps()` run; there is no second grammar.
+//
+//   keys            the top-level keys in document order, PREAMBLE EXCLUDED
+//                   (lines before the first key line own no key). Meaningful
+//                   only while `not_splittable` is empty.
+//   not_splittable  empty when the document splits. Otherwise the reason it
+//                   cannot be split, in the splitter's own words (a quoted key
+//                   at column zero, an unattributable line at column zero),
+//                   and `keys` MUST NOT be read: the blocks behind them
+//                   mis-attribute those bytes. A host treats a non-empty value
+//                   as a refusal, never as "no keys" and never as success.
+//
+// What this is NOT. It is not a loader and makes no semantic claim: a document
+// carrying a forbidden line break (NEL, U+2028, U+2029, a lone CR) splits
+// perfectly well here and is refused by loads(); a document that is not YAML
+// at all may split. And the split alone does not validate an emission: a
+// key-shaped continuation line inside a multi-line quoted scalar is a key line
+// to this grammar and a scalar to the parser, so `keys` can name a key the
+// parser never sees. The host compares `keys` against the list it INTENDED to
+// write, obtained independently, and refuses on any difference or any order
+// change; agreement between the two is the property, not a non-empty result.
+struct TopLevelKeys {
+    std::vector<std::string> keys;
+    std::string not_splittable;
+};
+
+// Split `text` with the reader's own top-level block grammar and report the key
+// sequence. Throws ChipletFormatError for a REPEATED top-level key, exactly as
+// loads() does: that document is ill-formed (PyYAML reads the last value,
+// yaml-cpp the first, and yaml-cpp reports both keys), so there is no sequence
+// to hand back. Every other verdict is in the returned struct.
+TopLevelKeys split_top_level_keys(const std::string& text);
+
+// Parser-attested, independently movable root entries. Offsets are half-open
+// UTF-8 BYTE offsets into the unchanged input. This is not schema validation or
+// permission to save. Unsupported/malformed documents return no partial data.
+struct CapturedTopLevelBlock {
+    std::string key;
+    std::size_t byte_start = 0;
+    std::size_t byte_end = 0;
+    std::string raw;
+};
+
+struct TopLevelBlockCapture {
+    bool safe = false;
+    std::string preamble;
+    std::vector<CapturedTopLevelBlock> blocks;
+    std::string reason_code;
+    std::string reason;
+    std::optional<std::size_t> byte_offset;
+};
+
+TopLevelBlockCapture capture_top_level_blocks(const std::string& text);
+
+// The lowest format minor that can carry every member `doc` uses, or "" when no
+// member postdates 1.0. dumps() never stamps below it.
+std::string content_format_floor(const ChipletDocument& doc);
 
 // Validate the semantic invariants that survive into the struct model
 // (format_version, intermediate guard, assembly.name, component id/type,

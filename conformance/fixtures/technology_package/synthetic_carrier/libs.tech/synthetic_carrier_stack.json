@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.1",
+  "note": "Invented stack of the synthetic carrier, in um, z = 0 at the substrate top. Test fixture only.",
+  "substrate": {
+    "material": "Si",
+    "epsilon_r": 11.9,
+    "loss_tangent": 0.0,
+    "thickness_um": 300.0
+  },
+  "beol": {
+    "attachment_surface_z_um": 4.0,
+    "dielectric": {
+      "material": "SiO2",
+      "epsilon_r": 4.0,
+      "loss_tangent": 0.0
+    },
+    "metals": [
+      {
+        "name": "R1",
+        "zmin_um": 1.0,
+        "zmax_um": 2.0
+      },
+      {
+        "name": "R2",
+        "zmin_um": 3.0,
+        "zmax_um": 4.0
+      }
+    ]
+  }
+}

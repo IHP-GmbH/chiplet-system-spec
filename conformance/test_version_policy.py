@@ -59,6 +59,7 @@ VERSIONED_SIDECARS = {
     "blackbox_padmap.schema.json": "version",
     "boundary_manifest.schema.json": "version",
     "interconnect_methods.schema.json": "schema_version",
+    "technology_package.schema.json": "schema_version",
 }
 
 
@@ -402,6 +403,19 @@ def test_the_cpp_supported_format_version_agrees_too():
     assert found.group(1) == cfio.SUPPORTED_FORMAT_VERSION
 
 
+def test_the_cpp_source_stamp_and_accepted_set_agree_too():
+    # Format 1.1 split the stamp per document kind and moved the accepted floor
+    # to the highest minor implemented; the C++ copies of both are gated here.
+    text = CPP_HEADER.read_text(encoding="utf-8")
+    found = re.search(r'SOURCE_FORMAT_VERSION\s*=\s*"([^"]+)"', text)
+    assert found, f"no SOURCE_FORMAT_VERSION constant in {CPP_HEADER}"
+    assert found.group(1) == cfio.SOURCE_FORMAT_VERSION
+    found = re.search(r'ACCEPTED_FORMAT_VERSIONS\s*\{\{([^}]*)\}\}', text)
+    assert found, f"no ACCEPTED_FORMAT_VERSIONS array in {CPP_HEADER}"
+    assert tuple(re.findall(r'"([^"]+)"', found.group(1))) == \
+        cfio.ACCEPTED_FORMAT_VERSIONS
+
+
 def test_the_cpp_release_obeys_the_shared_version_policy():
     release = _cpp_reader_release()
     assert len(release.split(".")) == 3  # readers ship a full MAJOR.MINOR.PATCH
@@ -423,7 +437,7 @@ CPP_REJECTS_THESE = ("+1.0", "1.0_0", "1. 0", " 1.0 ", "1.\u0660", "1.0\n")
 
 @pytest.mark.parametrize("fv", CPP_REJECTS_THESE)
 def test_python_rejects_every_spelling_the_cpp_reader_rejects(fv):
-    assert cfio._parse_version(fv) is None, fv
+    assert cfio.parse_format_version(fv) is None, fv
 
 
 @pytest.mark.parametrize("fv", ["1.0", "1.10", "0.9", "10.0"])
@@ -431,15 +445,15 @@ def test_the_spellings_the_spec_actually_defines_still_parse(fv):
     # The tightening must not cost a single legal document: MAJOR.MINOR, ASCII
     # digits, no padding. Multi-digit on both sides, because "1.10" is the
     # case the unquoted-YAML divergence has always turned on.
-    assert cfio._parse_version(fv) is not None, fv
+    assert cfio.parse_format_version(fv) is not None, fv
 
 
 def test_the_unquoted_number_coercion_survives_the_tightening():
     # The one tolerance the docstring justifies is an unquoted 1.0 in YAML
     # arriving as a float. That is a YAML spelling, not an int() quirk, and it
     # stays: removing it would break real documents, unlike the five above.
-    assert cfio._parse_version(1.0) == (1, 0)
-    assert cfio._parse_version(2) is None  # still not MAJOR.MINOR
+    assert cfio.parse_format_version(1.0) == (1, 0)
+    assert cfio.parse_format_version(2) is None  # still not MAJOR.MINOR
 
 
 # --- escalation must be consistent, not first-read-only --------------------
@@ -603,13 +617,19 @@ def test_the_single_string_form_is_the_one_element_set():
         assert as_set == as_str, case["name"]
 
 
-def test_the_supported_format_version_is_an_accepted_one():
+def test_every_writer_stamp_reads_back_silently():
     # The half of the constant pair a comment cannot keep: what the writer
-    # stamps has to be something this reader accepts, or the library emits
-    # documents it refuses to read back. The C++ side asserts it at compile time.
-    assert cfio.SUPPORTED_FORMAT_VERSION in cfio.ACCEPTED_FORMAT_VERSIONS
+    # stamps has to be something this reader reads without a warning, or the
+    # library emits documents it refuses (or warns on) when read back. There is
+    # one stamp per document kind (assembly, source), and an ACCEPTED entry is
+    # the highest minor implemented, so a stamp at or below it is readable; it
+    # need not be a member. The C++ side asserts the same at compile time.
+    for stamp in (cfio.SUPPORTED_FORMAT_VERSION, cfio.SOURCE_FORMAT_VERSION):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert cfio.check_format_version(stamp) == stamp
     assert cfio.ACCEPTED_FORMAT_VERSIONS, "a reader that accepts nothing"
-    majors = [cfio._parse_version(v)[0] for v in cfio.ACCEPTED_FORMAT_VERSIONS]
+    majors = [cfio.parse_format_version(v)[0] for v in cfio.ACCEPTED_FORMAT_VERSIONS]
     assert len(set(majors)) == len(majors), \
         "two entries with the same major is a programming error"
 

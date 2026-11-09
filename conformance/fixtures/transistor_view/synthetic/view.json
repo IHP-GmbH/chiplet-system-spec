@@ -1,0 +1,53 @@
+{
+  "format": "chiplet-eda-views-transistor/v1",
+  "dialect": "spice",
+  "netlist_kind": "schematic",
+  "top": "syn-ota",
+  "top_form": "commented",
+  "pins": [
+    {
+      "name": "VDD",
+      "role": "supply"
+    },
+    {
+      "name": "vss",
+      "role": "supply"
+    },
+    {
+      "name": "InP",
+      "role": "signal"
+    },
+    {
+      "name": "InM",
+      "role": "signal"
+    },
+    {
+      "name": "Out",
+      "role": "signal"
+    },
+    {
+      "name": "ibias",
+      "role": "signal"
+    }
+  ],
+  "devices": [
+    "cap_cmim",
+    "sg13_lv_nmos",
+    "sg13_lv_pmos"
+  ],
+  "local_subckts": [
+    "diff_pair",
+    "mirror_p",
+    "tail_n"
+  ],
+  "pdk": {
+    "name": "ihp-sg13g2",
+    "revision": "bf0790268f00fd9ebf5625d273a68f24e21bbb8f"
+  },
+  "files": [
+    {
+      "file": "syn_ota.spice",
+      "sha256": "9a0c99ff930d381f75420170bf9481582a6b168f38bf9ffd155d6727eb4a8820"
+    }
+  ]
+}

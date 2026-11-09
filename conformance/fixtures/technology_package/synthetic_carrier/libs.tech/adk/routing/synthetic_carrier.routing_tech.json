@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.3.0",
+  "identity": {
+    "name": "synthetic_carrier",
+    "version": "0.1.0",
+    "dbu_um": 0.001,
+    "manufacturing_grid_um": 0.005,
+    "redistributable": true,
+    "manufacturable": false,
+    "provenance": "Invented for the chiplet-spec technology package conformance tests; describes no process.",
+    "description": "Synthetic two-metal carrier, test fixture only."
+  },
+  "routing_layers": [
+    {
+      "abstract_name": "met1",
+      "emitter_name": "R1",
+      "gds_layer": 230,
+      "gds_datatype": 0,
+      "preferred_direction": "HORIZONTAL",
+      "min_width_um": 1.0,
+      "min_spacing_um": 1.0,
+      "pitch_um": 2.0,
+      "resistance_ohm_per_sq": 0.05
+    },
+    {
+      "abstract_name": "met2",
+      "emitter_name": "R2",
+      "gds_layer": 232,
+      "gds_datatype": 0,
+      "preferred_direction": "VERTICAL",
+      "min_width_um": 2.0,
+      "min_spacing_um": 2.0,
+      "pitch_um": 4.0,
+      "resistance_ohm_per_sq": 0.02
+    }
+  ],
+  "vias": [
+    {
+      "name": "mv1",
+      "emitter_name": "V1",
+      "gds_layer": 231,
+      "gds_datatype": 0,
+      "connects": [
+        "met1",
+        "met2"
+      ],
+      "min_cut_width_um": 0.5,
+      "min_cut_spacing_um": 0.5,
+      "enclosure_bottom_um": 0.1,
+      "enclosure_top_um": 0.1,
+      "resistance_ohm_per_cut": 0.5
+    }
+  ],
+  "routability": {
+    "min_routing_layer": "met1",
+    "max_routing_layer": "met2",
+    "pin_layers": [
+      "met2"
+    ],
+    "rc_layer": "met1"
+  },
+  "gds_layermap": {
+    "R1": {
+      "NET": "230/0",
+      "PIN": "230/2"
+    },
+    "R2": {
+      "NET": "232/0",
+      "PIN": "232/2"
+    },
+    "V1": {
+      "VIA": "231/0"
+    }
+  },
+  "fab": {
+    "layer_set": "libs.tech/klayout/tech/synthetic_carrier_layers.txt"
+  }
+}

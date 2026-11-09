@@ -1,0 +1,44 @@
+# Example 4: an sg13g2 die beside a GF180MCU die built elsewhere; U2 enters by acceptance.
+format_version: "1.1"
+_metadata:
+  finalize_required: true
+  finalizer: "packaging-flow run"
+assembly:
+  name: cf_mixed_gf180
+  description: "CF_DRIVER_BONDPAD and an admitted gf180mcu die on a plain IntM4TM2 carrier, joined by two fixture nets"
+  units: um
+interposer:
+  adapter: intm4tm2
+system:
+  carrier: {technology: intm4tm2, top_cell: CF_CARRIER, size: [6500, 6200]}
+  registry: inputs/registry/interconnect_pdk
+  dies:
+    - {id: U1, die: inputs/dies/CF_DRIVER_BONDPAD, at: [1000, 3100], rotation: 0, method: cupillar_opt1, thickness: 750}
+    - {id: U2, die: inputs/dies/chip_top, at: [3966.5, 3100], rotation: 0, method: gf180mcu_flow_demo_pillar}
+  links:   # two fixture nets
+    - {a: U1.d2d_f0, b: U2.bidir_PAD_11, net: d2d_f0_fixture}
+    - {a: U1.d2d_f3, b: U2.bidir_PAD_12, net: fixture_d2d_f3}
+    - {a: U1.CLK, b: U2.clk_PAD, net: bench_clk}
+  rails:
+    - {name: U1_VDD, class: power, ports: [U1.VDD]}
+    - {name: U1_VSS, class: ground, ports: [U1.VSS, U2.VSS]}
+    - {name: U2_VDD, class: power, ports: [U2.VDD]}
+  # every port no net reaches, tied to its own pad
+  alone:
+    - U1.CFG_MODE
+    - U1.RSTN
+    - U1.STATUS
+    - "U1.d2d_f[1..2]"
+    - "U1.d2d_f[4..9]"
+    - U1.d2d_fclk
+    - U1.d2d_frst_n
+    - "U1.d2d_r[0..9]"
+    - U2.analog_PAD
+    - "U2.bidir_PAD_[0..10]"
+    - "U2.bidir_PAD_[13..36]"
+    - "U2.input_PAD_[0..15]"
+    - U2.rst_n_PAD
+flow:
+  packaging_flow:
+    route: {tech: ihp_sg13g2_intm4tm2_rdl2, interconnect_adapter: ihp_cupillar}
+    checks: {template: signoff}

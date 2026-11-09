@@ -1,0 +1,593 @@
+{
+ "base_view": {
+  "format": "chiplet-eda-views-transistor/v1",
+  "dialect": "spice",
+  "netlist_kind": "schematic",
+  "top": "blk",
+  "top_form": "subckt",
+  "pins": [
+   {
+    "name": "a",
+    "role": "signal"
+   },
+   {
+    "name": "b",
+    "role": "signal"
+   }
+  ],
+  "devices": [
+   "dev"
+  ],
+  "local_subckts": [],
+  "pdk": {
+   "name": "ihp-sg13g2",
+   "revision": "bf0790268f00fd9ebf5625d273a68f24e21bbb8f"
+  }
+ },
+ "refusals": [
+  {
+   "name": "two_starred_top_lines",
+   "reason": "top_form",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "**.subckt blk a b\n**.subckt blk a b\nX1 a b dev\n**.ends\n"
+    }
+   ],
+   "view": {
+    "top_form": "commented"
+   }
+  },
+  {
+   "name": "no_starred_ends",
+   "reason": "top_form",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "**.subckt blk a b\nX1 a b dev\n"
+    }
+   ],
+   "view": {
+    "top_form": "commented"
+   }
+  },
+  {
+   "name": "starred_ends_before_the_top",
+   "reason": "top_form",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "**.ends\n**.subckt blk a b\nX1 a b dev\n"
+    }
+   ],
+   "view": {
+    "top_form": "commented"
+   }
+  },
+  {
+   "name": "top_pair_not_in_the_last_file",
+   "reason": "top_form",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "**.subckt blk a b\nX1 a b dev\n**.ends\n"
+    },
+    {
+     "file": "leaf.spice",
+     "text": ".subckt leaf c\nX2 c dev\n.ends\n"
+    }
+   ],
+   "view": {
+    "top_form": "commented",
+    "local_subckts": [
+     "leaf"
+    ]
+   }
+  },
+  {
+   "name": "subckt_between_the_top_pair",
+   "reason": "top_form",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "**.subckt blk a b\nX1 a b dev\n.subckt leaf c\n.ends\n**.ends\n"
+    }
+   ],
+   "view": {
+    "top_form": "commented"
+   }
+  },
+  {
+   "name": "starred_subckt_under_subckt_form",
+   "reason": "top_form",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "**.subckt other x\n.subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "subckt_absent",
+   "reason": "subckt_absent",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt other a b\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "invalid_utf8",
+   "reason": "encoding",
+   "files": [
+    {
+     "file": "blk.spice",
+     "hex": "2e737562636b7420626c6b206120620a2a20636166e90a583120612062206465760a2e656e64730a"
+    }
+   ]
+  },
+  {
+   "name": "file_starts_with_continuation",
+   "reason": "continuation",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "+ a b\n.subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "double_slash_left_in_card",
+   "reason": "comment_in_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev // dev2\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "semicolon_left_in_card",
+   "reason": "comment_in_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev;dev2\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "dollar_after_comma_left_in_card",
+   "reason": "comment_in_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev w=1,$2\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "dollar_after_whitespace_at_line_end",
+   "reason": "comment_in_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev $\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "include_card",
+   "reason": "include_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".include models.lib\n.subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "inc_card",
+   "reason": "include_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\n.inc models.lib\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "lib_card",
+   "reason": "include_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".lib models.lib tt\n.subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "model_card",
+   "reason": "device_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\n.model rmod r\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "always_global_card_in_subckt",
+   "reason": "block_global",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\n.save all\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "dot_card_other_than_param_in_subckt",
+   "reason": "block_global",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\n.ic v(a)=0\nX1 a b dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "element_outside_subckt",
+   "reason": "block_global",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": "X1 a b dev\n.subckt blk a b\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "nested_subckt",
+   "reason": "nesting",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.subckt inner c\n.ends\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "ends_at_depth_zero",
+   "reason": "nesting",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "unclosed_subckt",
+   "reason": "nesting",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n"
+    }
+   ]
+  },
+  {
+   "name": "end_before_the_last_card",
+   "reason": "nesting",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n.end\n.subckt leaf c\n.ends\n"
+    }
+   ],
+   "view": {
+    "local_subckts": [
+     "leaf"
+    ]
+   }
+  },
+  {
+   "name": "n_card",
+   "reason": "device_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nN1 a b osdi_dev\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "model_naming_r_card",
+   "reason": "device_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nR1 a b 1k rppd\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "r_value_as_a_parameter",
+   "reason": "device_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nR1 a b r=1k\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "r_value_quoted",
+   "reason": "device_card",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nR1 a b 'rval'\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "equals_token",
+   "reason": "card_syntax",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev w = 1\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "x_card_naming_no_subckt",
+   "reason": "card_syntax",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nX2 w=1\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "sub_beside_SUB",
+   "reason": "name_clash",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b sub\nX2 a b SUB\nX3 a b dev\n.ends\n.subckt sub c d\n.ends\n.subckt SUB c d\n.ends\n"
+    }
+   ],
+   "view": {
+    "local_subckts": [
+     "sub"
+    ]
+   }
+  },
+  {
+   "name": "local_foo_x_beside_device_foo_x",
+   "reason": "name_clash",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b foo-x\nX2 a b foo_x\n.ends\n.subckt foo-x c d\n.ends\n"
+    }
+   ],
+   "view": {
+    "local_subckts": [
+     "foo-x"
+    ],
+    "devices": [
+     "foo_x"
+    ]
+   }
+  },
+  {
+   "name": "local_Foo_x_beside_device_foo_x",
+   "reason": "name_clash",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b Foo-x\nX2 a b foo_x\n.ends\n.subckt Foo-x c d\n.ends\n"
+    }
+   ],
+   "view": {
+    "local_subckts": [
+     "Foo-x"
+    ],
+    "devices": [
+     "foo_x"
+    ]
+   }
+  },
+  {
+   "name": "meta_pins_in_another_order",
+   "reason": "view_differs",
+   "field": "pins",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ],
+   "view": {
+    "pins": [
+     {
+      "name": "b",
+      "role": "signal"
+     },
+     {
+      "name": "a",
+      "role": "signal"
+     }
+    ]
+   }
+  },
+  {
+   "name": "meta_omits_a_device",
+   "reason": "view_differs",
+   "field": "devices",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nX2 a b dev2\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "meta_names_another_local",
+   "reason": "view_differs",
+   "field": "local_subckts",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n.subckt leaf c\n.ends\n"
+    }
+   ],
+   "view": {
+    "local_subckts": [
+     "other"
+    ]
+   }
+  },
+  {
+   "name": "absolute_path",
+   "reason": "view_shape",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ],
+   "view_files": [
+    {
+     "file": "/blk.spice"
+    }
+   ]
+  },
+  {
+   "name": "dotdot_path",
+   "reason": "view_shape",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ],
+   "view_files": [
+    {
+     "file": "../blk.spice"
+    }
+   ]
+  },
+  {
+   "name": "sha256_differs",
+   "reason": "digest",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ],
+   "view_files": [
+    {
+     "file": "blk.spice",
+     "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+   ]
+  },
+  {
+   "name": "pins_twice_case_folded",
+   "reason": "view_shape",
+   "field": "pins",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ],
+   "view": {
+    "pins": [
+     {
+      "name": "a",
+      "role": "signal"
+     },
+     {
+      "name": "A",
+      "role": "signal"
+     }
+    ]
+   }
+  },
+  {
+   "name": "devices_and_locals_overlap",
+   "reason": "view_shape",
+   "field": "devices",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\n.ends\n"
+    }
+   ],
+   "view": {
+    "devices": [
+     "dev"
+    ],
+    "local_subckts": [
+     "DEV"
+    ]
+   }
+  }
+ ],
+ "accepted": [
+  {
+   "name": "param_card_in_subckt",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\n.param w0=1u\nX1 a b dev w={w0}\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "valued_r_c_l_cards",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\nR1 a b 1k\nR2 a b {rval} m=1\nC1 a b 10f\nC2 a b 1.5E-12 m=2\nL1 a b 2MEG\nR3 a b .5mil\nR4 a b -1e+3\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "tab_inline_comments",
+   "files": [
+    {
+     "file": "blk.spice",
+     "text": ".subckt blk a b\nX1 a b dev\t;\tnote\n*\tcomment\n.ends\n"
+    }
+   ]
+  },
+  {
+   "name": "leaf_file_then_top_file",
+   "files": [
+    {
+     "file": "leaf.spice",
+     "text": ".subckt leaf c\nX2 c dev\n.ends\n"
+    },
+    {
+     "file": "blk.spice",
+     "text": "**.subckt blk a b\nX1 a b leaf\n**.ends\n.end\n"
+    }
+   ],
+   "view": {
+    "top_form": "commented",
+    "local_subckts": [
+     "leaf"
+    ]
+   }
+  }
+ ]
+}

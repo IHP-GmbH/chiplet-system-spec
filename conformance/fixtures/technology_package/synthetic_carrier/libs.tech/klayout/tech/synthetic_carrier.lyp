@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<layer-properties>
+  <properties>
+    <name>R1.drawing</name>
+    <source>230/0</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+  <properties>
+    <name>R1.pin</name>
+    <source>230/2</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+  <properties>
+    <name>V1.drawing</name>
+    <source>231/0</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+  <properties>
+    <name>R2.drawing</name>
+    <source>232/0</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+  <properties>
+    <name>R2.pin</name>
+    <source>232/2</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+  <properties>
+    <name>Opening.drawing</name>
+    <source>233/0</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+  <properties>
+    <name>Outline.drawing</name>
+    <source>234/0</source>
+    <valid>true</valid>
+    <visible>true</visible>
+  </properties>
+</layer-properties>

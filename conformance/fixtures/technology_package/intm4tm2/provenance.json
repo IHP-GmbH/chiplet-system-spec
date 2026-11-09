@@ -1,0 +1,21 @@
+{
+  "source": "https://github.com/IHP-GmbH/OpenIntM4TM2",
+  "release": "0.4.0",
+  "copied": {
+    "libs.tech/adk/technology.json": "1241c07c6766ced120f158fa07f806629658e8a7cfa429703a5c8f7e2bfd5192",
+    "libs.tech/adk/routing/ihp_sg13g2_intm4tm2.routing_tech.json": "45092a4edff92e2f25dd7166e651d11ee0e4f934e52d43ae63647c9dc2b6bbcb",
+    "libs.tech/adk/routing/ihp_sg13g2_intm4tm2_rdl2.routing_tech.json": "998ac0cdd5a8127fce1f715ae7bf33d30af154efa67a89276c789a16ab3085cf",
+    "libs.tech/intm4tm2_stack.json": "46a5879540ece79cec3267975a29af51d617e81fb77e358dfd5af67452d24117",
+    "libs.tech/klayout/tech/intm4tm2.lyp": "96fe744ba8ed4817a7e79800d68027d4782b649c208d9996b5de4a6fd6c823d8"
+  },
+  "placeholders": [
+    "libs.tech/kicad/interposer_template.kicad_dru",
+    "libs.tech/kicad/interposer_template.kicad_pcb",
+    "libs.tech/kicad/interposer_template.kicad_pro",
+    "libs.tech/klayout/tech/drc/intm4tm2.drc",
+    "libs.tech/klayout/tech/drc/rule_decks/density.drc",
+    "libs.tech/klayout/tech/drc/run_drc.py",
+    "libs.tech/klayout/tech/intm4tm2.lyt",
+    "libs.tech/parasitics/routed_load.py"
+  ]
+}

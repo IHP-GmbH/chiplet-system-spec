@@ -32,8 +32,8 @@ technologies:
     dbu: 0.001
 
 # Interconnect stacks the dies mount on. total_height drives z-mounting; the
-# mounting surface (the interposer's attachment_surface_z, 13.83 um here) comes
-# from the interposer stackup, so the dies' z is given explicitly below.
+# mounting surface (the interposer's attachment_surface_z, 10.8103 um here, the
+# interposer PDK's key) is declared below, so the dies' z is given explicitly.
 connection_stacks:
   cupillar_opt1:
     description: "IHP Cu pillar (CuPillar 28 + SnAgCap 16 = 44 um)"
@@ -59,7 +59,7 @@ components:
     # extends downward from attachment_surface_z (the BEOL-top mount plane), so
     # the dies' z below is unchanged by the body value.
     dimensions: {width: 6492.312, height: 5602.001, thickness: 300.0}
-    attachment_surface_z: 13.83                        # BEOL-top die-mount plane (TopMetal2 top = 10.83 + 3.00)
+    attachment_surface_z: 10.8103                      # BEOL-top die-mount plane (IntM4TM2 TopMetal2 top)
     io_pads:
       - id: J1
         io_class: wire_bond
@@ -82,7 +82,7 @@ components:
     connection: cupillar_opt1                          # IHP Cu pillar
     layout: ./gds/Metal_Test.gds
     top_cell: Metal_Test
-    position: {x: 1954.121, y: 2332.483, z: 57.83}     # 13.83 + 44 (cupillar_opt1)
+    position: {x: 1954.121, y: 2332.483, z: 54.8103}   # 10.8103 + 44 (cupillar_opt1)
     dimensions: {width: 730.0, height: 2566.339, thickness: 750.0}
     rotation: {z: 0.0}
 
@@ -94,6 +94,6 @@ components:
     connection: vendorx_microbump                      # non-IHP vendor microbump
     layout: ./gds/vendor_die.gds
     top_cell: VENDOR_DIE
-    position: {x: 5170.23, y: 2420.27, z: 37.83}       # 13.83 + 24 (vendorx_microbump)
+    position: {x: 5170.23, y: 2420.27, z: 34.8103}     # 10.8103 + 24 (vendorx_microbump)
     dimensions: {width: 730.0, height: 2566.339, thickness: 750.0}
     rotation: {z: 0.0}

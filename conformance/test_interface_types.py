@@ -111,15 +111,29 @@ def _doc(**iface):
 
     Hand-built on purpose: a corpus specimen is a document, not the
     specification, and asserting the rule against one would pin whatever that
-    file happens to contain.
+    file happens to contain. Stamped at the lowest minor that may carry the
+    member (``solder_bump`` is 1.1), so each case asks about rule 4 alone.
     """
-    return {"format_version": "1.0", "assembly": {"name": "a"},
-            "interfaces": [iface]}
+    doc = {"format_version": "1.0", "assembly": {"name": "a"},
+           "interfaces": [iface]}
+    doc["format_version"] = cfio.content_format_floor(doc) or "1.0"
+    return doc
 
 
 @pytest.mark.parametrize("itype", cfio.KNOWN_INTERFACE_TYPES)
 def test_the_python_validator_accepts_every_known_type(itype):
     assert cfio.validate(_doc(id="i1", type=itype))
+
+
+def test_solder_bump_is_refused_below_its_minor():
+    # The 1.1 member, in a document stamped 1.0: out of contract, refused by
+    # the validator because the map says so, not because the reader is new.
+    assert cfio.MEMBER_SINCE["interfaces[].type"]["solder_bump"] == "1.1"
+    doc = _doc(id="i1", type="solder_bump")
+    assert doc["format_version"] == "1.1"
+    doc["format_version"] = "1.0"
+    with pytest.raises(cfio.ChipletFormatError, match="solder_bump"):
+        cfio.validate(doc)
 
 
 @pytest.mark.parametrize("itype", ["hybrid_bond", "bogus_bond", "MICRO_BUMP",

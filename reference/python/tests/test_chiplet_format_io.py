@@ -81,12 +81,11 @@ def _component(doc, cid):
 
 def test_attachment_surface_z_roundtrip():
     """The interposer's die-mount plane parses, survives dump/load and is
-    distinct from the physical body thickness; dies carry none (consumers fall
-    back to dimensions.thickness)."""
+    distinct from the physical body thickness; dies carry none."""
     doc = cfio.load(EXAMPLES / "interposer_demo_design.chiplet")
     interposer = _component(doc, "interposer")
     assert interposer is not None
-    assert interposer["attachment_surface_z"] == 13.83
+    assert interposer["attachment_surface_z"] == 10.8103
     # thickness is now the physical body, decoupled from the mount plane.
     assert interposer["dimensions"]["thickness"] == 300.0
 
@@ -95,7 +94,7 @@ def test_attachment_surface_z_roundtrip():
     assert "attachment_surface_z" not in die
 
     reloaded = cfio.loads(cfio.dumps(doc))
-    assert _component(reloaded, "interposer")["attachment_surface_z"] == 13.83
+    assert _component(reloaded, "interposer")["attachment_surface_z"] == 10.8103
 
 
 def test_no_gpl_runtime_dependency():
@@ -182,7 +181,7 @@ _KEYS_THE_EMITTER_CANNOT_WRITE_BARE = [
                               _KEYS_THE_EMITTER_CANNOT_WRITE_BARE])
 def test_the_writer_refuses_a_top_level_key_it_cannot_emit_as_a_key_line(key,
                                                                         line):
-    """SPEC-41: the writer must not emit a document its own splitter misreads.
+    """The writer must not emit a document its own splitter misreads.
 
     Each of these produced a file whose split reported two top-level keys and
     whose parse reported three, with no diagnostic from either side, and the
@@ -241,7 +240,7 @@ def test_dump_to_a_file_goes_through_the_same_refusal():
 
 @pytest.mark.parametrize("validate", [False, True])
 def test_dump_refused_key_preserves_existing_file_bytes(tmp_path, validate):
-    """SPEC-41 finding 6: serialization refusal must precede opening for write."""
+    """Serialization refusal must precede opening for write."""
     target = tmp_path / "existing.chiplet"
     original = b'# keep this comment\r\nformat_version: "1.0"\r\nassembly:\r\n  name: demo\r\n'
     target.write_bytes(original)

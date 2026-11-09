@@ -19,7 +19,7 @@ What a green here does NOT cover (META-2), and the list is the point:
 * the rule itself. Nothing in this repository resolves a method id to an
   ``interface_type``, so no green here is evidence that any inconsistent binding
   is ever refused. The refusals are owned by the KiCad plugin (at export),
-  adk-tools' assembly DRC, the Mosaic loader and chiplet-system (at load), and
+  adk-tools' assembly DRC, the Mosaic loader and chiplet-system-description (at load), and
   each owes a parity test against the oracle fixture in its own suite. Rows open
   per host; until those land, rule 9 is written down and unenforced.
 * the CONSISTENT case. The corpus carries one inconsistent binding, not a pair;
@@ -83,7 +83,7 @@ def test_the_spec_names_every_owner_of_rule_9():
     # A rule nobody is named for is a rule nobody runs. The owners are part of
     # the normative text because the reference validators are not among them.
     rule = _rule_9_text()
-    for owner in ("KiCad plugin", "adk-tools", "Mosaic", "chiplet-system"):
+    for owner in ("KiCad plugin", "adk-tools", "Mosaic", "chiplet-system-description"):
         assert owner in rule, f"rule 9 does not name {owner}"
     assert "WRITE" in rule and "LOAD" in rule, \
         "rule 9 must say which owner refuses at write and which at load"
