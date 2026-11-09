@@ -110,7 +110,7 @@ static_assert(detail::is_readable(SUPPORTED_FORMAT_VERSION) &&
 // a reader RELEASE, so a vendored mirror can be gated on a version instead of on
 // bytes. The two reference implementations ship one release number, and
 // conformance/test_version_policy.py fails if they drift apart.
-inline constexpr const char* READER_RELEASE = "1.21.0";
+inline constexpr const char* READER_RELEASE = "1.22.0";
 
 // The closed interfaces[].type vocabulary (spec validation rule 4), exported
 // because a consumer needs it. This library carries whatever string the document

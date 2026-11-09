@@ -54,10 +54,11 @@ The names in this table are exported from the top-level package.
 ### Submodules
 
 These are imported by module name, not from the top-level package. `die_contract` is strict
-die-contract admission ([STRICT_ADMISSION_API.md](../../docs/STRICT_ADMISSION_API.md)). Ten more
+die-contract admission ([STRICT_ADMISSION_API.md](../../docs/STRICT_ADMISSION_API.md)). Eleven more
 sit beside it. Seven hold what a die flow and the tools that read its output share,
 `pad_numbers` the symbol pin a pad gets from the contract's terminals alone, `footprint_ids`
-the footprint names a KiCad sheet is given, and `sheet_names` the names it carries verbatim:
+the footprint names a KiCad sheet is given, and `sheet_names` the names it carries verbatim.
+`technology_package` validates the package a technology enters the flow as:
 
 | Module | Holds |
 | --- | --- |
@@ -71,6 +72,7 @@ the footprint names a KiCad sheet is given, and `sheet_names` the names it carri
 | `pad_numbers` | `pad_numbers`: the symbol pin of each terminal (`number`, `name`, `pad_index`, `port`, `ordinal`), from the contract's `terminals` alone, read through die_contract. `is_port` and `no_connect` derive from `port`. A port's pads share the pad name; a repeated name that is no port is `<name>_<k>` in pad-index order and no-connect. No port identity, a half identity, one name on a port and off it or on two ports, or a generated number that collides, raises `DieContractError`. |
 | `footprint_ids` | `die_footprint(cell)` is `chiplet_dies:<cell>` and `ext_pad_footprint(um)` is `chiplet_carrier:EXT_PAD_<um>um`. A cell KiCad 9.0.6 would not keep, an empty name, or any whitespace raises `FootprintIdError`. A pad size is a positive whole number of um: a bool, a float, a string, zero or a negative is the same error. |
 | `sheet_names` | `SHEET_NAME_RULE` and `is_sheet_name`: a KiCad sheet's net, pin and pad names, a plain first character, then plain characters and `[N]` digit subscripts in any order. A range, an empty, nested or non-digit subscript, or a bracket first is refused. `SHEET_NAME_WORDS` is the rule in words, for a refusal. |
+| `technology_package` | `check_package(root)` and `validate_package(root, require=...)` over a technology package, the tree whose manifest is `libs.tech/adk/technology.json` (`schemas/technology_package.schema.json`). A package that cannot be read at all raises `TechnologyPackageError`; otherwise each capability set, A (geometry and assembly), B (automated design) and C (analysis), passes or lists every finding with a stable message id. `methods=` names an interconnect method registry, which `escape_capacity` pitches are checked against. `python -m chiplet_format_io.technology_package ROOT [--methods FILE]` is the command: exit 0 when the required sets pass, 1 when one does not, 2 when the package is refused, 3 when the validator itself fails; a pass with facts it could not check says how many. Needs the `strict` extra (jsonschema). |
 
 ### Validation
 

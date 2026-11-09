@@ -92,7 +92,8 @@ elaborator refuses it until `packaging-flow place` fills it in, and
   reference's modules for what a die flow and its readers share
   (`agreement`, `eda_views`, `pins`, `ready_die_names`, `transistor_view`,
   `verilog_closure`) are not vendored; nothing here reads them.
-  `technology` is vendored: the system joins a die's PDK to its technology
+  `technology_package`, the technology package validator, is not vendored
+  either. `technology` is vendored: the system joins a die's PDK to its technology
   through it. `sheet_names` is vendored: both sheet imports read a net name
   with the rule the generator writes it with. The identity test pins those
   exclusions, so a module the reference adds is a decision here, never a

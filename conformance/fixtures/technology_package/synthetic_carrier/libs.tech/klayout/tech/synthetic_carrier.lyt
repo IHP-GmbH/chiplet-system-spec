@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<technology>
+ <name>synthetic_carrier</name>
+ <description>Synthetic carrier, test fixture only</description>
+ <dbu>0.001</dbu>
+ <layer-properties_file>synthetic_carrier.lyp</layer-properties_file>
+</technology>

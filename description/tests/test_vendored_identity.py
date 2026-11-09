@@ -51,6 +51,7 @@ NOT_VENDORED = frozenset({
     "footprint_ids.py",  # footprint names; this package does not draw symbols
     "pins.py",  # the pin tables of a die view and a die contract
     "ready_die_names.py",  # the file names and build-record words of a ready die
+    "technology_package.py",  # a carrier package's validator; nothing here reads a package
     "transistor_view.py",  # imports eda_views, so a vendored copy could not load
     "verilog_closure.py",  # the Verilog closure a die's views are read with
 })

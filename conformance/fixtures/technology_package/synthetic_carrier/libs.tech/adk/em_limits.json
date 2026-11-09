@@ -1,0 +1,16 @@
+{
+  "note": "Invented current density limits, test fixture only.",
+  "layers": {
+    "R1": {
+      "j_max_ma_per_um": 1.0
+    },
+    "R2": {
+      "j_max_ma_per_um": 2.0
+    }
+  },
+  "vias": {
+    "V1": {
+      "i_max_ma_per_cut": 0.5
+    }
+  }
+}

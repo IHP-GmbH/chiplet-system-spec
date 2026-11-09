@@ -37,3 +37,9 @@ Copyright: The authors of the IHP__OTA1336 repository, https://github.com/Krzysz
 License: Apache-2.0
 Comment: Vendored at commit 34a743da5b78b867554d3ee7a7b54770fae114b0 with the
  sch_path and sym_path comment lines removed; the file headers say so.
+
+Files: conformance/fixtures/technology_package/intm4tm2/libs.tech/*
+Copyright: 2026 IHP PDK Authors
+License: Apache-2.0
+Comment: Copied from https://github.com/IHP-GmbH/OpenIntM4TM2, release
+ 0.4.0; the placeholders are empty files written here. provenance.json beside them lists which is which.

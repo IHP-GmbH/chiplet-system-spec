@@ -59,6 +59,7 @@ VERSIONED_SIDECARS = {
     "blackbox_padmap.schema.json": "version",
     "boundary_manifest.schema.json": "version",
     "interconnect_methods.schema.json": "schema_version",
+    "technology_package.schema.json": "schema_version",
 }
 
 
