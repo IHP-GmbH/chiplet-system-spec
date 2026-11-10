@@ -62,5 +62,6 @@ def test_the_plane_is_the_descriptors(name, tmp_path, monkeypatch):
     monkeypatch.setenv("INTERPOSER_PDK_ROOT", str(pdk_root(tmp_path, OTHER_PLANE)))
     doc = elaborate(example(name).build_system())
     by_id = {c["id"]: c for c in doc["components"]}
+    assert by_id["interposer"]["attachment_surface_z"] == 10.7103
     assert by_id["interposer"]["dimensions"]["thickness"] == 10.7103
     assert [by_id[u]["position"]["z"] for u in ("U1", "U2")] == [54.7103, 54.7103]

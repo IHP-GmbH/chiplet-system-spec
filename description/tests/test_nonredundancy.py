@@ -43,6 +43,7 @@ PINS = load_pins_json(PINS_JSON)
 def _interposer():
     return Interposer(technology="intm4tm2", top_cell="INTERPOSER",
                       dimensions=Dimensions(6492.312, 5602.001, 13.83),
+                      attachment_surface_z=10.8103,
                       position=Position(3246.156, 2801.0))
 
 
@@ -65,8 +66,8 @@ def test_six_vs_four_refused_at_connect():
     u1 = _die("DIE_U1", Port("d2d", d6, Role.MANAGER, tuple(f"A{i}" for i in range(6))))
     u2 = _die("DIE_U2", Port("d2d", d4, Role.SUBORDINATE, tuple(f"B{i}" for i in range(4))))
     b = _builder()
-    b.add_die(u1, "U1", Position(1500.0, 2801.0, 57.83))
-    b.add_die(u2, "U2", Position(5000.0, 2801.0, 57.83))
+    b.add_die(u1, "U1", Position(1500.0, 2801.0, 54.8103))
+    b.add_die(u2, "U2", Position(5000.0, 2801.0, 54.8103))
     with pytest.raises(LaneCountMismatch):
         b.connect(("U1", "d2d"), ("U2", "d2d"), net_prefix="sig")
 
@@ -84,8 +85,8 @@ def test_direction_conflict_refused_at_connect():
     u1 = _die("DIE_U1", Port("d2d", d6, Role.MANAGER, tuple(f"A{i}" for i in range(6))))
     u2 = _die("DIE_U2", Port("d2d", d6, Role.MANAGER, tuple(f"B{i}" for i in range(6))))
     b = _builder()
-    b.add_die(u1, "U1", Position(1500.0, 2801.0, 57.83))
-    b.add_die(u2, "U2", Position(5000.0, 2801.0, 57.83))
+    b.add_die(u1, "U1", Position(1500.0, 2801.0, 54.8103))
+    b.add_die(u2, "U2", Position(5000.0, 2801.0, 54.8103))
     with pytest.raises(RoleConflict):
         b.connect(("U1", "d2d"), ("U2", "d2d"), net_prefix="sig")
 
@@ -104,8 +105,8 @@ def test_correct_six_lane_connect_does_not_raise():
     u1 = _die("DIE_U1", Port("d2d", d6, Role.MANAGER, tuple(f"A{i}" for i in range(6))))
     u2 = _die("DIE_U2", Port("d2d", d6, Role.SUBORDINATE, tuple(f"B{i}" for i in range(6))))
     b = _builder()
-    b.add_die(u1, "U1", Position(1500.0, 2801.0, 57.83))
-    b.add_die(u2, "U2", Position(5000.0, 2801.0, 57.83))
+    b.add_die(u1, "U1", Position(1500.0, 2801.0, 54.8103))
+    b.add_die(u2, "U2", Position(5000.0, 2801.0, 54.8103))
     b.connect(("U1", "d2d"), ("U2", "d2d"), net_prefix="sig")
     b.build()  # no raise
 

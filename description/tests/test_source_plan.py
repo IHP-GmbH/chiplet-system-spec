@@ -619,7 +619,8 @@ def _by_hand(tmp_path):
                + tuple(port(n, Role.MANAGER) for n in ("r0", "r1")))
     b = SystemBuilder("two_die", Interposer("intm4tm2", "CF_CARRIER",
                                             Dimensions(2000.0, 3200.0, 10.8103),
-                                            Position(1000.0, 1600.0)),
+                                            Position(1000.0, 1600.0),
+                                            attachment_surface_z=10.8103),
                       description="Driver and echo on a carrier")
     b.add_technology(INTM4TM2)
     b.add_technology(SG13G2)

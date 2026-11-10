@@ -34,6 +34,7 @@ def _project(doc: dict) -> dict:
             "orientation": c.get("orientation"),
             "connection": c.get("connection"),
             "top_cell": c.get("top_cell"),
+            "attachment_surface_z": c.get("attachment_surface_z"),
             "position": tuple(float(pos.get(k, 0.0)) for k in ("x", "y", "z")),
             "dimensions": tuple(
                 float(dim.get(k, 0.0)) for k in ("width", "height", "thickness")

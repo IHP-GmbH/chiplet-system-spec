@@ -39,6 +39,8 @@ def _interposer_component(interp: Interposer) -> Dict[str, Any]:
             "thickness": interp.dimensions.thickness,
         },
     }
+    if interp.attachment_surface_z is not None:
+        comp["attachment_surface_z"] = interp.attachment_surface_z
     if interp.io_pads:
         comp["io_pads"] = [
             {

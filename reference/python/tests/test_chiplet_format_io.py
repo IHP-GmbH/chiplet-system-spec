@@ -81,8 +81,7 @@ def _component(doc, cid):
 
 def test_attachment_surface_z_roundtrip():
     """The interposer's die-mount plane parses, survives dump/load and is
-    distinct from the physical body thickness; dies carry none (consumers fall
-    back to dimensions.thickness)."""
+    distinct from the physical body thickness; dies carry none."""
     doc = cfio.load(EXAMPLES / "interposer_demo_design.chiplet")
     interposer = _component(doc, "interposer")
     assert interposer is not None

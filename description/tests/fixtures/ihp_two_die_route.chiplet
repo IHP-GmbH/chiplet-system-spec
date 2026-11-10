@@ -30,6 +30,7 @@ components:
     top_cell: INTERPOSER
     position: {x: 3246.156, y: 2801.000, z: 0.0}
     dimensions: {width: 6492.312, height: 5602.001, thickness: 10.8103}
+    attachment_surface_z: 10.8103
     io_pads:
       - id: J_VDD
         io_class: wire_bond

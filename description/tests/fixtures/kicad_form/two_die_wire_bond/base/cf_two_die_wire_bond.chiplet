@@ -28,7 +28,8 @@ components:
   dimensions:
     width: 2000.0
     height: 3200.0
-    thickness: 13.83
+    thickness: 10.8103
+  attachment_surface_z: 10.8103
   io_pads:
   - id: J_U1_PAD_CFG_MODE
     io_class: wire_bond
@@ -120,7 +121,7 @@ components:
   position:
     x: 1000.0
     y: 2200.0
-    z: 57.83
+    z: 54.8103
   dimensions:
     width: 1000.0
     height: 1000.0
@@ -137,7 +138,7 @@ components:
   position:
     x: 1000.0
     y: 1000.0
-    z: 57.83
+    z: 54.8103
   dimensions:
     width: 1000.0
     height: 1000.0

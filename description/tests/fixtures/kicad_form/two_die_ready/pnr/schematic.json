@@ -3,7 +3,7 @@
     "word": "not_run"
   },
   "chiplet": "../base/cf_two_die_bondpad.chiplet",
-  "chiplet_sha256": "2630666c819f0b317a9b4d948d9b6a426f40bfa06fdcd3e4ef74d128b61dfc16",
+  "chiplet_sha256": "a4625f23e516402f909796c3082703decdc2eb402d808e2caab9fd19afc8ac26",
   "components": [
     {
       "id": "U1",
@@ -32,7 +32,7 @@
   },
   "refusals": [],
   "schematic": "cf_two_die_bondpad.kicad_sch",
-  "schematic_sha256": "ae56a149590e0300165cdd13f7eedb4946519abd29253e487ef5feb1c3224832",
+  "schematic_sha256": "0fb3271cbd89cded5e448e873861380ba13a448a54427f84d9f914d62d5df0cd",
   "unconnected_terminals": 0,
   "version": "1.0",
   "word": "written"

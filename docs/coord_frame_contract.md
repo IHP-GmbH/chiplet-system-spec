@@ -133,11 +133,12 @@ y-up, in um.
 center; for `anchor: gds_origin` it is the component's own GDS (0,0),
 wherever that origin sits in the artwork.
 
-In Z, `position.z` is the component's **seating plane**: the bottom
+In Z, a die's `position.z` is its **seating plane**: the bottom
 face of the placed body, the one that meets the mounting surface (for
 dies on a connection stack, the tip of that stack; see section 3).
 `dimensions.thickness` extends the body upward from `position.z`.
-Files that predate real thickness data carry the placeholder
+An interposer's `position.z` is the origin of its local frame instead
+(section 1.5). Files that predate real thickness data carry the placeholder
 `thickness: 0.0`, where the center and seating-plane readings
 coincide; with a real thickness they differ by `thickness / 2`, and
 the seating-plane reading is the normative one: it is what the
@@ -164,9 +165,17 @@ questions and have different sources:
 | Field | Source | Meaning |
 |---|---|---|
 | `dimensions: width/height` | bbox of prBoundary 235/0 (the board outline, drawn from KiCad Edge.Cuts) when the layer is present; bbox of all drawn geometry otherwise (legacy GDS) | The fab extent of the interposer, what viewers render as the substrate body |
-| `dimensions: thickness` | KiCad stackup (`GetBoardThickness`) | The interposer's **physical body** z-extent (Si substrate + BEOL). It extends **downward** from `attachment_surface_z`: the die-mount plane is the top surface and the substrate body sits below it (local z goes negative). Legacy files without `attachment_surface_z` overload this field as the mount reference. |
-| `attachment_surface_z` | the interposer PDK's key `beol.attachment_surface_z_um` (10.8103 for IntM4TM2: the TopMetal2 top of the interposer's own BEOL, Metal4 on a 0.64 um base oxide) | The die-attachment (BEOL-top) surface z in the interposer-local frame: the plane dies mount on, `z_die = attachment_surface_z + connection height` (section 3). Optional; when absent, consumers fall back to `dimensions.thickness` as the mount reference. |
+| `dimensions: thickness` | KiCad stackup (`GetBoardThickness`) | The interposer's **physical body** z-extent (Si substrate + BEOL). It extends **downward** from `attachment_surface_z`: the die-mount plane is the top surface and the substrate body sits below it (local z goes negative). It is the body only and never a mount plane. |
+| `attachment_surface_z` | the interposer PDK's key `beol.attachment_surface_z_um` (10.8103 for IntM4TM2: the TopMetal2 top of the interposer's own BEOL, Metal4 on a 0.64 um base oxide) | The die-attachment (BEOL-top) surface z in the interposer-local frame: the plane dies mount on, `z_die = interposer.position.z + attachment_surface_z + connection height` (section 3). Optional in the schema; a file that seats dies without it has no mount plane (section 3.4). |
 | `position: x/y` | half of the **full** GDS bbox (all layers, outline included) | Where the mesh bbox center sits in the canonical frame (`anchor: bbox_center`, section 2) |
+
+The interposer's `position.z` places the origin of its local frame in
+the canonical frame; for the interposer it is not the body's bottom face
+(section 1.4 describes the placed dies). The plane in the canonical frame is
+therefore `interposer.position.z + attachment_surface_z`, and the body spans
+local z `attachment_surface_z - thickness` to `attachment_surface_z`. A die's
+`position.z` is in the canonical frame. Every file the pipeline writes keeps
+the interposer at z 0, where the local and canonical planes coincide.
 
 When the outline contains all drawn geometry, the full bbox equals
 the outline bbox and both fields describe the same rectangle. When
@@ -236,12 +245,12 @@ the live values from
 
 ```yaml
 components:
-  - id: interposer
+  - id: "interposer"
     type: interposer
-    technology: intm4tm2
+    technology: "intm4tm2"
     anchor: bbox_center
-    layout: interposer_wire_bonding_demo_interposer.gds
-    top_cell: INTERPOSER
+    layout: "interposer_wire_bonding_demo_interposer.gds"
+    top_cell: "INTERPOSER"
     position:
       x: 3246.156      # half of full GDS bbox width (= outline width
       y: 2801.000      #   when all geometry is on-board, see section 1.5)
@@ -252,14 +261,14 @@ components:
       thickness: 300.0    # physical interposer body (KiCad stackup); see section 1.5
     attachment_surface_z: 10.8103 # BEOL-top die-mount plane; see sections 1.5, 3
 
-  - id: U1
+  - id: "U1"
     type: die
-    technology: sg13g2
+    technology: "sg13g2"
     anchor: gds_origin
-    connection: cupillar_opt1   # per-die method; see section 3.2
+    connection: "cupillar_opt1"   # per-die method; see section 3.2
     orientation: flip_chip
-    layout: ${GDS_TO_KICAD_ROOT}/.../Metal_Test.gds
-    top_cell: Metal_Test
+    layout: "${GDS_TO_KICAD_ROOT}/.../Metal_Test.gds"
+    top_cell: "Metal_Test"
     position:
       x: 1954.121     # where the die's GDS (0,0) lands (anchor: gds_origin)
       y: 2332.483
@@ -303,22 +312,24 @@ For dies that mount on a connection stack (cu-pillar, solder bump,
 microbump):
 
 ```
-z_die = mounting_surface + connection.total_height()
+z_die = interposer.position.z + mounting_surface + connection.total_height()
 ```
 
 where:
 - `mounting_surface` = `z_bottom` of the interposer stackup layer
   whose name matches the connection stack's first layer, after the
   interconnect-PDK fragment for this die's `connection:` is merged in
-  (see section 3.2).
+  (see section 3.2). The fragment is rebased on the file's mount plane,
+  so this `z_bottom` is that plane.
 - `connection.total_height()` = sum of `height` for every layer in
   the connection stack.
 
-The mounting plane of a file is its interposer's `attachment_surface_z`
-when the file declares one. The interconnect fragment is rebased on that
-value, not on the technology stackup's. The technology stackup's
-`attachment_surface_z` applies only when the file declares none, and
-`dimensions.thickness` only when neither exists (section 3.4). For
+The mount plane of a file is its interposer's `attachment_surface_z`,
+as the file declares it. The interconnect fragment is rebased on that value,
+not on the technology stackup's. Nothing stands in for a missing value: the
+reference readers hold no PDK, a tool's stackup copy is not the format, and
+`dimensions.thickness` is the body. A file that seats dies and declares no
+`attachment_surface_z` has no mount plane (section 3.4). For
 `technology: intm4tm2` the declared value must equal the interposer PDK's
 `beol.attachment_surface_z_um`; a file whose value differs is flagged
 (section 3.5).
@@ -350,7 +361,7 @@ How the mounting surface resolves (chiplet-studio's z calculation):
     CuPillar.z_bottom = 10.8103.
 3. firstLayerName = connection.layers[0].name = "CuPillar". Look it up
    in the merged stackup. FOUND. mounting_surface = 10.8103.
-4. z_die = 10.8103 + total_height(cupillar_opt1).
+4. z_die = 0 (the interposer's position.z) + 10.8103 + total_height(cupillar_opt1).
 ```
 
 Per-die totals in the demo:
@@ -376,33 +387,37 @@ first layer (the layer that attaches to the interposer pad, e.g. CuPillar for
 cu-pillar stacks); after the merge it resolves to `attachment_surface_z`, and
 adding the stack's total height lands the die on the tip of the connection.
 
-### 3.4 Edge cases (must be handled by reader)
+### 3.4 Edge cases (handled by every tool that computes z)
 
 | Case | Behavior |
 |---|---|
-| Die has no `connection:` field | **Fallback**: mount on the file's plane, else the stackup's, else thickness (section 3.1), `connection_height = 0`. |
-| `connection` id not a defined connection stack | **Fallback**: mount on the plane of section 3.1, `connection_height = 0`. |
-| Connection's first layer not in interposer stackup (even after merge) | **Fallback**: mount on the plane of section 3.1. |
-| `interposer.attachment_surface_z` absent (legacy file) | **Fallback**: use `interposer.dimensions.thickness` as the mount reference (the pre-split behavior, when thickness doubled as the attachment surface). |
+| Die has no `connection:` field | **Fallback**: mount on the file's plane (section 3.1), `connection_height = 0`. |
+| `connection` id not a defined connection stack | **Fallback**: mount on the file's plane (section 3.1), `connection_height = 0`. |
+| Connection's first layer not in interposer stackup (even after merge) | **Fallback**: mount on the file's plane (section 3.1). |
+| `interposer.attachment_surface_z` absent and the interposer seats dies | No mount plane. An exporter that places dies in z refuses the file, naming the interposer and the remedy (declare `attachment_surface_z`; for `intm4tm2` it is the interposer PDK's `beol.attachment_surface_z_um`). A viewer shows the dies on `dimensions.thickness` with a warning that names the file; that seat is a display guess, not a mount plane. Neither takes a stackup's plane. |
 | Die has `position.z` explicitly set non-zero | Use the explicit value, do not auto-calculate. |
 
-The mount reference is `attachment_surface_z` when the interposer declares it,
-falling back to `dimensions.thickness` for files written before the field
-existed -- so both eras seat dies on the BEOL top, not on world z=0 (the
-earlier `0.0` return was a bug that put dies at the origin) and not on the
-substrate bottom (which is what reading the physical `thickness` would now
-give). The fallback keeps the formula valid in all cases.
+An interposer *seats dies* when its file holds a `die` or `die_array`
+component. A die with an explicit `position.z` counts: the plane is still
+what that z is checked against (section 3.5, and the exporter check in
+`3dblox_interop.md` section 6.1). This section is the one statement of the
+no-plane behavior; other sections point here.
 
 ### 3.5 Plane check (intm4tm2)
 
 A check reads the interposer PDK's key (`beol.attachment_surface_z_um` in
-`libs.tech/intm4tm2_stack.json`) and every committed `.chiplet` whose
+`libs.tech/intm4tm2_stack.json`) and the committed `.chiplet` files whose
 interposer declares `technology: intm4tm2`. It fails, naming the file and
-line, when the file's `attachment_surface_z` differs from the key, or when a
-die with a `connection:` has a non-zero `position.z` other than the plane
-plus that connection's total height, written as section 1.5 states. It runs
-in adk-tools CI and in the image's verify stage, the only place where the
-PDK sits beside every consumer. The reference readers in this repository do
+line, when the file's `attachment_surface_z` differs from the key, when the
+interposer seats dies and declares no `attachment_surface_z` (the key does
+not stand in for it), or when a die with a `connection:` has a non-zero
+`position.z` other than the interposer's `position.z` plus the file's plane
+plus that connection's total height, written as section 1.5 states. It runs in adk-tools CI and in the
+image's verify stage, the only place where the PDK sits beside every
+consumer. It walks adk-tools' `tools/chiplet_kicad_plugin`,
+`tools/chiplet-studio` and `examples` trees; a repository whose files it
+does not walk holds them to the same rule in its own tests. The reference
+readers in this repository do
 not run it, since they hold no PDK; a viewer may report the same mismatch
 when it opens a file, but that report is not the check. Conformance
 fixtures are format data, not designs: they may hold other values, and
@@ -511,4 +526,16 @@ in `.chiplet` files.
 ## History
 
 This document's changes are recorded in the repository history and, where they touch the format,
-in [`VERSION_POLICY.md`](./VERSION_POLICY.md).
+in [`VERSION_POLICY.md`](./VERSION_POLICY.md). Entries below record changes of meaning.
+
+- 2026-11-09. The mount plane is the file's `attachment_surface_z` and nothing else (section 3.4).
+  Files written before the field existed used `thickness` as the mount reference, and a missing
+  field fell to the stackup's plane, then to `thickness`. Withdrawn: a legacy `thickness` may be an
+  old plane, the current one or the body, and a stackup is a tool's copy. No format version,
+  schema rule or reader behavior moves. Until the next reader release, the schema's description
+  of the field and two C++ reader comments still state the old reading. Cases:
+  `conformance/fixtures/mount_plane/`.
+- 2026-11-09. `attachment_surface_z` is in the interposer-local frame, and a die's z adds the
+  interposer's `position.z` (sections 1.5, 3.1, 3.5). The formula left that term out, which a file
+  with its interposer at z 0 never shows. Not a change of meaning: the plane was already stated
+  as local, and the 3Dblox exporter already adds it.

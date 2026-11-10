@@ -9,8 +9,9 @@ host the run happens on comes through a :class:`Resolver` the flow implements:
 the technology records (with the viewer paths of that host), each method's
 record and connection stack, the attach plane, and the external pad row. A die
 sits at the plane plus its method's stack, added in decimal so the sum is the
-one the frame contract names; the carrier is centred, at z 0, its thickness the
-plane (``design.chiplet`` has no attachment-surface field).
+one the frame contract names; the carrier is centred, at z 0, and declares the
+plane as its ``attachment_surface_z``. No body is known here, so its thickness
+stays the plane too.
 
 A refusal of this package is a :class:`SourceError` carrying the file and the
 line; an error the resolver raises passes through untranslated, so the flow
@@ -159,7 +160,8 @@ def build(source: Source, topology: Plan, resolver: Resolver) -> System:
     interposer = Interposer(
         technology=carrier.technology, top_cell=carrier.top_cell,
         dimensions=Dimensions(width, height, float(plane)),
-        position=Position(width / 2.0, height / 2.0), io_pads=io_pads)
+        position=Position(width / 2.0, height / 2.0), io_pads=io_pads,
+        attachment_surface_z=float(plane))
     builder = SystemBuilder(str(assembly.get("name", "")), interposer,
                             description=str(assembly.get("description", "") or ""))
 

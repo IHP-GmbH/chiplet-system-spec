@@ -34,6 +34,7 @@ PINS = load_pins_json(PINS_JSON)
 def _interp():
     return Interposer(technology="intm4tm2", top_cell="I",
                       dimensions=Dimensions(6492.312, 5602.001, 13.83),
+                      attachment_surface_z=10.8103,
                       position=Position(3246.156, 2801.0))
 
 
@@ -55,8 +56,8 @@ def _two_dies(d_manager, d_subordinate):
     u2 = _die("DIE_U2", Port("d2d", d_subordinate, Role.SUBORDINATE,
                              tuple(f"B{i}" for i in range(6))))
     b = _builder()
-    b.add_die(u1, "U1", Position(1500.0, 2801.0, 57.83))
-    b.add_die(u2, "U2", Position(5000.0, 2801.0, 57.83))
+    b.add_die(u1, "U1", Position(1500.0, 2801.0, 54.8103))
+    b.add_die(u2, "U2", Position(5000.0, 2801.0, 54.8103))
     return b
 
 

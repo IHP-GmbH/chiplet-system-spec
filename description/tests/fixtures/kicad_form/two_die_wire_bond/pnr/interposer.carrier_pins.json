@@ -1,5 +1,5 @@
 {
-  "chiplet_sha256": "664e47788dcca489bc0ec30f1751419089e143633a8016300265b7280ac3b07a",
+  "chiplet_sha256": "e958abf391125f64f24aa3b9b31f989fead7368b9d8ef2cc2518c62cae3483fe",
   "component": "interposer",
   "format": "gds2kicad.carrier-pins",
   "pins": [

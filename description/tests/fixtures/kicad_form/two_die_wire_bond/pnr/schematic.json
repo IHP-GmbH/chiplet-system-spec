@@ -3,7 +3,7 @@
     "word": "not_run"
   },
   "chiplet": "../base/cf_two_die_wire_bond.chiplet",
-  "chiplet_sha256": "664e47788dcca489bc0ec30f1751419089e143633a8016300265b7280ac3b07a",
+  "chiplet_sha256": "e958abf391125f64f24aa3b9b31f989fead7368b9d8ef2cc2518c62cae3483fe",
   "components": [
     {
       "id": "interposer",
@@ -37,12 +37,12 @@
     },
     "interposer": {
       "path": "interposer.carrier_pins.json",
-      "sha256": "944ae147c5846e06aa6ab341565fbb093407f0b48a817de6dc9c4be124f90c63"
+      "sha256": "4fa631f0bc0ee107ab0218ff037f373f601f6f00712c0ccd7db2b4ee932bfc88"
     }
   },
   "refusals": [],
   "schematic": "cf_two_die_wire_bond.kicad_sch",
-  "schematic_sha256": "f9f13f062a3f022885c9b24355e71622f111857036f3dcbb401a3043938b15a3",
+  "schematic_sha256": "148f1dca5def2766bf21c0f0cc482fab29723c920cada661dcd341d589debc87",
   "unconnected_terminals": 0,
   "version": "1.0",
   "word": "written"

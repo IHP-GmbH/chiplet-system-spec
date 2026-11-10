@@ -418,6 +418,8 @@ class Interposer:
     io_pads: Tuple[InterposerIoPad, ...] = ()
     id: str = "interposer"
     anchor: str = "bbox_center"
+    #: The plane dies mount on (``attachment_surface_z``); None writes no plane.
+    attachment_surface_z: Optional[float] = None
 
 
 # ----------------------------------------------------------------------

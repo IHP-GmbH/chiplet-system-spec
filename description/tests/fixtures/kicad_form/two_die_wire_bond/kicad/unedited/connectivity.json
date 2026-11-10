@@ -1,15 +1,15 @@
 {
-  "base_sha256": "664e47788dcca489bc0ec30f1751419089e143633a8016300265b7280ac3b07a",
+  "base_sha256": "e958abf391125f64f24aa3b9b31f989fead7368b9d8ef2cc2518c62cae3483fe",
   "format": "chiplet_system.connectivity",
   "front_end": {
     "inputs": [
       {
         "path": "cf_two_die_wire_bond.net",
-        "sha256": "be46be522ebd0494ca80c9c09901e9528b055db74ead39e99e59b090e8617806"
+        "sha256": "4576ef13303f4d5c6decc6153a101e5f612c20a398d79a03b0aa59be1d1b15a8"
       },
       {
         "path": "cf_two_die_wire_bond.kicad_sch",
-        "sha256": "f9f13f062a3f022885c9b24355e71622f111857036f3dcbb401a3043938b15a3"
+        "sha256": "148f1dca5def2766bf21c0f0cc482fab29723c920cada661dcd341d589debc87"
       }
     ],
     "reader": "kicad_sch_to_connectivity 1.0",
@@ -18,7 +18,7 @@
   },
   "generator_report": {
     "path": "../../pnr/schematic.json",
-    "sha256": "bc00abbbb9ac3963859019804f772e21bf63bb002b88d0d4bbc4e00ec58a9aa7"
+    "sha256": "f885500219b1e6a716a8e0f9d793f08565524f78d9073757f13332b161c071c7"
   },
   "nets": [
     {

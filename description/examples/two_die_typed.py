@@ -106,7 +106,7 @@ def build_system():
     b = SystemBuilder("ihp_two_die_route", interposer=Interposer(
         technology="intm4tm2", top_cell="INTERPOSER",
         dimensions=Dimensions(6492.312, 5602.001, float(plane)),
-        position=Position(3246.156, 2801.0),
+        position=Position(3246.156, 2801.0), attachment_surface_z=float(plane),
         io_pads=(InterposerIoPad("J_VDD", "VDD", Position(300.0, 2801.0), 80.0, 80.0),
                  InterposerIoPad("J_GND", "GND", Position(6192.0, 2801.0), 80.0, 80.0))),
         description="Two SG13G2 dies on an IntM4TM2 interposer; cupillar_opt1; routable netlist")
