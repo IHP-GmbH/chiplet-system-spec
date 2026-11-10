@@ -214,7 +214,7 @@ class Port:
                 f"{self.definition.name!r} declares lane_count="
                 f"{self.definition.lane_count}"
             )
-        # RAIL-1: a repeated lane would elaborate to two nets on one pad (a short)
+        # A repeated lane would elaborate to two nets on one pad (a short)
         # while another lane goes unconnected. Refuse it here.
         if len(set(self.lanes)) != len(self.lanes):
             dupes = sorted({lane for lane in self.lanes if self.lanes.count(lane) > 1})

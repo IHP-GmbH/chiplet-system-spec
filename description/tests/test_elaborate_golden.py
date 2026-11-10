@@ -102,7 +102,7 @@ def test_emitted_file_loads_zero_warnings_under_ir(built_system, tmp_path):
 
 @pytest.mark.needs_sibling_sources
 def test_seeded_mutant_stripped_anchor_warns_under_ir(built_system, tmp_path):
-    """Prove-it-can-fail for the zero-warning oracle (RAIL-4): a malformed but
+    """Prove-it-can-fail for the zero-warning oracle: a malformed but
     still-loadable emission (a component with its anchor removed) must produce a
     non-empty ir warning set, so the cross-load actually catches a bad emit."""
     require_interposer_pnr()
