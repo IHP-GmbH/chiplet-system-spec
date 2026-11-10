@@ -490,7 +490,7 @@ def test_non_escalating_host_still_warns_exactly_once():
 # reference/cpp/tests against the C++ one, so the two references are measured
 # against the file and never against each other.
 #
-# What a green over the oracle does NOT cover (META-2): warning DELIVERY. A row
+# What a green over the oracle does NOT cover: warning DELIVERY. A row
 # says a higher minor is accepted and reported; which channel carries it, how it
 # is deduplicated, and what a host running warnings-as-errors sees are covered by
 # the tests above and by nothing in the oracle. It also covers no I/O: the rows
@@ -673,7 +673,7 @@ def test_the_policy_document_states_the_transition_window():
         in policy
 
 
-# --- the retroactive sweep (accepted majors, pass two) ---------------------
+# --- the retroactive sweep (accepted majors) -------------------------------
 def _sweep_rows():
     policy = (ROOT / "docs" / "VERSION_POLICY.md").read_text(encoding="utf-8")
     assert "## Unversioned corrections since 1.0" in policy, \
@@ -738,8 +738,8 @@ def test_the_dividing_line_justifies_the_minor_at_ELEMENT_level():
     in normative text.
 
     What a green here does NOT cover: whether any consumer actually refuses at
-    element level. This reads a document; the behaviour is the consumers' and the
-    per-consumer rows own it.
+    element level. This reads a document; the behaviour belongs to each
+    consumer.
     """
     policy = (ROOT / "docs" / "VERSION_POLICY.md").read_text(encoding="utf-8")
     line = policy.split("The dividing line", 1)[1].split("## Changing the major", 1)[0]

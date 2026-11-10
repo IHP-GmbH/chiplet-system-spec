@@ -9,7 +9,7 @@
 # The pad set of the `to` endpoint is the interposer's inline io_pads whose
 # layer is the endpoint's port_layer, i.e. {J1}, and J1's io_class wire_bond
 # allows only a wire_bond interface. The die side of the same interface carries
-# no pads in the document and is not checked until a pad binding exists.
+# no pads in the document and is not checked until an explicit pad binding exists.
 format_version: "1.0"
 
 assembly:

@@ -100,7 +100,7 @@ components:
 
   - id: MEM
     type: die_array
-    # bbox_center, and the change from gds_origin belongs to the anchor ruling
+    # bbox_center, and the change from gds_origin belongs to the anchor rule
     # rather than to this file's coverage. The anchor applies per element and
     # start_position places the first element's anchor point, which is a rule the
     # format had never written down: the contract defined the anchor for a

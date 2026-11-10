@@ -18,7 +18,7 @@
     "by the loader before the reader was called. Those rows are Python-only and",
     "say so in their own field rather than being quietly absent.",
     "",
-    "What this oracle does NOT cover (META-2): warning DELIVERY. It says a higher",
+    "What this oracle does NOT cover: warning DELIVERY. It says a higher",
     "minor is accepted and reported; whether that arrives through Python's",
     "warnings channel, how it is deduplicated, and what a host that escalates",
     "warnings to errors sees are all owned by the tests in",

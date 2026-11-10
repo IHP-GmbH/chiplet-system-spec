@@ -423,7 +423,7 @@ def _content_document(char):
 
 
 def test_the_forbidden_set_is_derived_from_the_parser_and_not_written_down():
-    # META-4, and the reason this test exists: the set was carried by hand from
+    # The reason this test exists: the set was carried by hand from
     # a four-member finding into a three-member constant, and every green in the
     # repository stayed green because every one of them read the constant. So
     # nothing here reads it. The criterion is EXECUTED over a code-point range:
@@ -608,7 +608,7 @@ def test_the_unattributable_refusal_names_the_line_and_the_way_out(case):
 
 @pytest.mark.parametrize("case", SPLITTER_ONLY, ids=lambda c: c["name"])
 def test_the_writer_never_reproduces_a_document_the_splitter_refuses(case):
-    # The same rule stated as one property over the whole group: whatever this writer
+    # Section (e)'s rule as one property over the whole group: whatever this writer
     # emits, the splitter every host runs must recover exactly the top-level keys
     # the writer was given. The writer meets that either by writing a splittable
     # document (a quoted key comes back bare, and a tab inside a scalar was never

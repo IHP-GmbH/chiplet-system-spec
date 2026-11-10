@@ -97,8 +97,9 @@ MINOR into a MAJOR for everyone downstream.
 
 Which leaves one line to draw, because this specification does land
 document-level refusals and calls them MINOR (the repeated top-level key, the
-forbidden line breaks) while the interface-type carry rule leans on the
-paragraph above to forbid one. They are reconcilable, and the reconciling sentence is this: a
+forbidden line breaks) while the carry rule (a reader carries an unrecognised
+`interfaces[].type` rather than refuse it) leans on the paragraph above to
+forbid one. They are reconcilable, and the reconciling sentence is this: a
 DOCUMENT-level refusal is permitted only for bytes that have NO conforming
 reading at all, and every refusal grounded in a VALUE a reader does not
 recognise is ELEMENT-level. The test is not how serious the defect looks, it is
@@ -107,9 +108,9 @@ keeps the last value, yaml-cpp the first, and nothing downstream can tell); a
 forbidden line break has none (a parser breaks a line where the grammar does
 not, so the two build different documents); an unrecognised member of a closed
 vocabulary has one, so a reader that cannot use it is incomplete, must say so,
-and must carry on. That makes those three one rule rather than
-three precedents, and it is the sentence to quote the next time this argument
-comes up.
+and must carry on. That makes the repeated key, the line breaks and the carry
+rule one rule rather than three precedents, and it is the sentence to quote the
+next time this argument comes up.
 
 The sentence speaks about a value a MINOR added, so it binds a reader reading a
 document stamped ABOVE the minor it implements. A value unknown in a document

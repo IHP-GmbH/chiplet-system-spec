@@ -11,7 +11,7 @@ C++ ``kPadUsageTable``); the first half of this file reads all three, and the
 second exercises the Python validator's behaviour on hand-built documents plus
 the two corpus fixtures.
 
-What a green here does NOT cover (META-2):
+What a green here does NOT cover:
 
 * the C++ validator's behaviour, which its own test binary owns
   (test_pad_usage_rule_refuses_a_mismatched_pad there); this file compares the

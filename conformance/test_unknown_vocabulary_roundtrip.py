@@ -27,7 +27,7 @@ And two documents, because the interesting one is not the interface on its own:
 it is the interface that meets an interposer pad with a KNOWN ``io_class``, which
 is validation rule 8 and was the third place the library refused an unknown type.
 
-What a green here does NOT cover (META-2): the C++ cells are asserted in the C++
+What a green here does NOT cover: the C++ cells are asserted in the C++
 binary, so this file's green says the Python side and the oracle agree, and ctest
 says the C++ side does; and nothing here says a CONSUMER refuses the element,
 which is the consumer's own gate and is what the exported vocabulary is for.
@@ -173,7 +173,7 @@ def test_a_known_type_produces_no_note():
 
 
 def test_the_vocabulary_is_exported_so_a_consumer_can_refuse_the_element():
-    # The other half of the ruling, and the half that makes the MINOR label true
+    # The other half of the carry rule, and the half that makes the MINOR label true
     # rather than aspirational: the library carries the value, and the consumer
     # refuses the ELEMENT. It cannot do that without the list.
     assert "KNOWN_INTERFACE_TYPES" in cfio.__all__

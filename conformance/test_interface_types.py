@@ -12,7 +12,7 @@ validator accepted it, and the spec carried an italic exception saying so. This
 file reads all four and compares them, and then exercises the Python validator's
 behaviour, which no text comparison can show.
 
-What a green here does NOT cover (META-2): the C++ reader's BEHAVIOUR on each
+What a green here does NOT cover: the C++ reader's BEHAVIOUR on each
 member (its own test binary owns that, test_every_known_interface_type_is_accepted);
 whether any producer emits ``solder_bump`` (none may before format 1.1, see
 docs/VERSION_POLICY.md's sweep table); and which io_class a given type may meet,
@@ -31,8 +31,8 @@ sys.path.insert(0, str(ROOT / "reference" / "python"))
 import chiplet_format_io as cfio  # noqa: E402
 
 SPEC = ROOT / "docs" / "CHIPLET_FORMAT_SPEC.md"
-#: The vocabulary moved from the translation unit into the HEADER when the carry rule
-#: made carrying the value the rule: a C++ consumer that has to refuse the
+#: The vocabulary moved from the translation unit into the HEADER when the readers
+#: started carrying the value instead of refusing it: a C++ consumer that has to refuse the
 #: ELEMENT cannot do it without the list, and it could not reach it while the
 #: array was private to the .cpp.
 CPP_SOURCE = (ROOT / "reference" / "cpp" / "include" / "chiplet_format_io"
@@ -101,7 +101,7 @@ def test_the_spec_prose_names_the_same_members():
 
 
 def test_solder_bump_is_in_the_vocabulary():
-    # Named, so the member cannot be dropped in a refactor without a
+    # solder_bump by name, so the member cannot be dropped in a refactor without a
     # test saying so out loud.
     assert "solder_bump" in cfio.KNOWN_INTERFACE_TYPES
 
@@ -139,7 +139,7 @@ def test_solder_bump_is_refused_below_its_minor():
 @pytest.mark.parametrize("itype", ["hybrid_bond", "bogus_bond", "MICRO_BUMP",
                                    "micro_bump\n"])
 def test_the_python_validator_carries_an_unknown_type(itype):
-    # Inverted by the carry ruling, and the PARITY assertion is restated
+    # Inverted by the carry rule, and the PARITY assertion is restated
     # rather than deleted, because parity is what the predecessor of this test
     # was really about. It asserted a refusal so that a document refused by one
     # reference reader was refused by the other; the verdict moved and the
