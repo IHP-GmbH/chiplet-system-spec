@@ -4,12 +4,12 @@
 tier 1 when the reader opts in, a refusal everywhere else, and the writer's stamp."""
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
 import subprocess
 import sys
-import tarfile
 from pathlib import Path
 
 import pytest
@@ -24,6 +24,7 @@ from chiplet_system_description.source.plan import plan
 from chiplet_system_description.source.unplaced import content_minor
 from chiplet_system_description.source.writer import dumps_source
 
+from tests.conftest import FIXTURES_DIR
 from tests.source_dies import SOURCE, checked, write_source
 
 #: :data:`SOURCE` as a sheet import leaves it: U1 not placed, no carrier size,
@@ -153,29 +154,45 @@ def test_a_walk_without_the_unplaced_key_refuses_it_in_a_higher_minor(monkeypatc
         loads_source(PINS_ONLY)
 
 
+#: The format 1.2 reader, kept as files (see its PROVENANCE.md).
+READER_1_2 = FIXTURES_DIR / "reader_1_2"
+
+
+def _verified_reader_1_2_src():
+    """The copy's ``src`` directory, once its files match SHA256SUMS: none
+    differs, none is added, none is missing."""
+    listed = {}
+    for line in (READER_1_2 / "SHA256SUMS").read_text("utf-8").splitlines():
+        digest, name = line.split("  ", 1)
+        listed[name] = digest
+    present = {p.relative_to(READER_1_2).as_posix()
+               for p in (READER_1_2 / "src").rglob("*") if p.is_file()
+               and "__pycache__" not in p.parts}
+    assert present == set(listed), "the 1.2 reader copy gained or lost a file"
+    for name, digest in listed.items():
+        assert hashlib.sha256((READER_1_2 / name).read_bytes()).hexdigest() == digest, name
+    return READER_1_2 / "src"
+
+
 def test_the_1_2_reader_as_released_refuses_a_file_with_unplaced(tmp_path):
-    """The real one: the reader at the commit this format follows, from git."""
-    repo = Path(__file__).resolve().parents[2]
-    try:
-        tar = subprocess.run(["git", "-C", str(repo), "archive", "6812067", "description/src"],
-                             capture_output=True, check=True, timeout=60).stdout
-    except (OSError, subprocess.SubprocessError):
-        pytest.skip("the 1.2 reader's commit is not in this checkout")
-    with tarfile.open(fileobj=io.BytesIO(tar)) as archive:
-        try:
-            archive.extractall(tmp_path, filter="data")
-        except TypeError:  # a Python without extraction filters; the archive is ours
-            archive.extractall(tmp_path)
+    """The real one: the 1.2 reader, run as its own package from the copy
+    PROVENANCE.md describes."""
+    src = _verified_reader_1_2_src()
     path = tmp_path / "pins_only.chiplet"
     path.write_text(PINS_ONLY, encoding="utf-8")
     code = ("import json, sys, warnings\nwarnings.simplefilter('ignore')\n"
             "from chiplet_system_description.source import check_text\n"
+            "import chiplet_system_description as package\n"
             "_, found = check_text(open(sys.argv[1]).read())\n"
-            "print(json.dumps([[f.line, f.note] for f in found]))\n")
-    env = dict(os.environ, PYTHONPATH=str(tmp_path / "description" / "src"))
+            "print(json.dumps([package.__file__, [[f.line, f.note] for f in found]]))\n")
+    # No bytecode, so no __pycache__ appears in the hashed tree.
+    env = dict(os.environ, PYTHONPATH=str(src), PYTHONDONTWRITEBYTECODE="1")
     run = subprocess.run([sys.executable, "-c", code, str(path)], capture_output=True,
-                         text=True, env=env, cwd=tmp_path, timeout=60, check=True)
-    assert json.loads(run.stdout) == [[26, False]]
+                         text=True, env=env, cwd=tmp_path, timeout=60)
+    assert run.returncode == 0, run.stderr
+    imported, found = json.loads(run.stdout)
+    assert Path(imported).is_relative_to(src), imported
+    assert found == [[26, False]]
 
 
 #: Sources at the edge of what 1.3 allows, each a file both readers judge.

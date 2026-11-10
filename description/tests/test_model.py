@@ -74,7 +74,7 @@ def test_die_ambiguous_lane_on_repeated_pin():
 
 
 def test_port_refuses_duplicate_lane_names():
-    """RAIL-1: a repeated lane within one port elaborates to a short (two nets on
+    """A repeated lane within one port elaborates to a short (two nets on
     one pad, one pin unconnected); refuse it at Port construction."""
     d = InterfaceDefinition("generic", 6)
     with pytest.raises(DuplicateLane):

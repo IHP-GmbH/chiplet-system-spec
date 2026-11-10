@@ -61,7 +61,7 @@ components:
     # validation rule 8 scopes an endpoint's pad set by its port_layer, so the
     # wire-bond pads and the flip-chip landing pads of an interposer that also
     # carries an interface endpoint on that layer have to be told apart by
-    # something. Until the explicit pad binding of SPEC-24 exists, the layer is
+    # something. Until an explicit pad binding exists, the layer is
     # that something.
     io_pads:
       - id: J1
@@ -100,7 +100,7 @@ components:
 
   - id: MEM
     type: die_array
-    # bbox_center, and the change from gds_origin belongs to the SPEC-30 ruling
+    # bbox_center, and the change from gds_origin belongs to the anchor rule
     # rather than to this file's coverage. The anchor applies per element and
     # start_position places the first element's anchor point, which is a rule the
     # format had never written down: the contract defined the anchor for a

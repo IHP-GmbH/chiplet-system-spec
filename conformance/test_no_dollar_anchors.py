@@ -2,7 +2,7 @@
 
 Under Python ``re`` a trailing ``$`` also matches before a final newline, so a
 pattern anchored with it accepts ``"value\n"`` while the reference readers refuse
-it (SPEC-11). The portable end anchor is ``(?![\\s\\S])``. This walks EVERY
+it. The portable end anchor is ``(?![\\s\\S])``. This walks EVERY
 committed schema and collects every regular expression it carries, both
 ``pattern`` values and ``patternProperties`` keys, because a grep for the word
 ``pattern`` missed the keys twice in one day. The list is derived, not

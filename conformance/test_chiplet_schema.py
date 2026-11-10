@@ -90,7 +90,7 @@ DIVERGENCES = {
     "v1_0_unknown_interface_type.chiplet": {
         "schema": False, "reader": True,
         "why": "An interfaces[].type outside the closed vocabulary. This is the "
-               "divergence the SPEC-32 ruling is: the schema closes the "
+               "divergence the carry rule is: the schema closes the "
                "vocabulary and binds WRITERS, and the reference readers carry "
                "the string, because a reader that refuses the DOCUMENT turns "
                "every future enum member into a MAJOR for everyone downstream. "

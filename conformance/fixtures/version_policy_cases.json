@@ -18,7 +18,7 @@
     "by the loader before the reader was called. Those rows are Python-only and",
     "say so in their own field rather than being quietly absent.",
     "",
-    "What this oracle does NOT cover (META-2): warning DELIVERY. It says a higher",
+    "What this oracle does NOT cover: warning DELIVERY. It says a higher",
     "minor is accepted and reported; whether that arrives through Python's",
     "warnings channel, how it is deduplicated, and what a host that escalates",
     "warnings to errors sees are all owned by the tests in",
@@ -145,7 +145,7 @@
       "name": "malformed: a trailing newline",
       "accepted": ["1.0"], "declared": "1.0\n", "declared_kind": "string",
       "verdict": "refuse",
-      "why": "surrounding whitespace is malformed, not a version (SPEC-2); the schemas' pattern admits none"
+      "why": "surrounding whitespace is malformed, not a version; the schemas' pattern admits none"
     },
     {
       "name": "malformed: a leading space",
