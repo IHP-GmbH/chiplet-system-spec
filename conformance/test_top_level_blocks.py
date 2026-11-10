@@ -136,7 +136,7 @@ def test_oracle_is_wellformed():
     assert (len(NOT_SPLITTABLE) + len(UNATTRIBUTABLE) + len(ILL_FORMED)
             + len(FORBIDDEN_LINE_BREAK)) == len(REFUSE)
     # The two writer spellings the unattributable kind exists for. Named, because
-    # they are what SPEC-41 was: our own writer emitting a document its own
+    # they are the defect this guards: our own writer emitting a document its own
     # splitter mis-attributes, and a kind carrying only the tab case would look
     # like a tidy-up of an edge nobody meets.
     assert any('\n? ' in c["doc"] for c in UNATTRIBUTABLE), \
@@ -585,7 +585,7 @@ def test_the_other_two_escapes_are_deliberately_unchanged(code_point, escape):
     assert escape in text
 
 
-# --- (e) SPEC-41: the writer must not emit what this splitter refuses ------
+# --- (e) the writer must not emit what this splitter refuses --------------
 @pytest.mark.parametrize("case", UNATTRIBUTABLE, ids=lambda c: c["name"])
 def test_the_unattributable_refusal_names_the_line_and_the_way_out(case):
     # The message is the assertion, on the same terms as the line-break rule:
@@ -608,7 +608,7 @@ def test_the_unattributable_refusal_names_the_line_and_the_way_out(case):
 
 @pytest.mark.parametrize("case", SPLITTER_ONLY, ids=lambda c: c["name"])
 def test_the_writer_never_reproduces_a_document_the_splitter_refuses(case):
-    # SPEC-41 stated as one property over the whole group: whatever this writer
+    # The same rule stated as one property over the whole group: whatever this writer
     # emits, the splitter every host runs must recover exactly the top-level keys
     # the writer was given. The writer meets that either by writing a splittable
     # document (a quoted key comes back bare, and a tab inside a scalar was never

@@ -145,7 +145,7 @@
       "name": "malformed: a trailing newline",
       "accepted": ["1.0"], "declared": "1.0\n", "declared_kind": "string",
       "verdict": "refuse",
-      "why": "surrounding whitespace is malformed, not a version (SPEC-2); the schemas' pattern admits none"
+      "why": "surrounding whitespace is malformed, not a version; the schemas' pattern admits none"
     },
     {
       "name": "malformed: a leading space",

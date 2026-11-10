@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
 #
-# The THIRD refusal site of SPEC-32, and the only one that survives removing the
+# The THIRD refusal site of the carry rule, and the only one that survives removing the
 # other two. An unrecognised interfaces[].type meeting a pad whose io_class IS in
 # rule 8's table: `flipped_bump` has a row, `quantum_tunnel` matches no entry in
 # it, so before this fixture existed the rule reported a violation for a value it

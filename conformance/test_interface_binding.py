@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 IHP GmbH
 """Gate for validation rule 9: component connection -> method -> interface type.
 
-Rule 9 is the cross-artifact half of SPEC-22. Rule 8 relates a pad's usage class
+Rule 9 is the cross-artifact half of the pad-usage check. Rule 8 relates a pad's usage class
 to an interface type inside one document; rule 9 relates the interconnect METHOD
 a component selects through ``connection:`` to the type of the interfaces that
 component takes part in, and the method's ``interface_type`` lives in the

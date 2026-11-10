@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
-"""Executable gate for the closed interfaces[].type vocabulary (rule 4, SPEC-23).
+"""Executable gate for the closed interfaces[].type vocabulary (rule 4).
 
 The vocabulary is written down four times: the enum in
 ``schemas/chiplet.schema.json``, the prose list in ``docs/CHIPLET_FORMAT_SPEC.md``,
 ``kKnownInterfaceTypes`` in the C++ reference source, and
 ``chiplet_format_io.KNOWN_INTERFACE_TYPES``. Four copies of one list is how a
 member ends up accepted by one reader and refused by the other, which is the
-state SPEC-23 found: the C++ reader threw on an unknown type, the Python
+state this gate was written for: the C++ reader threw on an unknown type, the Python
 validator accepted it, and the spec carried an italic exception saying so. This
 file reads all four and compares them, and then exercises the Python validator's
 behaviour, which no text comparison can show.
@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT / "reference" / "python"))
 import chiplet_format_io as cfio  # noqa: E402
 
 SPEC = ROOT / "docs" / "CHIPLET_FORMAT_SPEC.md"
-#: The vocabulary moved from the translation unit into the HEADER when SPEC-32
+#: The vocabulary moved from the translation unit into the HEADER when the carry rule
 #: made carrying the value the rule: a C++ consumer that has to refuse the
 #: ELEMENT cannot do it without the list, and it could not reach it while the
 #: array was private to the .cpp.
@@ -101,7 +101,7 @@ def test_the_spec_prose_names_the_same_members():
 
 
 def test_solder_bump_is_in_the_vocabulary():
-    # SPEC-23 by name, so the member cannot be dropped in a refactor without a
+    # Named, so the member cannot be dropped in a refactor without a
     # test saying so out loud.
     assert "solder_bump" in cfio.KNOWN_INTERFACE_TYPES
 
@@ -139,7 +139,7 @@ def test_solder_bump_is_refused_below_its_minor():
 @pytest.mark.parametrize("itype", ["hybrid_bond", "bogus_bond", "MICRO_BUMP",
                                    "micro_bump\n"])
 def test_the_python_validator_carries_an_unknown_type(itype):
-    # Inverted by the SPEC-32 ruling, and the PARITY assertion is restated
+    # Inverted by the carry ruling, and the PARITY assertion is restated
     # rather than deleted, because parity is what the predecessor of this test
     # was really about. It asserted a refusal so that a document refused by one
     # reference reader was refused by the other; the verdict moved and the

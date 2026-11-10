@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
-"""Executable gate for validation rule 8: io_class vs interfaces[].type (SPEC-22).
+"""Executable gate for validation rule 8: io_class vs interfaces[].type.
 
 Two closed vocabularies describe one physical joint, and until now nothing
 related them: a document could declare a wire_bond pad as the landing of a
@@ -18,7 +18,7 @@ What a green here does NOT cover (META-2):
   C++ TABLE as text and never runs the C++ reader.
 * an endpoint whose component carries no inline pads, i.e. every die endpoint.
   Rule 8 does not check it, by decision, and no test here can pretend otherwise
-  until an explicit pad binding exists (SPEC-24).
+  until an explicit pad binding exists.
 * rule 9, the cross-artifact check that the METHOD behind a component's
   connection stack agrees with the interface type. The reference validators do
   not run it; the assembly-stage hosts do.
@@ -177,7 +177,7 @@ def test_an_endpoint_with_no_pads_at_all_is_vacuous():
 def test_a_die_endpoint_is_out_of_scope():
     # The die carries no inline pads in the document, so the rule has nothing to
     # read on that side. Stated as a test so the limit is visible rather than
-    # inferred from an absence (SPEC-24 is the row that closes it).
+    # inferred from an absence (an explicit pad binding is what closes it).
     doc = _doc("wire_bond", "TopMetal2", "wire_bond", "TopMetal2")
     doc["interfaces"][0]["from"] = {"component": "U1", "port_layer": "TopMetal2"}
     assert cfio.validate(doc)

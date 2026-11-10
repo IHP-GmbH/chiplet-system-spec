@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 IHP GmbH
 """Executable gate for the CARRY rule on an unrecognised vocabulary member.
 
-Panel ruling Q1 (SPEC-32, with SPEC-34 and SPEC-35): the reference readers carry
+The carry rule: the reference readers carry
 every enum-like field as the string the document wrote, the schema closes each
 vocabulary and binds WRITERS, an unrecognised member is reported on the warn
 channel, and it is refused by nobody in the library. A consumer that cannot act
@@ -17,7 +17,7 @@ for. Three axes, each of which had a live defect behind it:
   C++ cells run in its own test binary under ctest.
 * ``validate`` {True, False}. The C++ refusal lived in ``parse_interface``, a
   function taking no options, so ``LoadOptions::validate = false`` never reached
-  it and the two readers loaded different documents from one file (SPEC-34). An
+  it and the two readers loaded different documents from one file. An
   implementer who "fixes" the first arm by gating the C++ throw behind the flag
   still fails the ``validate=False`` cell here.
 * path {load, load-then-dump}. A reader that carries a string its writer then

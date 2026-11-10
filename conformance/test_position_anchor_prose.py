@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
-"""Gate for SPEC-31: the spec's ``position`` prose must not outrank its contract.
+"""Gate: the spec's ``position`` prose must not outrank its contract.
 
 ``docs/CHIPLET_FORMAT_SPEC.md`` used to say, twice and without a condition, that
 ``position`` is the component's geometric center. That holds only for
@@ -87,7 +87,7 @@ def test_no_governed_text_claims_a_reference_reader_refuses_an_io_class():
 
 
 def test_no_governed_text_says_a_reference_reader_refuses_an_interface_type():
-    """The SPEC-32 half of the same defect, gated the same way.
+    """The interface-type half of the same defect, gated the same way.
 
     Three sentences said the readers enforce the closed interfaces[].type
     vocabulary: the schema's own type description ("an unknown interface type is
@@ -96,7 +96,7 @@ def test_no_governed_text_says_a_reference_reader_refuses_an_interface_type():
     accept it ahead of the 1.1 stamp" gloss on solder_bump, which stated the
     prohibition in terms of what a READER knows rather than what a DOCUMENT may
     carry, so the same bytes were valid or invalid according to which binary
-    opened them. The panel ruling reverses all three: the vocabulary binds
+    opened them. The carry ruling reverses all three: the vocabulary binds
     WRITERS and is enforced by the schema, the readers carry the string, and a
     consumer refuses the ELEMENT.
 
@@ -137,7 +137,7 @@ def test_the_closed_vocabulary_list_in_the_prose_is_complete():
 
 
 def test_the_anchor_rule_covers_a_die_array():
-    """SPEC-30: `anchor` applies per element, including inside a `die_array`.
+    """`anchor` applies per element, including inside a `die_array`.
 
     The gap this closes was invisible in exactly the way the position one was.
     The frame contract, which the spec names as the source of truth for the
