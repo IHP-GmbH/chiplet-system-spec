@@ -24,7 +24,7 @@ from chiplet_system_description.source.plan import plan
 from chiplet_system_description.source.unplaced import content_minor
 from chiplet_system_description.source.writer import dumps_source
 
-from tests.conftest import FIXTURES_DIR
+from tests.conftest import READER_1_2
 from tests.source_dies import SOURCE, checked, write_source
 
 #: :data:`SOURCE` as a sheet import leaves it: U1 not placed, no carrier size,
@@ -152,10 +152,6 @@ def test_a_walk_without_the_unplaced_key_refuses_it_in_a_higher_minor(monkeypatc
     assert [(f.line, f.note) for f in findings] == [(26, False)]
     with pytest.raises(SourceError):
         loads_source(PINS_ONLY)
-
-
-#: The format 1.2 reader, kept as files (see its PROVENANCE.md).
-READER_1_2 = FIXTURES_DIR / "reader_1_2"
 
 
 def _verified_reader_1_2_src():
