@@ -15,12 +15,15 @@ SPDX-FileCopyrightText: 2026 IHP GmbH
 
 ## 1. What is being mapped
 
-**3Dblox**, originated by TSMC and standardised as **IEEE 3537-2026** (an
-active standard, approved by the IEEE SA Standards Board on 2026-11-04, per
-<https://standards.ieee.org/ieee/3537/11871/> as read on 2026-11-13),
-describes multi-die physical assemblies. The standard's text is not a source
-for this appendix; what follows is what OpenROAD's open implementation reads,
-through three file kinds:
+**3Dblox**, originated by TSMC and standardized as **IEEE 3537-2026** (its
+status and source are in the scope section of
+[`CHIPLET_FORMAT_SPEC.md`](./CHIPLET_FORMAT_SPEC.md)), describes multi-die
+physical assemblies. The standard's text is not a source for this appendix.
+Throughout it, "3Dblox" means what OpenROAD's open reader takes, and a
+statement that 3Dblox has or lacks something is a statement about that
+reader, not about the language.
+
+The reader takes three file kinds:
 
 - **`.3dbv`** (chiplet definitions): `ChipletDef` entries with per-die
   technology, design area and thickness, named bond regions, and linkage to
@@ -39,9 +42,9 @@ logical connectivity against a declared netlist, alignment markers), and a
 
 The two formats describe the **same physical-assembly layer**. OpenROAD's
 reader binds the assembly to the P&R abstraction for multi-die EDA and
-design-space exploration, and takes no artwork file. That holds for this one
-reader, not for the language: public TSMC material describes 3Dblox at three
-abstraction levels, black box, LEF/DEF and GDSII.
+design-space exploration, and takes no artwork file. Public material
+describes the language at three abstraction levels, black box, LEF/DEF and
+GDSII (see the spec's scope section).
 `.chiplet` binds it to the mask level - GDS/OASIS bodies, `.lyp` layer
 properties, per-layer interconnect metallurgy, fab DRC parameters - for
 assembly signoff and fabrication hand-off. A design can usefully hold both: a
@@ -91,7 +94,6 @@ black-box dies; assembly-level nets; and explicit units and resolution.
 4. **Mask artwork linkage**: GDS/OASIS bodies with `.lyp` layer properties.
    OpenROAD's reader takes no artwork file: no keyword it reads names a
    GDS or OASIS file, and the region key `gds_layer` is parsed and ignored.
-   This is a statement about that reader, not about the language (section 1).
 5. **Polygonal boundary manifests** (arbitrary polygons with content hashes;
    3Dblox bond regions are 4-corner rectangles).
 6. **Black-box pad vocabulary** for closed-PDK dies (pad layers usable
