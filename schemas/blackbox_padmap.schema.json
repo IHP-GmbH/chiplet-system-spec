@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://ihp.example/chiplet-spec/blackbox_padmap.schema.json",
   "title": "Black-box chiplet pad map (um-based padmap)",
-  "description": "Schema for the um-based black-box pad map (*.blackbox.json and the extract_padmap output): the plan-derived pad map that is the conformance answer key, and the extracted pad map it is checked against. Produced by blackbox_chiplet.py / extract_padmap.py, consumed by chiplet-flow (reconcile.py, and the conform gate in runner.py). Structural validation only. It governs the CANONICAL persisted padmap (the extract_padmap output and *.blackbox.json), which always carries die.bbox_um; the pre-normalization authoring sugar that blackbox_chiplet.py also accepts (die as width_um/height_um, or a die derived from the pads) is normalized to bbox_um before any artifact exists, so it is out of scope here. Distinct from the dbu-based pins.json (pins.schema.json): this artifact self-discriminates by its top-level 'pads' array and 'die.bbox_um' in um, so the two never cross-parse. Cross-field invariants (the extracted die.bbox_um equals the plan's; the extracted pad set equals the plan's, by name and position) are checked by the conform stage, not here.",
+  "description": "Schema for the um-based black-box pad map (*.blackbox.json and the extract_padmap output): the plan-derived pad map that is the conformance answer key, and the extracted pad map it is checked against. Produced by blackbox_chiplet.py / extract_padmap.py, consumed by chiplet-flow (reconcile.py, and the conform gate in runner.py). Structural validation only. It governs the CANONICAL persisted padmap (the extract_padmap output and *.blackbox.json), which always carries die.bbox_um; the pre-normalization authoring sugar that blackbox_chiplet.py also accepts (die as width_um/height_um, or a die derived from the pads) is normalized to bbox_um before any artifact exists, so it is out of scope here. Distinct from the dbu-based pins.json (pins.schema.json): this artifact self-discriminates by its top-level 'pads' array and 'die.bbox_um' in um, so the two never cross-parse. Cross-field invariants (the extracted die.bbox_um equals the plan's; the extracted pad set equals the plan's, by name and position) are checked by the conform stage, not here. Version 1.1 adds the keys a die owner states when the pad map is handed over as a partner package (docs/partner_die_package.md): per pad a net, a direction, a role and a port, the die thickness, the process ids, the supply volts, a signoff statement, and references to other descriptions of the same die. Every added key is optional here, so every 1.0 file stays valid; the partner-die writer is the reader that requires them. Rules that span keys (the power and ground nets against supply_volts, ground at 0 and power above 0, port and ordinal both or neither, unique pad names, pads inside the box) are that writer's, not this schema's.",
   "type": "object",
   "required": ["die", "pads"],
   "additionalProperties": true,
@@ -11,7 +11,7 @@
     "version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
-      "description": "Contract version, quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. OPTIONAL: this artifact shipped unversioned and the existing files carry no version, so requiring one would invalidate every padmap already on disk. When present it is read under the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.0; an absent version means 1.0. New emitters SHOULD write it, so the day this artifact changes shape there is something to gate on."
+      "description": "Contract version, quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. OPTIONAL: this artifact shipped unversioned and the existing files carry no version, so requiring one would invalidate every padmap already on disk. When present it is read under the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.1; an absent version means 1.0. Version 1.1 added, all optional: pads[].net, pads[].direction, pads[].role, pads[].port, pads[].ordinal, die.thickness_um, process, supply_volts, signoff, cdxml_ref and 3dblox_ref. A partner package declares \"1.1\". New emitters SHOULD write it, so the day this artifact changes shape there is something to gate on."
     },
     "_provenance": {
       "type": "object",
@@ -29,7 +29,73 @@
           "minItems": 4,
           "maxItems": 4,
           "description": "Die GDS bounding box in um as [x_min, y_min, x_max, y_max] (the top-cell bbox). The conform gate pins the extracted bbox to this."
+        },
+        "thickness_um": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Added in 1.1. Die body thickness in um, as the die owner states it."
         }
+      }
+    },
+    "process": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Added in 1.1. The die's process, named by the die owner's own ids. Ids only: never a layer number or a rule value of that process.",
+      "properties": {
+        "pdk": {"type": "string", "minLength": 1, "description": "The process design kit id."},
+        "pdk_version": {"type": "string", "minLength": 1, "description": "The release of that kit the die was designed with."},
+        "technology": {"type": "string", "minLength": 1, "description": "The die's own technology id."}
+      }
+    },
+    "supply_volts": {
+      "type": "object",
+      "additionalProperties": {"type": "number", "minimum": 0},
+      "description": "Added in 1.1. Supply volts per net, {net: volts}, for the nets of the power and ground pads. A negative value refuses here; which nets must appear, ground at 0 and power above 0 are rules the writer holds, because they span keys."
+    },
+    "signoff": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Added in 1.1. The die owner's statement about checks it ran on its own layout. Recorded as a claim; nothing in the flow judges it.",
+      "properties": {
+        "statement": {"type": "string", "minLength": 1, "description": "The statement, in the die owner's words."},
+        "issued_by": {"type": "string", "minLength": 1, "description": "A role or an organisation, never a person: the record travels with a run's evidence."},
+        "issued_at": {"type": "string", "minLength": 1, "description": "ISO 8601 date and time, UTC."},
+        "layout_sha256": {"allOf": [{"$ref": "#/definitions/sha256"}], "description": "Digest of the layout the owner checked, never of a layout generated from this pad map."},
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "check": {"enum": ["drc", "lvs", "other"]},
+              "tool": {"type": "string", "minLength": 1},
+              "result": {"enum": ["pass", "fail", "unresolved"]},
+              "run_at": {"type": "string", "minLength": 1, "description": "ISO 8601 date and time, UTC."}
+            }
+          }
+        }
+      }
+    },
+    "cdxml_ref": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Added in 1.1. Cites a part document for the same die, in the shape of the .chiplet component key of the same name. The part document format is the one of cdxml.xsd at opencomputeproject/ODSA-CDXML 5a725e4. Carried as data.",
+      "properties": {
+        "mpn": {"type": "string", "description": "Manufacturer part number."},
+        "opn": {"type": "string", "description": "Ordering part number."},
+        "version": {"type": "string", "description": "Part-document version."},
+        "uri": {"type": "string", "description": "Path or URL to the part document. A path is relative to the directory holding this file."},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "3dblox_ref": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Added in 1.1. Cites the ChipletDef describing the same die in a .3dbv file, as OpenROAD reads one (src/odb/src/3dblox/dbvParser.cpp at The-OpenROAD-Project/OpenROAD 2c56926971), in the shape of the .chiplet component key of the same name. Carried as data.",
+      "properties": {
+        "chiplet": {"type": "string", "description": "ChipletDef name inside the .3dbv."},
+        "uri": {"type": "string", "description": "Path or URL to the .3dbv file. A path is relative to the directory holding this file."},
+        "sha256": {"$ref": "#/definitions/sha256"}
       }
     },
     "pads": {
@@ -43,9 +109,21 @@
           "x_um": {"type": "number", "description": "Pad centre X in um."},
           "y_um": {"type": "number", "description": "Pad centre Y in um."},
           "w_um": {"type": "number", "minimum": 0},
-          "h_um": {"type": "number", "minimum": 0}
+          "h_um": {"type": "number", "minimum": 0},
+          "net": {"type": "string", "minLength": 1, "description": "Added in 1.1. The pad's net. For a power or ground pad the net is its supply domain."},
+          "direction": {"enum": ["input", "output", "bidir", "analog", "none"], "description": "Added in 1.1. Electrical direction, the die contract's closed set."},
+          "role": {"enum": ["signal", "power", "ground", "no_connect"], "description": "Added in 1.1. What the pad is, the die contract's closed set."},
+          "port": {"type": "string", "minLength": 1, "description": "Added in 1.1. The function name; several power or ground pads may share one, a signal port holds one pad. Given with ordinal or not at all; absent means the pad name."},
+          "ordinal": {"type": "integer", "minimum": 0, "description": "Added in 1.1. The pad's position within its port; absent means 0."}
         }
       }
+    }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}(?![\\s\\S])",
+      "description": "A SHA-256 digest, 64 lowercase hex digits."
     }
   }
 }

@@ -14,7 +14,7 @@ reader/writer libraries in Python and C++, and a conformance suite. Apache-2.0 t
 
 | Path | Contents |
 |------|----------|
-| `docs/` | Format specification, version policy, reader API notes, 3Dblox mapping |
+| `docs/` | Format specification, version policy, reader API notes, 3Dblox mapping, partner die package |
 | `schemas/` | JSON Schemas for `.chiplet` and its sidecars, with example instances |
 | `examples/` | A sample `.chiplet`, boundary manifests, an interconnect-method registry |
 | `reference/python/` | `chiplet-format-io`, the Python reference reader/writer (needs PyYAML) |
@@ -50,6 +50,9 @@ in [reference/cpp/README.md](reference/cpp/README.md), and the system descriptio
 [docs/CHIPLET_FORMAT_SPEC.md](docs/CHIPLET_FORMAT_SPEC.md) is the normative entry point;
 `schemas/chiplet.schema.json` is normative for structure and the reference reader for semantics.
 [docs/VERSION_POLICY.md](docs/VERSION_POLICY.md) governs every version number here.
+[docs/partner_die_package.md](docs/partner_die_package.md) says what a die owner hands over
+for a die whose layout stays with them, the black-box pad map at 1.1, and what the flow then
+says about that die.
 
 The format is at 1.3. Writers stamp the lowest minor their content needs, so assemblies are
 still written as `"1.0"`. A reader accepts a higher minor of its own major with a warning and

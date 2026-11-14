@@ -330,10 +330,15 @@ each move is written down here with what a consumer gets by taking it.
 
 Two passes over the history, and this table is the result of the second.
 
-**Pass one, declared bumps.** No governed artifact in `schemas/` or `docs/` has
-declared a MINOR or MAJOR bump since 1.0: every row of the spec's own Version
-History is still `1.0`, and the sidecars still declare `"1.0"`. Nothing to
-reconcile.
+**Pass one, declared bumps**, as of the sweep (2026-09-04). No governed artifact
+in `schemas/` or `docs/` had declared a MINOR or MAJOR bump since 1.0: every row
+of the spec's own Version History was still `1.0`, and the sidecars still
+declared `"1.0"`. Nothing to reconcile. Minors declared since then are recorded
+where each artifact defines them, not here: the `.chiplet` minors in the spec's
+Version History, the die contract's under [Reader releases](#reader-releases),
+and the black-box pad map's 1.1 (the partner die package keys, every one
+optional, so every 1.0 pad map stays valid) in its schema's `version`
+description and [partner_die_package.md](partner_die_package.md).
 
 **Pass two, shape changes that landed without a version change.** Every one of
 them is judged under one sentence, the one in [What bumps what](#what-bumps-what):

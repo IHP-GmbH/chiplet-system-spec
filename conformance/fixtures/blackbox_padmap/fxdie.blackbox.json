@@ -1,0 +1,34 @@
+{
+  "version": "1.1",
+  "chiplet_name": "fxdie",
+  "die": {"bbox_um": [0.0, 0.0, 1000.0, 1000.0], "thickness_um": 300.0},
+  "process": {"pdk": "fx-pdk", "pdk_version": "fx-pdk-2026.1", "technology": "fxtech"},
+  "pads": [
+    {"name": "PAD_A", "x_um": 100.0, "y_um": 635.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "in_a", "direction": "input", "role": "signal", "port": "in_a", "ordinal": 0},
+    {"name": "PAD_B", "x_um": 100.0, "y_um": 815.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "io_b", "direction": "bidir", "role": "signal", "port": "io_b", "ordinal": 0},
+    {"name": "PAD_NC", "x_um": 500.0, "y_um": 900.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "NC", "direction": "none", "role": "no_connect"},
+    {"name": "PAD_VDD0", "x_um": 900.0, "y_um": 275.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "VDD", "direction": "bidir", "role": "power", "port": "VDD", "ordinal": 0},
+    {"name": "PAD_VDD1", "x_um": 900.0, "y_um": 455.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "VDD", "direction": "bidir", "role": "power", "port": "VDD", "ordinal": 1},
+    {"name": "PAD_VSS0", "x_um": 900.0, "y_um": 635.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "VSS", "direction": "bidir", "role": "ground", "port": "VSS", "ordinal": 0},
+    {"name": "PAD_VSS1", "x_um": 900.0, "y_um": 815.0, "w_um": 60.0, "h_um": 60.0,
+     "net": "VSS", "direction": "bidir", "role": "ground", "port": "VSS", "ordinal": 1}
+  ],
+  "supply_volts": {"VDD": 1.2, "VSS": 0},
+  "signoff": {
+    "statement": "The die owner ran its own physical checks on the layout named below.",
+    "issued_by": "die-owner-signoff",
+    "issued_at": "2026-11-10T09:00:00Z",
+    "layout_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "checks": [
+      {"check": "drc", "tool": "owner-drc-deck", "result": "pass", "run_at": "2026-11-10T08:00:00Z"},
+      {"check": "lvs", "tool": "owner-lvs", "result": "unresolved", "run_at": "2026-11-10T08:30:00Z"}
+    ]
+  },
+  "_provenance": {"generator": "hand-written test fixture"}
+}
