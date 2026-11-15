@@ -116,10 +116,12 @@ class Technology:
                     f"cannot be anchored to the emitted .chiplet")
 
 
-#: The two pinned entries, verbatim to the golden fixture. Data constants, not a
-#: registry mechanism.
+#: The pinned entries; the first two verbatim to the golden fixture. Data
+#: constants, not a registry mechanism. SG13CMOS5L is the die process the IHP
+#: attachment methods state beside SG13G2.
 INTM4TM2 = Technology("intm4tm2", "IHP 130nm IntM4TM2 aluminium BEOL interposer", 0.001)
 SG13G2 = Technology("sg13g2", "IHP SG13G2 130nm BiCMOS die", 0.001)
+SG13CMOS5L = Technology("sg13cmos5l", "IHP SG13CMOS5L 130nm CMOS die", 0.001)
 
 
 # ----------------------------------------------------------------------
@@ -280,10 +282,14 @@ class InterconnectMethod:
 #: ``default_connection_library`` entries (``pitch_um`` = ``pitch_rules.IXN_pitch``,
 #: ``die_processes`` = ``die_processes``).
 #: The manifest's ``vendorx_microbump`` entry is demo data and is not shipped.
-CUPILLAR_OPT1 = InterconnectMethod("cupillar_opt1", pitch_um=75.0, die_processes=("sg13g2",))
-CUPILLAR_OPT2 = InterconnectMethod("cupillar_opt2", pitch_um=80.0, die_processes=("sg13g2",))
-CUPILLAR_OPT3 = InterconnectMethod("cupillar_opt3", pitch_um=95.0, die_processes=("sg13g2",))
-SBUMP_SAC305 = InterconnectMethod("sbump_sac305", pitch_um=130.0, die_processes=("sg13g2",))
+CUPILLAR_OPT1 = InterconnectMethod("cupillar_opt1", pitch_um=75.0,
+                                   die_processes=("sg13g2", "sg13cmos5l"))
+CUPILLAR_OPT2 = InterconnectMethod("cupillar_opt2", pitch_um=80.0,
+                                   die_processes=("sg13g2", "sg13cmos5l"))
+CUPILLAR_OPT3 = InterconnectMethod("cupillar_opt3", pitch_um=95.0,
+                                   die_processes=("sg13g2", "sg13cmos5l"))
+SBUMP_SAC305 = InterconnectMethod("sbump_sac305", pitch_um=130.0,
+                                  die_processes=("sg13g2", "sg13cmos5l"))
 
 
 # ----------------------------------------------------------------------
