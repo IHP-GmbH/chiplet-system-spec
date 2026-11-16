@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
 #
-# An interfaces[].type outside the closed vocabulary (SPEC-32). Both reference
+# An interfaces[].type outside the closed vocabulary. Both reference
 # readers CARRY the string: the format owns the vocabulary, the schema closes it
 # and binds writers, and a consumer that cannot act on an unrecognised member
 # refuses the ELEMENT that carries one. Refusing the DOCUMENT is what would turn

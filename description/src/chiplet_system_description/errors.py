@@ -45,8 +45,8 @@ class DuplicateLane(SystemSpecError):
     """A single port lists the same lane (pin name) more than once.
 
     Each lane elaborates to its own net endpoint, so a repeated lane silently
-    drives one pad from two nets while another lane goes unconnected (the RAIL-1
-    short). Refused at ``Port`` construction. Distinct from
+    drives one pad from two nets (a short) while another lane goes unconnected.
+    Refused at ``Port`` construction. Distinct from
     :class:`AmbiguousLane`, which is about a pin name repeated in the pin list.
     """
 

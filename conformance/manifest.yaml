@@ -272,7 +272,7 @@ fixtures:
     expect: refuse
     pad_usage_only: true
 
-  # SPEC-32: an interfaces[].type outside the closed vocabulary is CARRIED, by
+  # An interfaces[].type outside the closed vocabulary is CARRIED, by
   # every reader here, under either setting of the validate flag. The second
   # document is the one that decides it: its interface meets a pad whose io_class
   # HAS a row in rule 8's table, which is where the refusal survived after the

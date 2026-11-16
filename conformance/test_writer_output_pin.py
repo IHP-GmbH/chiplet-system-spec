@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 IHP GmbH
 """The half of the version rule a consumer cannot check: was the bump big enough?
 
-The KiCad plugin implemented the consumer half of META-10 (the bytes moved, so
+The KiCad plugin implemented the consumer half of this rule (the bytes moved, so
 the declared version must have moved too) and reported the one thing it could not
 see from outside: whether the bump was the right SIZE. It only has bytes; the
 size depends on what changed semantically, which only this repository knows.

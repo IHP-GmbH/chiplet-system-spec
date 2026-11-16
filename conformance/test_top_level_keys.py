@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
-"""Executable gate for the PUBLIC key-sequence API over the shared oracle (SPEC-48).
+"""Executable gate for the PUBLIC key-sequence API over the shared oracle.
 
 ``chiplet_format_io.split_top_level_keys`` is a thin wrapper over the reader's own
 top-level block splitter. This file proves three things about it, each against
@@ -129,7 +129,7 @@ def test_a_quoted_scalar_continuation_can_hide_a_key_so_the_host_must_compare():
     assert parsed["assembly"]["name"] == "demo flow: injected"
     verdict = cfio.split_top_level_keys(_PHANTOM)
     # Splittable, and the grammar sees a key the parser does not. That is the
-    # SPEC-36 disagreement, and the API alone cannot see it: it reports what the
+    # split-and-parse disagreement, and the API alone cannot see it: it reports what the
     # grammar sees. The host's check is the comparison below, against the keys
     # it INTENDED to write, and it must fail here.
     assert verdict.splittable

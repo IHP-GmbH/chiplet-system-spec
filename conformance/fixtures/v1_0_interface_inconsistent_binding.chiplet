@@ -16,7 +16,7 @@
 # refusal against THIS file, so three implementations are measured against one
 # oracle instead of against each other.
 #
-# What this fixture does NOT cover (META-2): it is one row, not the rule. It
+# What this fixture does NOT cover: it is one row, not the rule. It
 # says nothing about a consistent binding being accepted, about a component with
 # no `connection:` (outside rule 9), about a method id that resolves to nothing
 # (a consumer-level cross-reference question, rule 11's SHOULD), or about the

@@ -48,6 +48,8 @@ import pytest
 #: This package, description/ inside the spec repository.
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = PACKAGE_ROOT / "tests" / "fixtures"
+#: The format 1.2 reader, kept as files (see its PROVENANCE.md).
+READER_1_2 = FIXTURES_DIR / "reader_1_2"
 #: The spec repository this package lives in.
 SPEC_ROOT = PACKAGE_ROOT.parent
 

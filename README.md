@@ -5,60 +5,36 @@ SPDX-FileCopyrightText: 2026 IHP GmbH
 
 # chiplet-system-spec
 
-The specification of the `.chiplet` format, a YAML description of a multi-die assembly (dies,
-interposer and substrate in one coordinate frame, with their GDS/OASIS bodies and interconnect),
-and of the sidecar files that travel with it. It comes with JSON Schemas, reference
-reader/writer libraries in Python and C++, and a conformance suite. Apache-2.0 throughout.
+The specification of the `.chiplet` format: the YAML file that places the dies, interposer
+and substrate of a multi-die assembly in one coordinate frame, with the sidecar files that
+travel with it. Every tool downstream of layout in the IHP Open ADK flow writes it, reads it
+or takes its flags from it. The repository holds the specification, its JSON Schemas,
+reference readers and writers in Python and C++, and a conformance suite.
 
-## What is where
+## Use
 
-| Path | Contents |
-|------|----------|
-| `docs/` | Format specification, version policy, reader API notes, 3Dblox mapping |
-| `schemas/` | JSON Schemas for `.chiplet` and its sidecars, with example instances |
-| `examples/` | A sample `.chiplet`, boundary manifests, an interconnect-method registry |
-| `reference/python/` | `chiplet-format-io`, the Python reference reader/writer (needs PyYAML) |
-| `reference/cpp/` | The same library in C++17 (needs yaml-cpp, builds with CMake) |
-| `description/` | `chiplet-system-description`, a typed Python eDSL that elaborates to `.chiplet` |
-| `conformance/` | Fixtures and pytest suites that pin reader behaviour across implementations |
-
-## Quick start
-
-From the repository root:
+From the repository root, install the Python reference reader in a virtual environment and
+load the example assembly:
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
-pip install ./reference/python pytest -r conformance/requirements.txt
-
-# read and validate an example with the reference reader
-python -c 'import chiplet_format_io as cfio; print(cfio.load("examples/interposer_demo_design.chiplet")["assembly"]["name"])'
-
-# check the same file against the JSON Schema
-python -c 'import json, yaml, jsonschema; jsonschema.validate(yaml.safe_load(open("examples/interposer_demo_design.chiplet")), json.load(open("schemas/chiplet.schema.json")))'
-
-# run the conformance suite, then the library's own tests
-(cd conformance && pytest -q)
-(cd reference/python && pytest -q)
+pip install ./reference/python
+python3 -c 'import chiplet_format_io as cfio; print(cfio.load("examples/interposer_demo_design.chiplet")["assembly"]["name"])'
 ```
 
-The Python API is in [reference/python/README.md](reference/python/README.md), C++ build steps
-in [reference/cpp/README.md](reference/cpp/README.md), and the system description in
-[description/README.md](description/README.md).
+## Documentation
 
-## Documents and versioning
+The full documentation is at
+https://ihp-open-adk-docs.readthedocs.io/en/latest/formats.html
 
-[docs/CHIPLET_FORMAT_SPEC.md](docs/CHIPLET_FORMAT_SPEC.md) is the normative entry point;
-`schemas/chiplet.schema.json` is normative for structure and the reference reader for semantics.
-[docs/VERSION_POLICY.md](docs/VERSION_POLICY.md) governs every version number here.
+The reference kept with the code is under `docs/`.
 
-The format is at 1.3. Writers stamp the lowest minor their content needs, so assemblies are
-still written as `"1.0"`. A reader accepts a higher minor of its own major with a warning and
-refuses any other major. The library release (`chiplet_format_io.__version__`) is separate
-from the format version.
+## Release
 
-## License and contributing
+Released as part of the IHP Open ADK. The release page lists the commit of every
+repository in each release:
+https://ihp-open-adk-docs.readthedocs.io/en/latest/install/00_release.html
 
-Apache License 2.0, see [LICENSE](LICENSE); per-file declarations in [.reuse/dep5](.reuse/dep5).
-Issues and pull requests go to <https://github.com/IHP-GmbH/chiplet-system-spec>; open pull
-requests against `dev`. CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)) runs on
-pull requests to `dev` and `main`.
+## License
+
+Apache-2.0. See `LICENSE`.

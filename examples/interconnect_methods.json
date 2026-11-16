@@ -38,7 +38,7 @@
       "description": "PacTech Cu Pillar, Table 6.1 Option 1 (35um opening)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_cupillar_anchor",
-      "die_processes": ["sg13g2"],
+      "die_processes": ["sg13g2", "sg13cmos5l"],
       "body_diameter_um": 44,
       "layers_3d": ["CuPillar", "SnAgCap"],
       "connection_stack": {
@@ -57,7 +57,7 @@
       "description": "PacTech Cu Pillar, Table 6.1 Option 2 (40um opening)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_cupillar_anchor",
-      "die_processes": ["sg13g2"],
+      "die_processes": ["sg13g2", "sg13cmos5l"],
       "body_diameter_um": 49,
       "layers_3d": ["CuPillar", "SnAgCap"],
       "connection_stack": {
@@ -76,7 +76,7 @@
       "description": "PacTech Cu Pillar, Table 6.1 Option 3 (45um opening)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_cupillar_anchor",
-      "die_processes": ["sg13g2"],
+      "die_processes": ["sg13g2", "sg13cmos5l"],
       "body_diameter_um": 54,
       "layers_3d": ["CuPillar", "SnAgCap"],
       "connection_stack": {
@@ -95,7 +95,7 @@
       "description": "PacTech SAC305 solder bump (80um ball)",
       "vendor": "PacTech (IHP)",
       "fab_anchor": "ihp_sbump_anchor",
-      "die_processes": ["sg13g2"],
+      "die_processes": ["sg13g2", "sg13cmos5l"],
       "body_diameter_um": 80,
       "layers_3d": ["SolderBall"],
       "connection_stack": {

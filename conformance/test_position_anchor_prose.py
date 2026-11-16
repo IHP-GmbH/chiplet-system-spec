@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2026 IHP GmbH
-"""Gate for SPEC-31: the spec's ``position`` prose must not outrank its contract.
+"""Gate: the spec's ``position`` prose must not outrank its contract.
 
 ``docs/CHIPLET_FORMAT_SPEC.md`` used to say, twice and without a condition, that
 ``position`` is the component's geometric center. That holds only for
@@ -13,7 +13,7 @@ from the prose alone puts every ``gds_origin`` component half its own extent
 away. That is not hypothetical, it was found and closed in a real consumer
 (interposer-pnr's ``boundary_rect``).
 
-What a green here does NOT cover (META-2): that any reader IMPLEMENTS the
+What a green here does NOT cover: that any reader IMPLEMENTS the
 contract correctly. This file compares two documents to each other and runs no
 reader. It also cannot see a third document repeating the unconditional claim;
 it gates the two sites that carried it.
@@ -63,7 +63,7 @@ def test_both_position_sites_name_the_anchor_that_decides():
 
 
 def test_no_governed_text_claims_a_reference_reader_refuses_an_io_class():
-    """Both panel members found this clause independently, in the schema.
+    """Two independent reviews found this clause, in the schema.
 
     `schemas/chiplet.schema.json` justified closing the io_class vocabulary partly
     with "the C++ reader throws on an unknown value". Measured false: the C++
@@ -74,8 +74,8 @@ def test_no_governed_text_claims_a_reference_reader_refuses_an_io_class():
     justify someone re-adding a refusal here.
 
     What a green here does NOT cover: whether the readers still behave that way.
-    This reads text. The behaviour is the conformance suite's and the panel's
-    carry-not-refuse ruling owns changing it.
+    This reads text. The behaviour is the conformance suite's, and the
+    carry-not-refuse rule owns changing it.
     """
     import json
     schema_text = (ROOT / "schemas" / "chiplet.schema.json").read_text(encoding="utf-8")
@@ -87,7 +87,7 @@ def test_no_governed_text_claims_a_reference_reader_refuses_an_io_class():
 
 
 def test_no_governed_text_says_a_reference_reader_refuses_an_interface_type():
-    """The SPEC-32 half of the same defect, gated the same way.
+    """The interface-type half of the same defect, gated the same way.
 
     Three sentences said the readers enforce the closed interfaces[].type
     vocabulary: the schema's own type description ("an unknown interface type is
@@ -96,7 +96,7 @@ def test_no_governed_text_says_a_reference_reader_refuses_an_interface_type():
     accept it ahead of the 1.1 stamp" gloss on solder_bump, which stated the
     prohibition in terms of what a READER knows rather than what a DOCUMENT may
     carry, so the same bytes were valid or invalid according to which binary
-    opened them. The panel ruling reverses all three: the vocabulary binds
+    opened them. The carry rule reverses all three: the vocabulary binds
     WRITERS and is enforced by the schema, the readers carry the string, and a
     consumer refuses the ELEMENT.
 
@@ -116,7 +116,7 @@ def test_no_governed_text_says_a_reference_reader_refuses_an_interface_type():
     assert "Both reference validators enforce it" not in SPEC
     json.loads(schema_text)
     iface = json.loads(schema_text)["definitions"]["interface"]["properties"]["type"]
-    # The vocabulary is still CLOSED in the schema: the ruling moved who
+    # The vocabulary is still CLOSED in the schema: the rule moved who
     # enforces it, not whether it exists. A green that let the enum go would be
     # the opposite mistake.
     assert iface["enum"] == list(cfio.KNOWN_INTERFACE_TYPES)
@@ -126,7 +126,7 @@ def test_no_governed_text_says_a_reference_reader_refuses_an_interface_type():
 def test_the_closed_vocabulary_list_in_the_prose_is_complete():
     """The prose listed three closed vocabularies where the schema closes four.
 
-    Both panel members reached the same place from it: the defect is not a
+    Both reviews reached the same place from it: the defect is not a
     missing criterion, it is artifacts violating the criterion they already have,
     and a list that quietly omits io_class is how one of them got away with it.
     """
@@ -137,7 +137,7 @@ def test_the_closed_vocabulary_list_in_the_prose_is_complete():
 
 
 def test_the_anchor_rule_covers_a_die_array():
-    """SPEC-30: `anchor` applies per element, including inside a `die_array`.
+    """`anchor` applies per element, including inside a `die_array`.
 
     The gap this closes was invisible in exactly the way the position one was.
     The frame contract, which the spec names as the source of truth for the
@@ -154,7 +154,7 @@ def test_the_anchor_rule_covers_a_die_array():
     contract's rule attaches to that definition. The alternative would make
     `anchor` the one field whose effect depends on the component's type.
 
-    What a green here does NOT cover (META-2): whether any reader implements it.
+    What a green here does NOT cover: whether any reader implements it.
     This compares documents. interposer-pnr's own warning on an array declaring
     `gds_origin` is untouched by this commit and is that repository's row.
     """
@@ -174,12 +174,12 @@ def test_the_anchor_rule_covers_a_die_array():
 
 
 def test_no_committed_document_declares_gds_origin_on_an_array():
-    """The compatibility half of the ruling, kept executable.
+    """The compatibility half of the anchor rule, kept executable.
 
     With the population at two (this repository's all-blocks fixture and a studio
     fixture that declares no anchor), the clarification reinterprets zero
     documents. That is only true while it stays true: a fixture that declares
-    `gds_origin` on a `die_array` would be a document whose meaning the ruling
+    `gds_origin` on a `die_array` would be a document whose meaning the rule
     changed after the fact, and the right response is to decide that on purpose
     rather than to discover it.
     """

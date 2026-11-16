@@ -13,6 +13,7 @@ from chiplet_system_description import (
     CUPILLAR_OPT2,
     CUPILLAR_OPT3,
     INTM4TM2,
+    SG13CMOS5L,
     SG13G2,
     InterconnectMethod,
     SBUMP_SAC305,
@@ -42,7 +43,7 @@ def test_shipped_die_processes_are_shipped_technology_ids():
     """The join is by Technology.id. A process a shipped method states that no
     shipped Technology carries would refuse every die at build() with a message
     that reads like a design error, so the two id spaces are held together here."""
-    shipped_ids = {SG13G2.id, INTM4TM2.id}
+    shipped_ids = {SG13G2.id, SG13CMOS5L.id, INTM4TM2.id}
     for m in SHIPPED:
         assert m.die_processes is not None, f"{m.id!r} states no die process"
         assert set(m.die_processes) <= shipped_ids, (m.id, m.die_processes)

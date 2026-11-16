@@ -177,7 +177,7 @@ def test_a_different_major_is_refused(declared):
     ["1", "0"],
     {"major": 1},
     True,
-    " 1.0",          # surrounding whitespace is malformed, not a version (SPEC-2)
+    " 1.0",          # surrounding whitespace is malformed, not a version
     "1.0 ",
     "1.0\n",
     "1.0.0 ",
@@ -246,7 +246,7 @@ def test_a_wellformed_version_string_is_structurally_valid(schema_file, declared
 @pytest.mark.parametrize("declared", ["1", "1.", "1.0.0.0", "v1.0", "1.0-rc1",
                                       "", "one.zero", [1, 0], {"major": 1},
                                       # a trailing newline is what $ lets through
-                                      # under Python re (SPEC-11)
+                                      # under Python re
                                       "1.0\n", " 1.0", "1.0 "])
 def test_a_malformed_version_is_structurally_rejected(schema_file, declared):
     assert not _valid(_version_subschema(schema_file), declared)
@@ -483,14 +483,14 @@ def test_non_escalating_host_still_warns_exactly_once():
     assert sum(isinstance(w.message, cfio.ContractVersionWarning) for w in seen) == 1
 
 
-# --- the transition window: one oracle, both readers (SPEC-21) --------------
+# --- the transition window: one oracle, both readers -----------------------
 #
 # conformance/fixtures/version_policy_cases.json is the shared verdict oracle.
 # The rows are run here against the Python check_contract_version and in
 # reference/cpp/tests against the C++ one, so the two references are measured
 # against the file and never against each other.
 #
-# What a green over the oracle does NOT cover (META-2): warning DELIVERY. A row
+# What a green over the oracle does NOT cover: warning DELIVERY. A row
 # says a higher minor is accepted and reported; which channel carries it, how it
 # is deduplicated, and what a host running warnings-as-errors sees are covered by
 # the tests above and by nothing in the oracle. It also covers no I/O: the rows
@@ -673,7 +673,7 @@ def test_the_policy_document_states_the_transition_window():
         in policy
 
 
-# --- the retroactive sweep (SPEC-21, pass two) ------------------------------
+# --- the retroactive sweep (accepted majors) -------------------------------
 def _sweep_rows():
     policy = (ROOT / "docs" / "VERSION_POLICY.md").read_text(encoding="utf-8")
     assert "## Unversioned corrections since 1.0" in policy, \
@@ -734,11 +734,12 @@ def test_the_dividing_line_justifies_the_minor_at_ELEMENT_level():
     correct) a consumer that refuses the document has not ignored anything, so
     that justification made every added enum member a MAJOR by the policy's own
     test. It also gave normative cover to exactly the whole-document refusal
-    SPEC-25 exists to remove. Right conclusion, wrong reason, in normative text.
+    the element-level rule exists to remove. Right conclusion, wrong reason,
+    in normative text.
 
     What a green here does NOT cover: whether any consumer actually refuses at
-    element level. This reads a document; the behaviour is SPEC-25's and the
-    per-consumer rows own it.
+    element level. This reads a document; the behaviour belongs to each
+    consumer.
     """
     policy = (ROOT / "docs" / "VERSION_POLICY.md").read_text(encoding="utf-8")
     line = policy.split("The dividing line", 1)[1].split("## Changing the major", 1)[0]

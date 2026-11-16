@@ -234,7 +234,7 @@ void test_dump_roundtrips_components_order() {
     check(ids.size() >= 2, "example has the expected components");
 }
 
-// Inverted by the carry-rule ruling, and the parity assertion is RESTATED rather
+// Inverted by the carry rule, and the parity assertion is RESTATED rather
 // than deleted, because parity is what the original test was really about. It
 // asserted that an unknown type throws here, so that a document refused by one
 // reference reader was refused by the other. The verdict moved, the property did
