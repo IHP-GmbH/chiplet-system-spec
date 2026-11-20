@@ -103,14 +103,17 @@ MODELLED_ROLES = frozenset({"carrier"})
 SET_MEMBERS: Dict[str, Tuple[str, ...]] = {
     "A": ("dbu_um", "manufacturing_grid_um", "layer_properties", "routing",
           "stack", "attach", "external", "occupied_pairs"),
-    "B": ("drc", "fill", "seal_ring", "kicad_template"),
+    "B": ("drc", "fill", "seal_ring"),
     "C": ("routing", "em_limits"),
 }
 
 #: Members a set reads when present and does not need, with that set. Without
 #: ``pcells`` the export draws vias and pads as rectangles from the descriptor;
-#: without ``escape_capacity`` the bump planner says the escape is not measured.
-OPTIONAL_MEMBERS: Dict[str, str] = {"pcells": "B", "escape_capacity": "A"}
+#: without ``escape_capacity`` the bump planner says the escape is not measured;
+#: without ``kicad_template`` the package has no KiCad view, which the report
+#: notes, because the flow still writes a KiCad board.
+OPTIONAL_MEMBERS: Dict[str, str] = {"pcells": "B", "escape_capacity": "A",
+                                    "kicad_template": "B"}
 
 #: Every message id this module emits, its kind and what it means. A GUI or a
 #: log reader keys on these, so an id is added here before it is used, and
@@ -147,7 +150,12 @@ MESSAGE_IDS: Dict[str, Tuple[str, str]] = {
     "PACKAGE_ESCAPE_AXIS": ("finding", "an entry's descriptor is not one multi-layer variant with a route layer on the axis"),
     "PACKAGE_ESCAPE_PITCH": ("finding", "an entry's pitch is not its method's pitch in the registry"),
     "PACKAGE_PITCH_NOT_CHECKED": ("note", "no registry was given, so an entry's pitch was not checked"),
+    "PACKAGE_NO_KICAD_VIEW": ("note", "the package has no KiCad view; the flow cannot run on it yet"),
 }
+
+#: The notes that stand for a fact the check could not decide. Another note
+#: reports a fact it did decide, so it never makes a pass read as partial.
+NOT_CHECKED_NOTES = frozenset({"PACKAGE_PITCH_NOT_CHECKED"})
 
 _SCHEMA_RESOURCE = "technology_package.schema.json"
 
@@ -212,7 +220,8 @@ class PackageReport(NamedTuple):
     def not_checked(self, set_name: str) -> int:
         """How many facts of the set were noted as not checked; a pass with
         any is not a plain pass."""
-        return sum(1 for note in self.notes if note.capability_set == set_name)
+        return sum(1 for note in self.notes if note.capability_set == set_name
+                   and note.message_id in NOT_CHECKED_NOTES)
 
     def verdict(self, set_name: str) -> str:
         """``set A: pass``, ``set A: fail``, or a pass with what it did not check."""
@@ -532,6 +541,7 @@ class _Checker:
         self.check_resistances(variants)
         self.check_escape(variants, names)
         self.check_em_limits()
+        self.check_kicad_view(variants)
 
     def check_absent(self) -> None:
         for set_name, members in SET_MEMBERS.items():
@@ -788,6 +798,35 @@ class _Checker:
 
     def check_em_limits(self) -> None:
         self.json_file("em_limits", "em_limits.path")
+
+    # KiCad view (set B, optional) ----------------------------------------------
+
+    def check_kicad_view(self, variants: Dict[str, _Variant]) -> None:
+        """Notes a KiCad view that is absent or not whole. The view is the
+        template and a KiCad layer on every routing layer; without both the
+        flow cannot write its KiCad board, though no set needs either."""
+        if "kicad_template" not in self.manifest:
+            self.note("PACKAGE_NO_KICAD_VIEW", "B", "kicad_template",
+                      _no_kicad_view(self.root, "kicad_template"))
+            return
+        for variant, descriptor in sorted(variants.items()):
+            if isinstance(descriptor, _Unreadable):
+                continue
+            for k, layer in enumerate(descriptor.get("routing_layers") or ()):
+                layer = layer if isinstance(layer, dict) else {}
+                if not layer.get("kicad_copper_layer"):
+                    name = layer.get("emitter_name", f"routing_layers[{k}]")
+                    self.note("PACKAGE_NO_KICAD_VIEW", "B",
+                              f"routing.variants.{variant}.routing_layers[{k}]",
+                              _no_kicad_view(self.root,
+                                             f"layers[{name}].kicad_copper_layer"))
+
+
+def _no_kicad_view(root: Path, missing: str) -> str:
+    return (f"{root}: this technology package has no KiCad view ({missing} is not set). "
+            "The package checks pass without one, but the flow still writes a KiCad board, "
+            "so packaging-flow refuses to run on this technology. To run the flow on it, add "
+            "kicad_template and a kicad_copper_layer for every routing layer.")
 
 
 def _by_identity(variants: Dict[str, _Variant]) -> Dict[str, List[str]]:

@@ -20,7 +20,8 @@
       "min_width_um": 1.0,
       "min_spacing_um": 1.0,
       "pitch_um": 2.0,
-      "resistance_ohm_per_sq": 0.05
+      "resistance_ohm_per_sq": 0.05,
+      "kicad_copper_layer": "B.Cu"
     },
     {
       "abstract_name": "met2",
@@ -31,7 +32,8 @@
       "min_width_um": 2.0,
       "min_spacing_um": 2.0,
       "pitch_um": 4.0,
-      "resistance_ohm_per_sq": 0.02
+      "resistance_ohm_per_sq": 0.02,
+      "kicad_copper_layer": "F.Cu"
     }
   ],
   "vias": [
