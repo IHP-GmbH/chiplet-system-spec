@@ -21,7 +21,7 @@ from setuptools.command.sdist import sdist
 
 SCHEMAS = ("die_contract.schema.json", "pins.schema.json",
            "blackbox_padmap.schema.json", "chiplet.schema.json",
-           "technology_package.schema.json")
+           "technology_package.schema.json", "routed_geometry.schema.json")
 HERE = Path(__file__).resolve().parent
 CANONICAL = HERE.parents[1] / "schemas"        # the authored documents
 STAGED = HERE / "_canonical_schemas"           # what an sdist carries instead

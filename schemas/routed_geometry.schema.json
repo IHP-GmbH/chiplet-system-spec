@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihp.example/chiplet-spec/routed_geometry.schema.json",
+  "title": "Routed geometry",
+  "description": "Routed geometry in micrometres, Y up, with the outline lower-left at (0, 0) in integer database units. Lists preserve source order: routing layers follow the descriptor; nets, segments and vias follow the traces reader; drawn entries follow its via tiling order; devices and pad_domains are not reordered. Unknown additive fields are allowed. Consumers apply the shared contract version policy before reading.",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "frame",
+    "dbu_um",
+    "stack",
+    "outline",
+    "interposer",
+    "devices",
+    "nets",
+    "inputs",
+    "producer"
+  ],
+  "properties": {
+    "schema": {
+      "const": "routed-geometry"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])"
+    },
+    "frame": {
+      "const": "interposer_local_y_up_um"
+    },
+    "dbu_um": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "stack": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "metal",
+          "cut_above"
+        ],
+        "properties": {
+          "metal": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cut_above": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "minItems": 1
+    },
+    "outline": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/point"
+      },
+      "minItems": 4
+    },
+    "interposer": {
+      "type": "object",
+      "required": [
+        "body_thickness_um"
+      ],
+      "properties": {
+        "body_thickness_um": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "devices": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/device"
+      },
+      "minItems": 1
+    },
+    "nets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/net"
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "required": [
+        "traces",
+        "chiplet",
+        "routing_tech",
+        "pins",
+        "bumps",
+        "tech_package",
+        "physical_stack"
+      ],
+      "properties": {
+        "traces": {
+          "$ref": "#/$defs/file"
+        },
+        "chiplet": {
+          "$ref": "#/$defs/file"
+        },
+        "routing_tech": {
+          "$ref": "#/$defs/digest"
+        },
+        "pins": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/file"
+          }
+        },
+        "bumps": {
+          "$ref": "#/$defs/file"
+        },
+        "form": {
+          "$ref": "#/$defs/file"
+        },
+        "tech_package": {
+          "$ref": "#/$defs/digest"
+        },
+        "physical_stack": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "additionalProperties": true
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "tool",
+        "version"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "point": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "digest": {
+      "type": "object",
+      "required": [
+        "sha256"
+      ],
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "file": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "segment": {
+      "type": "object",
+      "required": [
+        "layer",
+        "x0",
+        "y0",
+        "x1",
+        "y1",
+        "width"
+      ],
+      "properties": {
+        "layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "x0": {
+          "type": "number"
+        },
+        "y0": {
+          "type": "number"
+        },
+        "x1": {
+          "type": "number"
+        },
+        "y1": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "via": {
+      "type": "object",
+      "required": [
+        "via",
+        "x",
+        "y",
+        "bottom_layer",
+        "top_layer",
+        "size"
+      ],
+      "properties": {
+        "via": {
+          "type": "string",
+          "minLength": 1
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "bottom_layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "top_layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "size": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "array": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "drawn": {
+      "type": "object",
+      "required": [
+        "via",
+        "bottom_layer",
+        "top_layer",
+        "x",
+        "y",
+        "pad",
+        "k",
+        "cut",
+        "pitch",
+        "enclosure"
+      ],
+      "properties": {
+        "via": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bottom_layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "top_layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "pad": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "k": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cut": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pitch": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "enclosure": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "k": {
+                "const": 1
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pitch": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "pitch": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "device": {
+      "type": "object",
+      "required": [
+        "ref",
+        "layout",
+        "origin",
+        "rotation_deg",
+        "mirrored",
+        "pad_domains"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layout": {
+          "$ref": "#/$defs/file"
+        },
+        "origin": {
+          "$ref": "#/$defs/point"
+        },
+        "rotation_deg": {
+          "type": "number"
+        },
+        "mirrored": {
+          "type": "boolean"
+        },
+        "pad_domains": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "net": {
+      "type": "object",
+      "required": [
+        "name",
+        "board_name",
+        "segments",
+        "vias",
+        "drawn"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "board_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "net_class": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "segments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/segment"
+          }
+        },
+        "vias": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/via"
+          }
+        },
+        "drawn": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/drawn"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
