@@ -46,6 +46,10 @@ What is checked here, and what is not:
   are resolved only when the registry is given; ``seal_ring`` and ``pcells``
   name cells of a library that only a layout tool can open. The schema checks
   their shape and nothing more is checked.
+* :func:`method_fab_params` reads a method's pad parameters from that registry
+  under the names of contract 1.2, and refuses a method whose two names of one
+  parameter give two values; :func:`load_method_pitches` applies it to every
+  method that states pad parameters.
 """
 
 from __future__ import annotations
@@ -80,6 +84,8 @@ __all__ = [
     "manifest_path",
     "load_manifest",
     "load_method_pitches",
+    "FAB_PARAMS_RENAMED",
+    "method_fab_params",
     "check_package",
     "validate_package",
     "main",
@@ -91,8 +97,20 @@ MANIFEST_PATH = PurePosixPath("libs.tech/adk/technology.json")
 TECHNOLOGY_PACKAGE_SCHEMA = "technology-package"
 SUPPORTED_TECHNOLOGY_PACKAGE_VERSION = "1.0"
 
-#: The interconnect method registry minor this reader reads a method's pitch from.
-SUPPORTED_METHODS_VERSION = "1.1"
+#: The interconnect method registry minor this reader reads a method's pitch and
+#: pad parameters from.
+SUPPORTED_METHODS_VERSION = "1.2"
+
+#: A method's pad parameters under the names of registry 1.2 -> (the 1.1 name
+#: it replaces, the words a refusal uses for it). The old names stay required
+#: through every 1.x, so a 1.1 reader keeps finding them; they go at 2.0.
+_FAB_PARAMS = {
+    "passivation_opening_um": ("passiv_opening_um", "passivation opening"),
+    "pad_metal_enclosure_um": ("tm2_enclosure_um", "pad metal enclosure"),
+}
+
+#: New name -> the 1.1 name it replaces.
+FAB_PARAMS_RENAMED = {new: old for new, (old, _) in _FAB_PARAMS.items()}
 
 #: Roles this version validates. The die half of the format is a later minor.
 MODELLED_ROLES = frozenset({"carrier"})
@@ -128,6 +146,8 @@ MESSAGE_IDS: Dict[str, Tuple[str, str]] = {
     "PACKAGE_SCHEMA_ABSENT": ("refusal", "this installation cannot validate (schema or jsonschema missing)"),
     "PACKAGE_ROLE_NOT_MODELLED": ("refusal", "the manifest names a role this version does not model"),
     "PACKAGE_METHODS_UNREADABLE": ("refusal", "the interconnect method registry given cannot be read"),
+    "PACKAGE_METHODS_FAB_PARAMS_DISAGREE": ("refusal", "a method gives two values under the two names of one pad parameter"),
+    "PACKAGE_METHODS_FAB_PARAMS_MISSING": ("refusal", "a method lacks the 1.x name of a pad parameter"),
     "PACKAGE_VALIDATOR_FAILED": ("refusal", "the validator itself failed; a defect to report, not a verdict"),
     "PACKAGE_SET_INCOMPLETE": ("verdict", "validate_package: a required set has findings"),
     "PACKAGE_MEMBER_ABSENT": ("finding", "a member the set needs is not declared"),
@@ -372,7 +392,8 @@ def load_method_pitches(path, *, on_warn: Optional[Callable[[str], None]] = None
                         ) -> Dict[str, Optional[float]]:
     """Each method's pitch (``pitch_rules.IXN_pitch``) from an interconnect
     method registry, None where the registry states none. Raises
-    :class:`TechnologyPackageError` when the registry cannot be read."""
+    :class:`TechnologyPackageError` when the registry cannot be read, or when a
+    method's pad parameters have no single reading (:func:`method_fab_params`)."""
     path = Path(path)
     try:
         registry = json.loads(path.read_text(encoding="utf-8"))
@@ -385,9 +406,49 @@ def load_method_pitches(path, *, on_warn: Optional[Callable[[str], None]] = None
         raise TechnologyPackageError("PACKAGE_METHODS_UNREADABLE", f"{path}: {exc}") from exc
     pitches: Dict[str, Optional[float]] = {}
     for method, spec in registry["methods"].items():
+        if isinstance(spec, dict) and "fab_params" in spec:
+            method_fab_params(method, spec, where=str(path))
         pitch = _dig(spec, ("pitch_rules", "IXN_pitch"))
         pitches[method] = pitch if _positive(pitch) else None
     return pitches
+
+
+def method_fab_params(method: str, spec: Dict[str, Any], *, where: str) -> Dict[str, Any]:
+    """A method's pad parameters (``fab_params``) under the names of registry
+    1.2, ``passivation_opening_um`` and ``pad_metal_enclosure_um``.
+
+    A 1.2 method may state a parameter under both names, and the 1.1 name is
+    required through every 1.x. A method whose two names give two values has
+    no single reading and is refused here, since the schema cannot compare two
+    values (docs/VERSION_POLICY.md, Deprecating a key). ``where`` names the
+    registry in the refusal. Anything that is not a method object reads as a
+    method without pad parameters. Raises :class:`TechnologyPackageError`.
+    """
+    fab_params = spec.get("fab_params") if isinstance(spec, dict) else None
+    if not isinstance(fab_params, dict):
+        fab_params = {}
+    params: Dict[str, Any] = {}
+    for new, (old, words) in _FAB_PARAMS.items():
+        if old not in fab_params:
+            if new in fab_params:
+                raise TechnologyPackageError(
+                    "PACKAGE_METHODS_FAB_PARAMS_MISSING",
+                    f"{where}: method {method} has no fab_params.{old}. Interconnect "
+                    f"methods 1.x keeps the old name beside {new}, so that readers older "
+                    f"than 1.2 still find it. Add it with the same value.")
+            raise TechnologyPackageError(
+                "PACKAGE_METHODS_FAB_PARAMS_MISSING",
+                f"{where}: method {method} has no {words}: "
+                f"fab_params.{old} and {new} are both missing. Add both, with the "
+                f"same value.")
+        if new in fab_params and fab_params[new] != fab_params[old]:
+            raise TechnologyPackageError(
+                "PACKAGE_METHODS_FAB_PARAMS_DISAGREE",
+                f"{where}: method {method} gives {old} {fab_params[old]} and {new} "
+                f"{fab_params[new]}. Since interconnect methods 1.2 these are two names "
+                f"for one value, so the file has no single reading. Make them equal.")
+        params[new] = fab_params.get(new, fab_params[old])
+    return params
 
 
 # --- member paths -------------------------------------------------------------

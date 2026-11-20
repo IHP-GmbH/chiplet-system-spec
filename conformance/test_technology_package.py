@@ -678,6 +678,85 @@ def test_an_unreadable_registry_is_refused(measured, text):
     assert caught.value.message_id == "PACKAGE_METHODS_UNREADABLE"
 
 
+# --- a method's pad parameters (registry 1.2) --------------------------------
+
+def test_the_reader_returns_the_new_names():
+    spec = {"fab_params": {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5,
+                           "passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5}}
+    assert tp.method_fab_params("m", spec, where="r.json") == {
+        "passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5}
+
+
+def test_the_reader_reads_a_1_1_method():
+    spec = {"fab_params": {"passiv_opening_um": 35.0, "tm2_enclosure_um": 7.5}}
+    assert tp.method_fab_params("m", spec, where="r.json") == {
+        "passivation_opening_um": 35.0, "pad_metal_enclosure_um": 7.5}
+
+
+@pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
+def test_two_spellings_with_two_values_are_refused(new, old):
+    fab_params = {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5}
+    fab_params[new] = fab_params[old] + 5.0
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_DISAGREE"
+    assert str(caught.value) == (
+        f"PACKAGE_METHODS_FAB_PARAMS_DISAGREE: r.json: method cupillar_opt2 gives "
+        f"{old} {fab_params[old]} and {new} {fab_params[new]}. Since interconnect "
+        f"methods 1.2 these are two names for one value, so the file has no single "
+        f"reading. Make them equal.")
+
+
+@pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
+def test_a_method_without_the_old_name_is_refused(new, old):
+    fab_params = {"passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5,
+                  "passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5}
+    del fab_params[old]
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_MISSING"
+    assert str(caught.value) == (
+        f"PACKAGE_METHODS_FAB_PARAMS_MISSING: r.json: method cupillar_opt2 has no "
+        f"fab_params.{old}. Interconnect methods 1.x keeps the old name beside {new}, "
+        f"so that readers older than 1.2 still find it. Add it with the same value.")
+
+
+#: new name -> the words the refusal uses for the parameter.
+FAB_PARAMS_WORDS = {"passivation_opening_um": "passivation opening",
+                    "pad_metal_enclosure_um": "pad metal enclosure"}
+
+
+@pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
+def test_a_method_with_neither_name_is_refused(new, old):
+    fab_params = {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5}
+    del fab_params[old]
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
+    assert str(caught.value) == (
+        f"PACKAGE_METHODS_FAB_PARAMS_MISSING: r.json: method cupillar_opt2 has no "
+        f"{FAB_PARAMS_WORDS[new]}: fab_params.{old} and {new} are both missing. Add "
+        f"both, with the same value.")
+
+
+def test_the_package_check_refuses_a_registry_whose_pad_parameters_disagree(measured):
+    package, registry = measured
+    registry.write_text(json.dumps({"schema_version": "1.2", "methods": {"vendorx_microbump": {
+        "pitch_rules": {"IXN_pitch": 40.0},
+        "fab_params": {"passiv_opening_um": 20.0, "tm2_enclosure_um": 5.0,
+                       "passivation_opening_um": 25.0}}}}))
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.check_package(package, methods=registry)
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_DISAGREE"
+    assert str(registry) in caught.value.text
+
+
+@pytest.mark.parametrize("spec", [None, "fab", {"fab_params": "x"}, {"fab_params": None}])
+def test_what_is_not_a_method_reads_as_one_without_pad_parameters(spec):
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("m", spec, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_MISSING"
+
+
 # --- the command -------------------------------------------------------------
 
 def test_command_exit_codes_and_report(package, tmp_path, capsys):
