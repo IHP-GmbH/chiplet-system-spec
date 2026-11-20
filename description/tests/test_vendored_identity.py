@@ -47,6 +47,7 @@ REFERENCE_PKG = "reference/python/chiplet_format_io"  # inside the spec
 #: default for the snapshot reason.
 NOT_VENDORED = frozenset({
     "agreement.py",  # imports transistor_view, so a vendored copy could not load
+    "die_content.py",  # the content form of a die's record; imports ready_die_names, and this package keys no die
     "eda_views.py",  # imports ready_die_names, which this package does not vendor
     "footprint_ids.py",  # footprint names; this package does not draw symbols
     "pins.py",  # the pin tables of a die view and a die contract

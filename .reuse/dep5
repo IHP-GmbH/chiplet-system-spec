@@ -43,3 +43,8 @@ Copyright: 2026 IHP PDK Authors
 License: Apache-2.0
 Comment: Copied from https://github.com/IHP-GmbH/OpenIntM4TM2, release
  0.4.0; the placeholders are empty files written here. provenance.json beside them lists which is which.
+
+Files: reference/python/tests/fixtures/*
+Copyright: 2026 IHP GmbH
+License: Apache-2.0
+Comment: JSON fixtures of the reference reader tests; their license is declared here (REUSE DEP5).

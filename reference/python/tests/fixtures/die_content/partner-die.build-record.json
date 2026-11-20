@@ -1,0 +1,57 @@
+{
+  "schema": "partner-die-record/v1",
+  "status": "partner-declared",
+  "qualified": false,
+  "process": {
+    "pdk": "fx-pdk",
+    "pdk_version": "fx-pdk-2026.1",
+    "technology": "fxtech"
+  },
+  "die": {
+    "chiplet_name": "fxdie",
+    "bbox_um": [
+      0.0,
+      0.0,
+      1000.0,
+      1000.0
+    ],
+    "thickness_um": 300.0
+  },
+  "package": {
+    "chiplet_name": "fxdie",
+    "sha256": "be26e43a39431e03246c20eed9c03ea7b0170618f076c845e6bd4c8459659f31",
+    "file": "fxdie.blackbox.json",
+    "provenance": {
+      "generator": "hand-written test fixture"
+    }
+  },
+  "supply_volts": {
+    "VDD": 1.2,
+    "VSS": 0
+  },
+  "signoff": {
+    "statement": "The die owner ran its own physical checks on the layout named below.",
+    "issued_by": "die-owner-signoff",
+    "issued_at": "2026-11-10T09:00:00Z",
+    "layout_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "checks": [
+      {
+        "check": "drc",
+        "tool": "owner-drc-deck",
+        "result": "pass",
+        "run_at": "2026-11-10T08:00:00Z"
+      },
+      {
+        "check": "lvs",
+        "tool": "owner-lvs",
+        "result": "unresolved",
+        "run_at": "2026-11-10T08:30:00Z"
+      }
+    ]
+  },
+  "emitted_under": {
+    "generator": "chiplet-die-flow emit-partner-die",
+    "reader_release": "1.22.0",
+    "reader_capability": 4
+  }
+}
