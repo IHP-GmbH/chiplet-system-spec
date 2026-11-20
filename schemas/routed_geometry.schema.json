@@ -23,7 +23,8 @@
     },
     "version": {
       "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])"
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
+      "description": "Contract version under docs/VERSION_POLICY.md: check_contract_version accepts the supported major, warns once on a newer minor, and refuses other majors; PATCH is ignored. Supported: 1.0."
     },
     "frame": {
       "const": "interposer_local_y_up_um"
@@ -168,7 +169,7 @@
       "properties": {
         "sha256": {
           "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
+          "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
         }
       },
       "additionalProperties": true
@@ -186,7 +187,7 @@
         },
         "sha256": {
           "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
+          "pattern": "^[0-9a-f]{64}(?![\\s\\S])"
         }
       },
       "additionalProperties": true

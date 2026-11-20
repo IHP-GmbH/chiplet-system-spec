@@ -84,3 +84,11 @@ def test_other_major_refused(document, tmp_path):
     path.write_text(json.dumps(document))
     with pytest.raises(cfio.ContractVersionError):
         load_routed_geometry(path)
+
+
+def test_digest_with_trailing_newline_refused(document, tmp_path):
+    document["devices"][0]["layout"]["sha256"] += "\n"
+    path = tmp_path / "geometry.json"
+    path.write_text(json.dumps(document))
+    with pytest.raises(RoutedGeometryError):
+        load_routed_geometry(path)
