@@ -723,7 +723,7 @@ def test_a_method_without_the_old_name_is_refused(new, old):
 
 #: new name -> the words the refusal uses for the parameter.
 FAB_PARAMS_WORDS = {"passivation_opening_um": "passivation opening",
-         "pad_metal_enclosure_um": "pad metal enclosure"}
+                    "pad_metal_enclosure_um": "pad metal enclosure"}
 
 
 @pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
@@ -734,8 +734,27 @@ def test_a_method_with_neither_name_is_refused(new, old):
         tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
     assert str(caught.value) == (
         f"PACKAGE_METHODS_FAB_PARAMS_MISSING: r.json: method cupillar_opt2 has no "
-        f"{FAB_PARAMS_WORDS[new]}: fab_params.{old} and {new} are both missing. Add both, with "
-        f"the same value.")
+        f"{FAB_PARAMS_WORDS[new]}: fab_params.{old} and {new} are both missing. Add "
+        f"both, with the same value.")
+
+
+def test_the_package_check_refuses_a_registry_whose_pad_parameters_disagree(measured):
+    package, registry = measured
+    registry.write_text(json.dumps({"schema_version": "1.2", "methods": {"vendorx_microbump": {
+        "pitch_rules": {"IXN_pitch": 40.0},
+        "fab_params": {"passiv_opening_um": 20.0, "tm2_enclosure_um": 5.0,
+                       "passivation_opening_um": 25.0}}}}))
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.check_package(package, methods=registry)
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_DISAGREE"
+    assert str(registry) in caught.value.text
+
+
+@pytest.mark.parametrize("spec", [None, "fab", {"fab_params": "x"}, {"fab_params": None}])
+def test_what_is_not_a_method_reads_as_one_without_pad_parameters(spec):
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("m", spec, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_MISSING"
 
 
 # --- the command -------------------------------------------------------------

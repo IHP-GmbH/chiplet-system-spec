@@ -2,10 +2,10 @@
 
 Contract 1.2 adds ``passivation_opening_um`` and ``pad_metal_enclosure_um`` as
 the names of what 1.1 calls ``passiv_opening_um`` and ``tm2_enclosure_um``. The
-old names stay required through every 1.x, so a 1.1 reader keeps finding them;
-a method that states both spellings with different values has no single
-reading. JSON Schema cannot compare two values, so that refusal lives in the
-reader (``technology_package.method_fab_params``), and this file holds both.
+old names stay required through every 1.x, so a 1.1 reader keeps finding them.
+This file holds the schema, the example and the policy; the reader's refusal of
+two names with two values (``technology_package.method_fab_params``) is tested
+in ``test_technology_package.py`` with the module's other refusals.
 """
 import copy
 import json
@@ -61,15 +61,6 @@ def test_every_example_method_states_both_spellings_equal():
     for method, spec in EXAMPLE["methods"].items():
         for new, old in RENAMED.items():
             assert spec["fab_params"][new] == spec["fab_params"][old], method
-
-
-def test_a_1_1_reader_still_reads_the_example():
-    """The 1.1 schema is this one without the two new names; a file our
-    writers produce still carries every key it requires."""
-    old = copy.deepcopy(SCHEMA)
-    for new in RENAMED:
-        del _fab_params_schema(old)["properties"][new]
-    assert _valid(old, EXAMPLE)
 
 
 def test_the_schema_keeps_the_old_names_required():
