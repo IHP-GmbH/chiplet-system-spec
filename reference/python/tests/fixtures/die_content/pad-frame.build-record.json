@@ -1,0 +1,42 @@
+{
+  "schema": "chiplet-flow-pad-frame-build-record/v1",
+  "status": "pad-frame-not-a-circuit",
+  "qualified": false,
+  "origin": "generated-pad-frame",
+  "process": {
+    "pdk": "ihp-sg13cmos5l",
+    "pdk_version": "22f43352dd8219f9007eb659e422e0d5fe28c5fb",
+    "pdk_version_source": "ciel versions/22f43352dd8219f9007eb659e422e0d5fe28c5fb of ihp-sg13, which ihp-sg13cmos5l links to",
+    "technology": "sg13cmos5l"
+  },
+  "spec": {
+    "sha256": "50f5ac292eb79f7f4f33479c937aaa8593ed7f18d2356fe0a771d4b324041d0d"
+  },
+  "pad_master": {
+    "name": "bondpad_70x70_5L",
+    "gds_sha256": "893ac21814c44e3e06907e18c7b2f41f2ad94f8415322ad41ec5bfa721d8c900",
+    "plate_layer": "TopMetal1",
+    "width_um": 70,
+    "height_um": 70
+  },
+  "layout": {
+    "sha256": "05022a913cf1f741ec192e9bedca8aa0f553772bade7f24333009a762eda8631"
+  },
+  "pins": {
+    "sha256": "62b9c16a28ebc6e28c49ecf5bdb37e21ebf4e1a40a4c3dedbb997f319003b75f"
+  },
+  "checks": {},
+  "limitations": [
+    "a pad frame: the layout holds the bond pads and the die area and nothing else; no circuit stands behind any pad",
+    "each pad's net, direction and role are the frame spec's word, not a circuit's; a pad's name is its port and its net",
+    "no DRC, antenna or LVS ran on this layout; checks is empty because no count was taken, which is not a count of zero",
+    "pad positions are the frame spec's, checked only against the die outline, the grid and the other pads' plates, not against any design rule",
+    "the pad master is the --pad-gds cell, checked only for its plate, its opening and its extent; everything else it draws is copied as given",
+    "pdk_version is read as pdk_version_source says, when this record was written; nothing was built with the PDK"
+  ],
+  "emitted_under": {
+    "generator": "chiplet-die-flow pad-frame",
+    "reader_release": "1.20.0",
+    "reader_capability": 4
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "schema": "die-output-contract",
+  "version": "1.1",
+  "die": {
+    "name": "PAD_FRAME_A",
+    "layout": "layout.gds",
+    "layout_sha256": "05022a913cf1f741ec192e9bedca8aa0f553772bade7f24333009a762eda8631",
+    "top_cell": "PAD_FRAME_A",
+    "dbu_um": 0.001,
+    "bbox_um": [
+      0.0,
+      0.0,
+      1500.0,
+      1000.0
+    ],
+    "frame": "die_local_gds_origin"
+  },
+  "process": {
+    "pdk": "ihp-sg13cmos5l",
+    "pdk_version": "22f43352dd8219f9007eb659e422e0d5fe28c5fb",
+    "technology": "sg13cmos5l"
+  },
+  "build_record": {
+    "path": "build-record.json",
+    "sha256": "44f5911e95be7eec10e0a4b5c6e5cbdc1ae32ed9d4211943f25839913d3c4f3f"
+  },
+  "inventory": {
+    "kind": "pins_json",
+    "path": "pins.json",
+    "sha256": "62b9c16a28ebc6e28c49ecf5bdb37e21ebf4e1a40a4c3dedbb997f319003b75f"
+  },
+  "terminals": [
+    {
+      "name": "d2d[0]",
+      "pad_index": 0,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d[0]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "d2d[1]",
+      "pad_index": 1,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d[1]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "d2d[2]",
+      "pad_index": 2,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d[2]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "d2d[3]",
+      "pad_index": 3,
+      "role": "signal",
+      "direction": "input",
+      "port": "d2d[3]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "VDDA_1",
+      "pad_index": 4,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDDA_1",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDDA_1"
+    },
+    {
+      "name": "VDDA_0",
+      "pad_index": 5,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDDA_0",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDDA_0"
+    },
+    {
+      "name": "ext[0]",
+      "pad_index": 6,
+      "role": "signal",
+      "direction": "bidir",
+      "port": "ext[0]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "ext[1]",
+      "pad_index": 7,
+      "role": "signal",
+      "direction": "bidir",
+      "port": "ext[1]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "ext[2]",
+      "pad_index": 8,
+      "role": "signal",
+      "direction": "bidir",
+      "port": "ext[2]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "ext[3]",
+      "pad_index": 9,
+      "role": "signal",
+      "direction": "bidir",
+      "port": "ext[3]",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "VSSA_1",
+      "pad_index": 10,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSSA_1",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSSA_1"
+    },
+    {
+      "name": "VSSA_0",
+      "pad_index": 11,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSSA_0",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "aperture",
+        "gds_layer": 9,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSSA_0"
+    }
+  ],
+  "generator": "chiplet-die-flow pad-frame"
+}

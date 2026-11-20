@@ -54,7 +54,7 @@ The names in this table are exported from the top-level package.
 ### Submodules
 
 These are imported by module name, not from the top-level package. `die_contract` is strict
-die-contract admission ([STRICT_ADMISSION_API.md](../../docs/STRICT_ADMISSION_API.md)). Eleven more
+die-contract admission ([STRICT_ADMISSION_API.md](../../docs/STRICT_ADMISSION_API.md)). Twelve more
 sit beside it. Seven hold what a die flow and the tools that read its output share,
 `pad_numbers` the symbol pin a pad gets from the contract's terminals alone, `footprint_ids`
 the footprint names a KiCad sheet is given, and `sheet_names` the names it carries verbatim.
@@ -68,6 +68,7 @@ the footprint names a KiCad sheet is given, and `sheet_names` the names it carri
 | `agreement` | `agree` and `agree_record`, the agreement of a simulated SPICE view with the CDL its LVS read, and its device table; a refusal raises `AgreementRefused`. |
 | `verilog_closure` | `units` and `closure` over Verilog sources, and the tokenizer they read with. |
 | `technology` | `TECHNOLOGY_OF_PDK`, from a PDK name to the technology id. |
+| `die_content` | The content form of a die's build record and contract, `die-content/v1`: `build_record_content` and `contract_content` leave out what a rerun of the same inputs changes (where it ran, when, with which tool version), bind each file the record names as `BOUND_TABLE` decides per writer (`keep` its digest, `project` the digest of its projection with the run's roots as names, `leave` it out), strip the step numbers LibreLane puts on paths, and write the record's own layout digest as the word `layout`; `*_content_sha256` is the digest of the canonical JSON (`canonical_json`, `canonical_sha256`). `project` is the writer's side: a run file with the run, design and PDK roots replaced by their names. A record or contract the form cannot read raises `ChipletFormatError`. |
 | `pins` | `PINS_VERSION` and the pin list's use, role and direction tables. `kicad_type(pin)` gives a pin's KiCad type from its role and direction, with the warnings its reading gives, from the one table `KICAD_TYPE` (also keyed by the die contract's words, `KICAD_TYPE_OF_TERMINAL`); a reader supports `SUPPORTED_PINS_VERSION` 1.1. |
 | `pad_numbers` | `pad_numbers`: the symbol pin of each terminal (`number`, `name`, `pad_index`, `port`, `ordinal`), from the contract's `terminals` alone, read through die_contract. `is_port` and `no_connect` derive from `port`. A port's pads share the pad name; a repeated name that is no port is `<name>_<k>` in pad-index order and no-connect. No port identity, a half identity, one name on a port and off it or on two ports, or a generated number that collides, raises `DieContractError`. |
 | `footprint_ids` | `die_footprint(cell)` is `chiplet_dies:<cell>` and `ext_pad_footprint(um)` is `chiplet_carrier:EXT_PAD_<um>um`. A cell KiCad 9.0.6 would not keep, an empty name, or any whitespace raises `FootprintIdError`. A pad size is a positive whole number of um: a bool, a float, a string, zero or a negative is the same error. |

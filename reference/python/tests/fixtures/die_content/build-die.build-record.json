@@ -1,0 +1,244 @@
+{
+  "schema": "chiplet-flow-librelane-build-record/v1",
+  "origin": "librelane-cli",
+  "status": "built-not-qualified",
+  "qualified": false,
+  "design": "CF_DRIVER_LS",
+  "flow": "Chiplet",
+  "librelane_version": "3.0.0rc0",
+  "process": {
+    "pdk": "ihp-sg13g2",
+    "pdk_version": "22f43352dd8219f9007eb659e422e0d5fe28c5fb",
+    "pdk_inputs": {
+      "count": 31,
+      "sha256": "0a254b9080fec5eebe4d1058a0b5972e2f0099c0d793962c52c74c4b978d9e47",
+      "declared_by": "chiplet.inputs-before.json"
+    },
+    "pdk_version_from": {
+      "path": "pdk-source.json",
+      "sha256": "2d79aca5c07f35a5d4f379646bd544455da24d81536e243d6c8a7369bc00da0f"
+    }
+  },
+  "layout": {
+    "path": "layout.gds",
+    "sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac",
+    "top_cell": "CF_DRIVER_LS",
+    "built_as": "final/gds/CF_DRIVER_LS.gds"
+  },
+  "bound": [
+    {
+      "path": "resolved.json",
+      "sha256": "5b57b756bd9d27a269483bd0386f3603643e2319c5471cc9767f7ee805fde5c8",
+      "content_sha256": "f4e254ad652a6491935bff0f30308dbffadcf37fc1f8e788f82138fe2361a1e7"
+    },
+    {
+      "path": "chiplet.build-observations.json",
+      "sha256": "67130c3c2583b03c742f3dad37053ed63d51ebdd633d6ccacae8ac1fa3b4e7c8",
+      "content_sha256": "ac35140236990f0e5be2c69a5314b367e5b9caa76647adb940d29474590a6891"
+    },
+    {
+      "path": "chiplet.inputs-before.json",
+      "sha256": "12ebffc8ab7ddf3e77380a15748db02e6b6ab1f4ac964f62263541fbbbea343e",
+      "content_sha256": "f4ad7ce53d668ddac03f1efccc2568322d163cdeba843ec6ffcd5ea13fb879f2"
+    },
+    {
+      "path": "final/def/CF_DRIVER_LS.def",
+      "sha256": "f0dd528d1c7c96bba5264db0ecdfe7bd0ec08b0b86425c6cfe6e3c39097b1627"
+    },
+    {
+      "path": "55-chipletflow-bondpadfiller/rewritten/CF_DRIVER_LS.gds",
+      "sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac"
+    },
+    {
+      "path": "56-klayout-antenna/config.json",
+      "sha256": "4e6b35c79093c4c6577498550f6245aef25e679672fe01deb4d4e1428d04e8ef"
+    },
+    {
+      "path": "56-klayout-antenna/state_in.json",
+      "sha256": "51f7837bb294041f2c9d3c315af94ef3cd33c8f9e7da4297ffcdd9a26005a975"
+    },
+    {
+      "path": "56-klayout-antenna/state_out.json",
+      "sha256": "36f0c56ab0e87fc50b35fd7e5e44805cac88bf4e489b6695695567aea7e6103e"
+    },
+    {
+      "path": "58-klayout-density/config.json",
+      "sha256": "28918d969de9aa254e084f445d36735e5232cd336ce69a7a5ec8d4159c0a2407"
+    },
+    {
+      "path": "58-klayout-density/state_in.json",
+      "sha256": "36f0c56ab0e87fc50b35fd7e5e44805cac88bf4e489b6695695567aea7e6103e"
+    },
+    {
+      "path": "58-klayout-density/state_out.json",
+      "sha256": "46f9d67fe52b25208cdcb863b513659f034d4468ae6f510d6bb3f16924b0de71"
+    },
+    {
+      "path": "60-klayout-drc/config.json",
+      "sha256": "75852acd2d21da09366b6765e10205c20abfa279a1a44ebae0d0436efd83c89a"
+    },
+    {
+      "path": "60-klayout-drc/state_in.json",
+      "sha256": "46f9d67fe52b25208cdcb863b513659f034d4468ae6f510d6bb3f16924b0de71"
+    },
+    {
+      "path": "60-klayout-drc/state_out.json",
+      "sha256": "e9212f8a18a44d2ebb6364ec6fe04c96059053fd67791d7aee511868ac27c52f"
+    },
+    {
+      "path": "63-openroad-writecdl/CF_DRIVER_LS.cdl",
+      "sha256": "7ee31b5b3d7054032d7e4e9ba02af1f55510e65bf7eb4b5515f856f5b21bca5b"
+    },
+    {
+      "path": "63-openroad-writecdl/state_out.json",
+      "sha256": "d4711dfb49cf852f67e559313934bc4ae0e7c03ed22d991d7e0d0a8bbfa03410"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/CF_DRIVER_LS.lvs-view.gds",
+      "sha256": "9fed77ba88a612c5502110595e8b2de1e8661ff5cb30e9082175d3a8c58c61ca"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/CF_DRIVER_LS.spice",
+      "sha256": "18ac43526284924b8740de50563bc9a412043424defb9d572a9b9cf5e52b3386"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/chipletflow-bondpadlvs.log",
+      "sha256": "3cdf8aab6a0ff3ba0c4dda2d58c36ea9dbf453d950202208bc4fd6873e98d058"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/config.json",
+      "sha256": "b78a1efb6daec687272128b81600c8bf244129b05478a7bf78bb94e889558888"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/deck-tree.json",
+      "sha256": "fb8e3f3fab93089a0a06b4e7c69cf098eb8f74b75cd467e073e5bc1473369998"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/fill-normalization.json",
+      "sha256": "ef75af67012893906bab34e4be721abffa1b90df43a80736c9b7de5009690602"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/lvs-deck.log",
+      "sha256": "a09ab73d66e055af8d518a9fe2841d76da5ceb7da4ed246ecebf16552e422e9f"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/reports/lvs.klayout.lvsdb",
+      "sha256": "76417b988c6c87a3be6bafc7410a2194b5efcf88540b2299aed809dbdd94c060"
+    },
+    {
+      "path": "64-chipletflow-bondpadlvs/state_in.json",
+      "sha256": "d4711dfb49cf852f67e559313934bc4ae0e7c03ed22d991d7e0d0a8bbfa03410"
+    },
+    {
+      "path": "final/metrics.json",
+      "sha256": "a0b12d3575cdc9790aecdc8a4e1deb754a85d237c7dcd617eb16afefe560cd4d"
+    }
+  ],
+  "limitations": [
+    "pdk_version is the upstream parent revision named by pdk-source.json at emit time, not a commit the run recorded or an authenticated identity of the whole materialized PDK tree",
+    "pdk_inputs attests the 31 declared inputs under PDK_ROOT, re-digested at emit time and outside the fetched and omitted submodule paths listed by pdk-source.json, of 65 file inputs the run declared; the others resolve outside PDK_ROOT or name no path, and are bound only through chiplet.inputs-before.json",
+    "no fabrication or process closure proof",
+    "LVS compares device connectivity against the die's own P&R export; not pad-to-route continuity; not RTL equivalence; whether the core is compared at device level depends on that reference and is not checked. For a fill-expanded view, an XOR shows the view keeps the shipped bytes' flat geometry and texts under the top cell; that the deck extracts the same netlist from the shipped hierarchy is not measured, and label correctness is not checked. DRC, density and antenna runsets are named, not digested. Recorded by this build, not authenticated, and not re-checked at admission."
+  ],
+  "view": {
+    "schema": "chiplet-flow-die-view/v3",
+    "provenance_checked": [
+      "def",
+      "config"
+    ]
+  },
+  "checks": {
+    "version": "1.0",
+    "layout_sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac",
+    "drc": {
+      "errors": 0,
+      "input_sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac",
+      "runset": "ihp-sg13g2/libs.tech/klayout/tech/drc/ihp-sg13g2.drc",
+      "options": {
+        "no_recommended": true,
+        "run_mode": "deep",
+        "threads": 2
+      }
+    },
+    "density": {
+      "errors": 0,
+      "input_sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac",
+      "runset": "ihp-sg13g2/libs.tech/klayout/tech/drc/rule_decks/density.drc",
+      "options": {
+        "threads": 2
+      }
+    },
+    "antenna": {
+      "errors": 0,
+      "input_sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac",
+      "runset": "ihp-sg13g2/libs.tech/klayout/tech/drc/rule_decks/antenna.drc",
+      "options": {
+        "threads": 2
+      }
+    },
+    "lvs": {
+      "verdict": "0",
+      "view": "fill_flattened",
+      "fabricated_sha256": "2bd69dec084dc5d3cfbd3a1d1096e9941765a39d26ba403e342461977a28eeac",
+      "deck_tree_sha256": "873c60eb53ffd5f5a7ab3e9fd755b31af21c9e38269588ed5454bf81f6c3f28b",
+      "script": "sg13g2.lvs",
+      "script_in_own_dir": true,
+      "reference": [
+        {
+          "role": "design",
+          "root": "run",
+          "path": "63-openroad-writecdl/CF_DRIVER_LS.cdl",
+          "sha256": "7ee31b5b3d7054032d7e4e9ba02af1f55510e65bf7eb4b5515f856f5b21bca5b"
+        },
+        {
+          "role": "cell",
+          "root": "pdk",
+          "path": "ihp-sg13g2/libs.ref/sg13g2_stdcell/cdl/sg13g2_stdcell.cdl",
+          "sha256": "6f629dc6b0d21df83fba7deb462a11217dd4b0737e99cd18a0a05ab876667c9a"
+        },
+        {
+          "role": "extra",
+          "root": "design",
+          "path": "inputs/CF_DRIVER_core.cdl",
+          "sha256": "13debb6683875bae2fdf2bcf3475936723c17e272441adf2dd514519531a32aa"
+        },
+        {
+          "role": "extra",
+          "root": "design",
+          "path": "inputs/cx_ls_down.cdl",
+          "sha256": "41d0dea29fd24192998ab95cb48643e970eabe290d53714853e73c18820f9706"
+        },
+        {
+          "role": "extra",
+          "root": "design",
+          "path": "inputs/cx_ls_up.cdl",
+          "sha256": "20f8629e2927554a883ea3d062dd8c2a0bee6684ee3ef544f8b06bdc5998c1e6"
+        },
+        {
+          "role": "extra",
+          "root": "design",
+          "path": "bondpad.cdl",
+          "sha256": "ccd5c8bd40a5a6c931f69d9767cf1f00b387005ab97257e7d3307529980add00"
+        }
+      ],
+      "run_checks": {
+        "deck_log": "pass",
+        "options": "pass",
+        "deck_input": "pass",
+        "ports": "pass",
+        "view_receipt": "pass",
+        "view_rehash": "pass",
+        "view_xor": "pass",
+        "design_cdl": "pass",
+        "deck_tree_at_build": "pass"
+      }
+    }
+  },
+  "emitted_under": {
+    "generator": "chiplet-flow emit-ready-die",
+    "reader_release": "1.12.0",
+    "reader_capability": 3,
+    "emitter_revision": "0123456789abcdef0123456789abcdef01234567",
+    "klayout_version": "KLayout 0.30.6"
+  }
+}

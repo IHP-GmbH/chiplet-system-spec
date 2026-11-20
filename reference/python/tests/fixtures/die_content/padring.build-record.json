@@ -1,0 +1,95 @@
+{
+  "schema": "chiplet-flow-external-build-record/v1",
+  "origin": "external-librelane-run",
+  "status": "built-elsewhere-not-qualified",
+  "qualified": false,
+  "design": "chip_top",
+  "source": "a padring example, built by LibreLane's stock Chip flow",
+  "run": "RUN_1",
+  "flow": "Chip",
+  "librelane_version": "3.1.0.dev3",
+  "process": {
+    "pdk": "ihp-sg13cmos5l",
+    "pdk_version": "89d42ee6d2fd9b50b86a1aada6fee6673c3e6008",
+    "technology": "sg13cmos5l"
+  },
+  "pdk_version_from": "ciel versions/89d42ee6d2fd9b50b86a1aada6fee6673c3e6008 of ihp-sg13, which ihp-sg13cmos5l links to",
+  "layout": {
+    "path": "layout.gds",
+    "sha256": "19256ea73afdab40aca5469564ff4453db7a410648b6304c7bcb2451489c6290",
+    "top_cell": "chip_top",
+    "built_as": "final/gds/chip_top.gds",
+    "streamed_in": [
+      "57-klayout-streamout"
+    ]
+  },
+  "bound": [
+    {
+      "path": "resolved.json",
+      "sha256": "16b1d986e1dd0f5f228b3bafb759c89d3aa1c94d7089471ee197f7b9009d959a",
+      "content_sha256": "f4e254ad652a6491935bff0f30308dbffadcf37fc1f8e788f82138fe2361a1e7"
+    },
+    {
+      "path": "final/metrics.json",
+      "sha256": "90f45b07cd256306506ba8a164162a14afc551492883987495e4a6c3eb1a227a"
+    },
+    {
+      "path": "final/def/chip_top.def",
+      "sha256": "dd9c06357b31e8eb731c467c5e11c105a36d80e8766296d424687e1ab18e2a1d"
+    },
+    {
+      "path": "final/pnl/chip_top.pnl.v",
+      "sha256": "824dfad7519f2ba3431e6cf28e2dc5a64ab04e92a3cb155d7bf2d2f11adc854d"
+    },
+    {
+      "path": "ip/bondpad_70x70/lef/bondpad_70x70_5L.lef",
+      "sha256": "ab430f8b1760e7d49297f8566a7ea9d9872d8f2cf1417b8cc6a50ca6896f2d92"
+    },
+    {
+      "path": "final/nl/chip_top.nl.v",
+      "sha256": "1c067bf0d6b9676c0d4e177784c153361aff2a42d731b7971dd2c84326f4fd04"
+    }
+  ],
+  "producer_reported": {
+    "klayout__drc_error__count": {
+      "value": 0,
+      "measured_in": [
+        "67-klayout-drc"
+      ]
+    },
+    "klayout__antenna_error__count": {
+      "value": 0,
+      "measured_in": [
+        "61-klayout-antenna"
+      ]
+    },
+    "route__drc_errors": {
+      "value": 0,
+      "measured_in": [
+        "43-openroad-detailedrouting"
+      ]
+    },
+    "design__lvs_error__count": {
+      "value": 0,
+      "measured_in": [
+        "70-netgen-lvs"
+      ]
+    }
+  },
+  "pins": {
+    "openings": 30,
+    "frame_shapes_on_opening_layer": 8
+  },
+  "limitations": [
+    "built by LibreLane's stock Chip flow, not by this repository's producers; nothing inside the die is checked here",
+    "the run's die LVS is quoted under producer_reported, never re-run; a ring bond pad's contact with its IO cell is geometric and unverified here",
+    "final/nl/chip_top.nl.v declares no supply port, so a supply pad's port declaration is not compared with the source's",
+    "producer_reported values are the run's final metrics, quoted, never re-run",
+    "pdk_version is read as pdk_version_from says, when this record was written, not a commit the run recorded"
+  ],
+  "emitted_under": {
+    "generator": "chiplet-die-flow derive-padring-die",
+    "reader_release": "1.18.0",
+    "reader_capability": 4
+  }
+}
