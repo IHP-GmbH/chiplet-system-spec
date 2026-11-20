@@ -50,6 +50,7 @@ NOT_VENDORED = frozenset({
     "eda_views.py",  # imports ready_die_names, which this package does not vendor
     "footprint_ids.py",  # footprint names; this package does not draw symbols
     "pins.py",  # the pin tables of a die view and a die contract
+    "routed_geometry.py",  # routed geometry is not consumed by the system description
     "ready_die_names.py",  # the file names and build-record words of a ready die
     "technology_package.py",  # a carrier package's validator; nothing here reads a package
     "transistor_view.py",  # imports eda_views, so a vendored copy could not load
