@@ -40,10 +40,10 @@ def test_the_schema_declares_the_reader_s_vocabulary():
     assert tuple(PIN["direction"]["enum"]) == pins.PIN_DIRECTIONS
 
 
-@pytest.mark.parametrize("key", ["role", "direction"])
-def test_each_word_has_a_word_in_the_die_contract(key):
+@pytest.mark.parametrize("key,position", [("role", 0), ("direction", 1)])
+def test_each_word_has_a_word_in_the_die_contract(key, position):
     terminal = CONTRACT["properties"]["terminals"]["items"]["properties"][key]["enum"]
-    keyed = {k[0 if key == "role" else 1] for k in pins.KICAD_TYPE_OF_TERMINAL} - {None}
+    keyed = {k[position] for k in pins.KICAD_TYPE_OF_TERMINAL} - {None}
     assert keyed == set(terminal)
 
 
@@ -74,5 +74,5 @@ def test_a_1_1_pin_with_role_and_direction_validates(fields):
     {"role": "SIGNAL", "direction": "Input"},
     {"role": "SIGNAL", "direction": "BIDIR"},
 ])
-def test_a_word_outside_the_capitals_is_refused(fields):
+def test_a_word_outside_the_vocabulary_or_its_capitals_is_refused(fields):
     assert not _valid(_with(**fields))

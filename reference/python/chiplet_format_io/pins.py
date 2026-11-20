@@ -61,10 +61,10 @@ KICAD_PIN_TYPES = ("input", "output", "bidirectional", "tri_state", "passive", "
                    "unspecified", "power_in", "power_out", "open_collector", "open_emitter",
                    "no_connect")
 # Each pin-list word and the die contract's word for it, over the whole
-# vocabulary. ROLE and DIRECTION above keep the built-die words only.
-_CONTRACT_WORD = {"SIGNAL": "signal", "POWER": "power", "GROUND": "ground",
-                  "NO_CONNECT": "no_connect", "INPUT": "input", "OUTPUT": "output",
-                  "INOUT": "bidir", "ANALOG": "analog", "NONE": "none"}
+# vocabulary: ROLE and DIRECTION above, which keep the built-die words only,
+# and the three words no built die writes.
+_CONTRACT_WORD = {**ROLE, **DIRECTION, "NO_CONNECT": "no_connect", "ANALOG": "analog",
+                  "NONE": "none"}
 # The one table: role, direction (None: any direction or none), KiCad type.
 _ROWS = (
     ("POWER", None, "power_in"),
@@ -81,7 +81,9 @@ _ROWS = (
 #: not a key: :func:`kicad_type` reads it as passive and says so.
 KICAD_TYPE = {(role, each): word for role, direction, word in _ROWS
               for each in ((None,) + PIN_DIRECTIONS if direction is None else (direction,))}
-#: The same table keyed by the die contract's role and direction words.
+#: The same table keyed by the die contract's role and direction words. A
+#: signal terminal with no direction is not a key here either; it is passive,
+#: as :func:`kicad_type` reads the pin.
 KICAD_TYPE_OF_TERMINAL = {
     (_CONTRACT_WORD[role], None if direction is None else _CONTRACT_WORD[direction]): word
     for (role, direction), word in KICAD_TYPE.items()}
@@ -136,12 +138,12 @@ def kicad_type(pin: Mapping[str, Any]) -> Tuple[str, Tuple[str, ...]]:
                 f'pin {label}: direction "{direction}" is not a pin-list direction; write one '
                 f"of {', '.join(PIN_DIRECTIONS)}, in capitals.")
     said = []
-    if (role, direction) in KICAD_TYPE:
-        word = KICAD_TYPE[(role, direction)]
-    else:
+    if role == "SIGNAL" and direction is None:
         word = "passive"
         said.append(f"pin {label}: role SIGNAL has no direction, so its KiCad type is passive; "
                     f"write a direction ({', '.join(PIN_DIRECTIONS[:-1])} or {PIN_DIRECTIONS[-1]}).")
+    else:
+        word = KICAD_TYPE[(role, direction)]
     if "type" in pin and pin["type"] != word:
         said.append(f'pin {label}: the stored type "{pin["type"]}" is not "{word}", the KiCad '
                     f'type its role and direction give; "{word}" is used.')
