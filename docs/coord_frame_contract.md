@@ -179,7 +179,7 @@ the interposer at z 0, where the local and canonical planes coincide.
 
 When the outline contains all drawn geometry, the full bbox equals
 the outline bbox and both fields describe the same rectangle. When
-copper leaks outside the outline (a design error; the converter
+metal leaks outside the outline (a design error; the converter
 warns loudly at export), `dimensions` keeps the true board size
 while `position` follows the mesh center, preserving die/pillar
 registry in the render at the cost of a shifted substrate body.

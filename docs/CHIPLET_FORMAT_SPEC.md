@@ -1080,7 +1080,7 @@ the rail's name.
 note, as it skips any item key of a higher minor, and a router fed that reading
 draws the rail at the layer minimum: wrong, not incomplete, the reason 1.3 made
 `unplaced` a root key. They stay item keys because the rail is the one place a
-requirement belongs, and the only consumer that turns the reading into copper
+requirement belongs, and the only consumer that turns the reading into wires
 fails closed: a flow that routes from a source checks that the readers it uses
 carry the three keys, and refuses a reading that skipped any `rails` key, before
 it builds anything. A root key would restate every rail name in a second place
