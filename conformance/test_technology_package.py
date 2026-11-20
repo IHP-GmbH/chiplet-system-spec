@@ -329,6 +329,44 @@ def test_halo_tool_is_a_member_path(package):
     assert tp.check_package(package).passes("B")
 
 
+# --- the KiCad view (set B, optional) ----------------------------------------
+
+def test_synthetic_carrier_has_a_whole_kicad_view():
+    report = tp.check_package(FIXTURE)
+    assert all(report.passes(name) for name in tp.SET_MEMBERS) and report.notes == []
+
+
+def test_no_kicad_template_passes_every_set_with_one_note(package):
+    _edit_manifest(package, lambda m: m.pop("kicad_template"))
+    report = tp.validate_package(package, require=("A", "B", "C"))
+    assert all(report.passes(name) for name in tp.SET_MEMBERS)
+    (note,) = report.notes
+    assert (note.message_id, note.capability_set, note.where) == (
+        "PACKAGE_NO_KICAD_VIEW", "B", "kicad_template")
+    assert note.text == (
+        f"{package}: this technology package has no KiCad view (kicad_template is not set). "
+        "The package checks pass without one, but the flow still writes a KiCad board, so "
+        "packaging-flow refuses to run on this technology. To run the flow on it, add "
+        "kicad_template and a kicad_copper_layer for every routing layer.")
+
+
+def test_a_routing_layer_without_its_kicad_layer_is_noted(package):
+    _edit_descriptor(package, lambda d: d["routing_layers"][0].pop("kicad_copper_layer"))
+    report = tp.check_package(package)
+    assert all(report.passes(name) for name in tp.SET_MEMBERS)
+    assert [(n.message_id, n.where) for n in report.notes] == [
+        ("PACKAGE_NO_KICAD_VIEW", f"{BASE}.routing_layers[0]")]
+    assert "R1" in report.notes[0].text and "kicad_copper_layer is not set" in report.notes[0].text
+
+
+def test_no_kicad_view_at_all_is_one_note(package):
+    """Without a template, layers without their KiCad layer add nothing."""
+    _edit_manifest(package, lambda m: m.pop("kicad_template"))
+    _edit_descriptor(package, lambda d: [layer.pop("kicad_copper_layer")
+                                         for layer in d["routing_layers"]])
+    assert [n.where for n in tp.check_package(package).notes] == ["kicad_template"]
+
+
 # --- routing descriptors (sets A and C) --------------------------------------
 
 def test_descriptor_bytes_must_match_the_recorded_sha256(package):

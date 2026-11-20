@@ -22,7 +22,7 @@
     "variants": {
       "base": {
         "path": "libs.tech/adk/routing/synthetic_carrier.routing_tech.json",
-        "sha256": "72f5e1bd700ffb13676b0d0f31549d6e1ab4ce7dcc2b0b109bd2202a78299bb6"
+        "sha256": "675c72db7fc099428d87e27baf623ea38d33d830f2e6555e877478ff7d2abe64"
       }
     }
   },
