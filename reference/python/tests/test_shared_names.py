@@ -15,7 +15,9 @@ device table, refusal words and amendment receipt words are pinned, and so are
 the patterns its CDL reader and value compare read with. Release 1.19.0 added
 the ihp-sg13cmos5l rows of the KLayout check tables, read off its decks at
 IHP-Open-PDK 22f43352. Release 1.21.0 added the sheet_names module, the rule a
-KiCad sheet's net, pin and pad names are written and read back with. A value
+KiCad sheet's net, pin and pad names are written and read back with. Release
+1.24.0 added the pin list's KiCad type table to pins, in both keyings, with the
+vocabulary it is keyed by and the version readers support. A value
 that moves fails here, at any depth and by type as well as by value, and so
 does a public name added or removed.
 """
@@ -158,6 +160,38 @@ GOLDEN = {
         "USE_BY_ROLE": {"POWER": "POWER", "GROUND": "GROUND", "SIGNAL": "SIGNAL"},
         "ROLE": {"SIGNAL": "signal", "POWER": "power", "GROUND": "ground"},
         "DIRECTION": {"INPUT": "input", "OUTPUT": "output", "INOUT": "bidir"},
+        "SUPPORTED_PINS_VERSION": "1.1",
+        "PIN_ROLES": ("SIGNAL", "POWER", "GROUND", "NO_CONNECT"),
+        "PIN_DIRECTIONS": ("INPUT", "OUTPUT", "INOUT", "ANALOG", "NONE"),
+        "KICAD_PIN_TYPES": ("input", "output", "bidirectional", "tri_state", "passive", "free",
+                            "unspecified", "power_in", "power_out", "open_collector",
+                            "open_emitter", "no_connect"),
+        "KICAD_TYPE": {
+            ("POWER", None): "power_in", ("POWER", "INPUT"): "power_in",
+            ("POWER", "OUTPUT"): "power_in", ("POWER", "INOUT"): "power_in",
+            ("POWER", "ANALOG"): "power_in", ("POWER", "NONE"): "power_in",
+            ("GROUND", None): "power_in", ("GROUND", "INPUT"): "power_in",
+            ("GROUND", "OUTPUT"): "power_in", ("GROUND", "INOUT"): "power_in",
+            ("GROUND", "ANALOG"): "power_in", ("GROUND", "NONE"): "power_in",
+            ("NO_CONNECT", None): "no_connect", ("NO_CONNECT", "INPUT"): "no_connect",
+            ("NO_CONNECT", "OUTPUT"): "no_connect", ("NO_CONNECT", "INOUT"): "no_connect",
+            ("NO_CONNECT", "ANALOG"): "no_connect", ("NO_CONNECT", "NONE"): "no_connect",
+            ("SIGNAL", "INPUT"): "input", ("SIGNAL", "OUTPUT"): "output",
+            ("SIGNAL", "INOUT"): "bidirectional", ("SIGNAL", "ANALOG"): "passive",
+            ("SIGNAL", "NONE"): "passive"},
+        "KICAD_TYPE_OF_TERMINAL": {
+            ("power", None): "power_in", ("power", "input"): "power_in",
+            ("power", "output"): "power_in", ("power", "bidir"): "power_in",
+            ("power", "analog"): "power_in", ("power", "none"): "power_in",
+            ("ground", None): "power_in", ("ground", "input"): "power_in",
+            ("ground", "output"): "power_in", ("ground", "bidir"): "power_in",
+            ("ground", "analog"): "power_in", ("ground", "none"): "power_in",
+            ("no_connect", None): "no_connect", ("no_connect", "input"): "no_connect",
+            ("no_connect", "output"): "no_connect", ("no_connect", "bidir"): "no_connect",
+            ("no_connect", "analog"): "no_connect", ("no_connect", "none"): "no_connect",
+            ("signal", "input"): "input", ("signal", "output"): "output",
+            ("signal", "bidir"): "bidirectional", ("signal", "analog"): "passive",
+            ("signal", "none"): "passive"},
     },
     "eda_views": {
         "SCHEMA": "chiplet-flow-eda-views/v1",
@@ -269,7 +303,7 @@ IMPORTED = {
 CALLABLES = {
     "ready_die_names": ("run_check_not_counted",),
     "technology": (),
-    "pins": (),
+    "pins": ("kicad_type",),
     "eda_views": ("EdaViewsRefused", "check_bound", "read", "gate_view"),
     "transistor_view": ("TransistorViewRefused", "DeckText", "TransistorView", "cards", "card_word",
                         "subckt_ports", "instance_subckt", "deck_text", "derive", "transistor_view"),
