@@ -348,6 +348,9 @@ def test_no_kicad_template_passes_every_set_with_one_note(package):
         "The package checks pass without one, but the flow still writes a KiCad board, so "
         "packaging-flow refuses to run on this technology. To run the flow on it, add "
         "kicad_template and a kicad_copper_layer for every routing layer.")
+    # The member was checked and found absent: a plain pass, not a partial one.
+    assert report.verdict("B") == "set B: pass"
+    assert report.as_dict()["sets"]["B"]["not_checked"] == 0
 
 
 def test_a_routing_layer_without_its_kicad_layer_is_noted(package):

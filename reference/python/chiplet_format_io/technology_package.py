@@ -153,6 +153,10 @@ MESSAGE_IDS: Dict[str, Tuple[str, str]] = {
     "PACKAGE_NO_KICAD_VIEW": ("note", "the package has no KiCad view; the flow cannot run on it yet"),
 }
 
+#: The notes that stand for a fact the check could not decide. Another note
+#: reports a fact it did decide, so it never makes a pass read as partial.
+NOT_CHECKED_NOTES = frozenset({"PACKAGE_PITCH_NOT_CHECKED"})
+
 _SCHEMA_RESOURCE = "technology_package.schema.json"
 
 def _home_sets() -> Dict[str, str]:
@@ -216,7 +220,8 @@ class PackageReport(NamedTuple):
     def not_checked(self, set_name: str) -> int:
         """How many facts of the set were noted as not checked; a pass with
         any is not a plain pass."""
-        return sum(1 for note in self.notes if note.capability_set == set_name)
+        return sum(1 for note in self.notes if note.capability_set == set_name
+                   and note.message_id in NOT_CHECKED_NOTES)
 
     def verdict(self, set_name: str) -> str:
         """``set A: pass``, ``set A: fail``, or a pass with what it did not check."""
