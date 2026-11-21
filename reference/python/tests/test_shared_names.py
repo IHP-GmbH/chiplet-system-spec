@@ -15,7 +15,12 @@ device table, refusal words and amendment receipt words are pinned, and so are
 the patterns its CDL reader and value compare read with. Release 1.19.0 added
 the ihp-sg13cmos5l rows of the KLayout check tables, read off its decks at
 IHP-Open-PDK 22f43352. Release 1.21.0 added the sheet_names module, the rule a
-KiCad sheet's net, pin and pad names are written and read back with. A value
+KiCad sheet's net, pin and pad names are written and read back with. Release
+1.24.0 added the pin list's KiCad type table to pins, in both keyings, with the
+vocabulary it is keyed by and the version readers support. Release 1.26.0
+added the die_content module, the content form of a die's build record and
+contract: its form name, its out lists and its table of bound rows are
+pinned, so the form cannot move without a new name. A value
 that moves fails here, at any depth and by type as well as by value, and so
 does a public name added or removed.
 """
@@ -158,6 +163,38 @@ GOLDEN = {
         "USE_BY_ROLE": {"POWER": "POWER", "GROUND": "GROUND", "SIGNAL": "SIGNAL"},
         "ROLE": {"SIGNAL": "signal", "POWER": "power", "GROUND": "ground"},
         "DIRECTION": {"INPUT": "input", "OUTPUT": "output", "INOUT": "bidir"},
+        "SUPPORTED_PINS_VERSION": "1.1",
+        "PIN_ROLES": ("SIGNAL", "POWER", "GROUND", "NO_CONNECT"),
+        "PIN_DIRECTIONS": ("INPUT", "OUTPUT", "INOUT", "ANALOG", "NONE"),
+        "KICAD_PIN_TYPES": ("input", "output", "bidirectional", "tri_state", "passive", "free",
+                            "unspecified", "power_in", "power_out", "open_collector",
+                            "open_emitter", "no_connect"),
+        "KICAD_TYPE": {
+            ("POWER", None): "power_in", ("POWER", "INPUT"): "power_in",
+            ("POWER", "OUTPUT"): "power_in", ("POWER", "INOUT"): "power_in",
+            ("POWER", "ANALOG"): "power_in", ("POWER", "NONE"): "power_in",
+            ("GROUND", None): "power_in", ("GROUND", "INPUT"): "power_in",
+            ("GROUND", "OUTPUT"): "power_in", ("GROUND", "INOUT"): "power_in",
+            ("GROUND", "ANALOG"): "power_in", ("GROUND", "NONE"): "power_in",
+            ("NO_CONNECT", None): "no_connect", ("NO_CONNECT", "INPUT"): "no_connect",
+            ("NO_CONNECT", "OUTPUT"): "no_connect", ("NO_CONNECT", "INOUT"): "no_connect",
+            ("NO_CONNECT", "ANALOG"): "no_connect", ("NO_CONNECT", "NONE"): "no_connect",
+            ("SIGNAL", "INPUT"): "input", ("SIGNAL", "OUTPUT"): "output",
+            ("SIGNAL", "INOUT"): "bidirectional", ("SIGNAL", "ANALOG"): "passive",
+            ("SIGNAL", "NONE"): "passive"},
+        "KICAD_TYPE_OF_TERMINAL": {
+            ("power", None): "power_in", ("power", "input"): "power_in",
+            ("power", "output"): "power_in", ("power", "bidir"): "power_in",
+            ("power", "analog"): "power_in", ("power", "none"): "power_in",
+            ("ground", None): "power_in", ("ground", "input"): "power_in",
+            ("ground", "output"): "power_in", ("ground", "bidir"): "power_in",
+            ("ground", "analog"): "power_in", ("ground", "none"): "power_in",
+            ("no_connect", None): "no_connect", ("no_connect", "input"): "no_connect",
+            ("no_connect", "output"): "no_connect", ("no_connect", "bidir"): "no_connect",
+            ("no_connect", "analog"): "no_connect", ("no_connect", "none"): "no_connect",
+            ("signal", "input"): "input", ("signal", "output"): "output",
+            ("signal", "bidir"): "bidirectional", ("signal", "analog"): "passive",
+            ("signal", "none"): "passive"},
     },
     "eda_views": {
         "SCHEMA": "chiplet-flow-eda-views/v1",
@@ -220,6 +257,51 @@ GOLDEN = {
         "SHEET_NAME_RULE": re.compile(r"[A-Za-z0-9_.+-](?:[A-Za-z0-9_.+-]|\[[0-9]+\])*"),
         "SHEET_NAME_WORDS": "plain [A-Za-z0-9_.+-] name, with [N] subscripts allowed after its first character",
     },
+    "die_content": {
+        "DIE_CONTENT_FORM": "die-content/v1",
+        "BUILD_RECORD_OUT": (("emitted_under",), ("build_revision",), ("process", "pdk_version_source"),
+                             ("process", "pdk_version_from"), ("pdk_version_from",), ("run",),
+                             ("librelane_version",)),
+        "CONTRACT_OUT": (("generator",),),
+        "CONTRACT_REPLACED": ("build_record", "sha256"),
+        "BUILD_DIE": "build-die",
+        "PADRING": "padring",
+        "WRITERS": ("build-die", "padring"),
+        "PADRING_RECORD_SCHEMA": "chiplet-flow-external-build-record/v1",
+        "BOUND_TABLE": (
+            ("build-die", "resolved.json", "project"),
+            ("build-die", "chiplet.inputs-before.json", "project"),
+            ("build-die", "chiplet.build-observations.json", "project"),
+            ("build-die", "final/def/*.def", "keep"),
+            ("build-die", "chipletflow-bondpadfiller/rewritten/*.gds", "keep"),
+            ("build-die", "openroad-writecdl/*.cdl", "keep"),
+            ("build-die", "chipletflow-bondpadlvs/cell-cdls/*/*.cdl", "keep"),
+            ("build-die", "klayout-drc/state_in.json", "leave"),
+            ("build-die", "klayout-drc/state_out.json", "leave"),
+            ("build-die", "klayout-drc/config.json", "leave"),
+            ("build-die", "klayout-density/state_in.json", "leave"),
+            ("build-die", "klayout-density/state_out.json", "leave"),
+            ("build-die", "klayout-density/config.json", "leave"),
+            ("build-die", "klayout-antenna/state_in.json", "leave"),
+            ("build-die", "klayout-antenna/state_out.json", "leave"),
+            ("build-die", "klayout-antenna/config.json", "leave"),
+            ("build-die", "final/metrics.json", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/fill-normalization.json", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/config.json", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/state_in.json", "leave"),
+            ("build-die", "openroad-writecdl/state_out.json", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/lvs-deck.log", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/chipletflow-bondpadlvs.log", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/reports/lvs.klayout.lvsdb", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/*.spice", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/deck-tree.json", "leave"),
+            ("build-die", "chipletflow-bondpadlvs/*.lvs-view.gds", "leave"),
+            ("padring", "resolved.json", "project"),
+            ("padring", "final/metrics.json", "leave"),
+            ("padring", "final/def/*.def", "keep"),
+            ("padring", "final/pnl/*.pnl.v", "keep"),
+        ),
+    },
 }
 
 #: The patterns the public tokenizer reads with. They are private, and pinned
@@ -247,6 +329,19 @@ PRIVATE = {
         "_NUMBER": re.compile(r"([-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+))(?:e([-+]?[0-9]+))?(meg|[tgkmunpf])?", re.ASCII),
         "_DOLLAR_MODEL": re.compile(r"\$\[([^\]]+)\]"),
     },
+    "die_content": {
+        "_KEEP": "keep",
+        "_PROJECT": "project",
+        "_LEAVE": "leave",
+        "_PROJECT_OUT": {
+            "resolved.json": (("meta", "librelane_version"),),
+            "chiplet.inputs-before.json": (("run_dir",), ("shared_implementation",)),
+            "chiplet.build-observations.json": (("final_artifacts",), ("maintained_step_sources",)),
+        },
+        "_ROOT_NAMES": ("run", "design", "pdk"),
+        "_LAYOUT": "layout",
+        "_STEP": re.compile(r"^[0-9]+-(?=[A-Za-z])"),
+    },
     "verilog_closure": {
         "_LEX": re.compile(r'\\\S+|/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\\n])*"', re.S),
         "_DIRECTIVE": re.compile(r"`(\w+)"),
@@ -258,6 +353,9 @@ PRIVATE = {
 #: Constants a module imports rather than defines, pinned too: the record reader
 #: checks a die contract against them. They are not in the module's __all__.
 IMPORTED = {
+    "die_content": {
+        "EMITTED_RECORD_SCHEMA": "chiplet-flow-librelane-build-record/v1",
+    },
     "eda_views": {
         "CONTRACT": "die-contract.json",
         "CONTRACT_SCHEMA": "die-output-contract",
@@ -269,7 +367,7 @@ IMPORTED = {
 CALLABLES = {
     "ready_die_names": ("run_check_not_counted",),
     "technology": (),
-    "pins": (),
+    "pins": ("kicad_type",),
     "eda_views": ("EdaViewsRefused", "check_bound", "read", "gate_view"),
     "transistor_view": ("TransistorViewRefused", "DeckText", "TransistorView", "cards", "card_word",
                         "subckt_ports", "instance_subckt", "deck_text", "derive", "transistor_view"),
@@ -277,6 +375,9 @@ CALLABLES = {
     "verilog_closure": ("VerilogClosureError", "strip", "active_text", "split_statements", "is_name",
                         "units", "closure"),
     "sheet_names": ("is_sheet_name",),
+    "die_content": ("canonical_json", "canonical_sha256", "writer_of", "strip_step", "decision", "project",
+                    "build_record_content", "build_record_content_sha256", "contract_content",
+                    "contract_content_sha256"),
 }
 
 

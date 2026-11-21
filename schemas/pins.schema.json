@@ -8,7 +8,7 @@
   "additionalProperties": true,
   "properties": {
     "version": {
-      "description": "Contract version. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.0. The bare integer 1 is the LEGACY spelling of \"1.0\", still emitted by existing pin-list producers; it is deprecated and will be removed one minor after every producer writes the string form, per the deprecation rule in the policy. New emitters write the string.",
+      "description": "Contract version. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. Supported: 1.1. 1.1 adds role and direction and deprecates type; a 1.0 file reads unchanged. The bare integer 1 is the LEGACY spelling of \"1.0\", still emitted by existing pin-list producers; it is deprecated and will be removed one minor after every producer writes the string form, per the deprecation rule in the policy. New emitters write the string.",
       "oneOf": [
         {"type": "string", "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])"},
         {"type": "integer", "enum": [1]}
@@ -60,7 +60,18 @@
           "width_dbu": {"type": "number", "minimum": 0},
           "height_dbu": {"type": "number", "minimum": 0},
           "side": {"type": "string"},
-          "type": {"type": "string"}
+          "role": {
+            "enum": ["SIGNAL", "POWER", "GROUND", "NO_CONNECT"],
+            "description": "The pin's electrical role in the die view's words: SIGNAL, POWER, GROUND or NO_CONNECT, in capitals. The KiCad pin type is derived from role and direction (chiplet_format_io.pins.kicad_type)."
+          },
+          "direction": {
+            "enum": ["INPUT", "OUTPUT", "INOUT", "ANALOG", "NONE"],
+            "description": "The pin's direction in the die view's words: INPUT, OUTPUT, INOUT, ANALOG or NONE, in capitals. Optional for POWER, GROUND and NO_CONNECT."
+          },
+          "type": {
+            "type": "string",
+            "description": "Deprecated from 1.1: the KiCad pin type, now derived from role and direction. Writers keep writing it through 1.1; a reader uses it only for a pin with no role."
+          }
         }
       }
     }

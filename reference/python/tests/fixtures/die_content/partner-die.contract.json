@@ -1,0 +1,145 @@
+{
+  "schema": "die-output-contract",
+  "version": "1.2",
+  "die": {
+    "name": "fxdie",
+    "layout": "layout.gds",
+    "layout_sha256": "58ecc265f57d07b9df5a1a9bdce865ffd5cd46d3068d4eccba58c2a85176d75f",
+    "top_cell": "fxdie",
+    "dbu_um": 0.001,
+    "bbox_um": [
+      0.0,
+      0.0,
+      1000.0,
+      1000.0
+    ],
+    "frame": "die_local_gds_origin"
+  },
+  "process": {
+    "pdk": "fx-pdk",
+    "pdk_version": "fx-pdk-2026.1",
+    "technology": "fxtech"
+  },
+  "build_record": {
+    "path": "build-record.json",
+    "sha256": "874675039b3ec07521351068e40f1818eef6873d762d860649aa901951d83340"
+  },
+  "inventory": {
+    "kind": "pins_json",
+    "path": "pins.json",
+    "sha256": "438cba35c2732d8e416f20117b75a6c829ba20f9d1969681e756fd6b21527063"
+  },
+  "terminals": [
+    {
+      "name": "PAD_A",
+      "pad_index": 0,
+      "role": "signal",
+      "direction": "input",
+      "port": "in_a",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_B",
+      "pad_index": 1,
+      "role": "signal",
+      "direction": "bidir",
+      "port": "io_b",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_NC",
+      "pad_index": 2,
+      "role": "no_connect",
+      "direction": "none",
+      "port": "PAD_NC",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      }
+    },
+    {
+      "name": "PAD_VDD0",
+      "pad_index": 3,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDD",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDD"
+    },
+    {
+      "name": "PAD_VDD1",
+      "pad_index": 4,
+      "role": "power",
+      "direction": "bidir",
+      "port": "VDD",
+      "ordinal": 1,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VDD"
+    },
+    {
+      "name": "PAD_VSS0",
+      "pad_index": 5,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSS",
+      "ordinal": 0,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSS"
+    },
+    {
+      "name": "PAD_VSS1",
+      "pad_index": 6,
+      "role": "ground",
+      "direction": "bidir",
+      "port": "VSS",
+      "ordinal": 1,
+      "opening": {
+        "purpose": "conductor",
+        "gds_layer": 205,
+        "gds_datatype": 0,
+        "shape": "rectangle"
+      },
+      "supply_domain": "VSS"
+    }
+  ],
+  "supply_domains": {
+    "VDD": {
+      "volts": 1.2
+    },
+    "VSS": {
+      "volts": 0
+    }
+  },
+  "generator": "chiplet-die-flow emit-partner-die"
+}

@@ -283,7 +283,8 @@
       "additionalProperties": false,
       "required": ["board", "project", "rules"],
       "x-capability-set": ["B"],
-      "description": "Set B. The KiCad board template a carrier design starts from.",
+      "x-capability-optional": true,
+      "description": "Set B, optional: the KiCad view of the carrier, the board template a carrier design starts from. Absent, the package checks pass with a note, and the flow, which still writes a KiCad board, refuses to run on the technology. Present, every routing layer of every routing variant names its kicad_copper_layer, or the report notes the layer.",
       "properties": {
         "board": {"$ref": "#/$defs/member_path"},
         "project": {"$ref": "#/$defs/member_path"},

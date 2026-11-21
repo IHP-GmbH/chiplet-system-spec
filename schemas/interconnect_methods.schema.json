@@ -10,7 +10,7 @@
     "schema_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(?![\\s\\S])",
-      "description": "Contract version of this registry (the field is named schema_version here for historical reasons; it is the same contract version as the other governed sidecars). Quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. This file is at 1.1 (1.0 plus the optional per-method die_processes); the reader shipped beside it (libs.tech/klayout/python/interconnect_manifest.py, SUPPORTED_SCHEMA_VERSION) supports 1.1, and every other consumer carries its own pin."
+      "description": "Contract version of this registry (the field is named schema_version here for historical reasons; it is the same contract version as the other governed sidecars). Quoted MAJOR.MINOR or MAJOR.MINOR.PATCH. Structural only: WHICH versions a consumer accepts is the shared version policy of docs/VERSION_POLICY.md (same major, minor at or below supported accepted; same-major higher minor accepted with a warning; different major refused; PATCH ignored), applied by chiplet_format_io.check_contract_version. This file is at 1.2 (1.1 plus the pad parameters' new names in fab_params; 1.1 added the optional per-method die_processes); the reader shipped beside it (libs.tech/klayout/python/interconnect_manifest.py, SUPPORTED_SCHEMA_VERSION) supports the minor it pins, and every other consumer carries its own pin."
     },
     "pdk": {"type": "string"},
     "description": {"type": "string"},
@@ -100,8 +100,10 @@
             "required": ["passiv_opening_um", "tm2_enclosure_um"],
             "additionalProperties": true,
             "properties": {
-              "passiv_opening_um": {"type": "number", "exclusiveMinimum": 0},
-              "tm2_enclosure_um": {"type": "number", "exclusiveMinimum": 0}
+              "passiv_opening_um": {"type": "number", "exclusiveMinimum": 0, "description": "Passivation opening over the landing pad, in um. Deprecated since 1.2 in favour of passivation_opening_um; still required through every 1.x, so that a 1.1 reader keeps finding it, and removed at 2.0."},
+              "tm2_enclosure_um": {"type": "number", "exclusiveMinimum": 0, "description": "Enclosure of the passivation opening by the landing pad metal, in um. Deprecated since 1.2 in favour of pad_metal_enclosure_um; still required through every 1.x, so that a 1.1 reader keeps finding it, and removed at 2.0."},
+              "passivation_opening_um": {"type": "number", "exclusiveMinimum": 0, "description": "Since 1.2. Passivation opening over the landing pad, in um; the name of passiv_opening_um that is not tied to one technology. Written beside passiv_opening_um with the same value; a reader prefers it, and refuses a method where the two differ (chiplet_format_io.technology_package.method_fab_params)."},
+              "pad_metal_enclosure_um": {"type": "number", "exclusiveMinimum": 0, "description": "Since 1.2. Enclosure of the passivation opening by the landing pad metal, in um; the name of tm2_enclosure_um that does not name the metal. Written beside tm2_enclosure_um with the same value; a reader prefers it, and refuses a method where the two differ (chiplet_format_io.technology_package.method_fab_params)."}
             }
           },
           "pitch_rules": {

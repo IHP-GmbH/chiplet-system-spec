@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "pdk": "interconnect_pdk",
   "description": "Interconnect method registry. Single source of truth for the post-fabrication interconnection elements (Cu pillars, solder bumps, microbumps) that join chiplets to an interposer. Decoupled from the interposer PDK so the bumping method can come from any vendor, not only IHP. Tools read this instead of hardcoding cupillar_opt1/2/3.",
   "default_method": "cupillar_opt2",
@@ -47,7 +47,7 @@
           {"name": "SnAgCap",  "material": "SnAg", "height": 16.0, "diameter": 44.0}
         ]
       },
-      "fab_params": {"passiv_opening_um": 35.0, "tm2_enclosure_um": 7.5},
+      "fab_params": {"passiv_opening_um": 35.0, "tm2_enclosure_um": 7.5, "passivation_opening_um": 35.0, "pad_metal_enclosure_um": 7.5},
       "pitch_rules": {"IXN_spacing": 40.0, "IXN_pitch": 75.0},
       "adapter": "ihp_cupillar",
       "stackup_fragment": "libs.tech/chiplet_studio/stackup_fragments/cupillar_opt1.stackup.yaml"
@@ -66,7 +66,7 @@
           {"name": "SnAgCap",  "material": "SnAg", "height": 16.0, "diameter": 49.0}
         ]
       },
-      "fab_params": {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5},
+      "fab_params": {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5, "passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5},
       "pitch_rules": {"IXN_spacing": 40.0, "IXN_pitch": 80.0},
       "adapter": "ihp_cupillar",
       "stackup_fragment": "libs.tech/chiplet_studio/stackup_fragments/cupillar_opt2.stackup.yaml"
@@ -85,7 +85,7 @@
           {"name": "SnAgCap",  "material": "SnAg", "height": 19.0, "diameter": 54.0}
         ]
       },
-      "fab_params": {"passiv_opening_um": 45.0, "tm2_enclosure_um": 7.5},
+      "fab_params": {"passiv_opening_um": 45.0, "tm2_enclosure_um": 7.5, "passivation_opening_um": 45.0, "pad_metal_enclosure_um": 7.5},
       "pitch_rules": {"IXN_spacing": 50.0, "IXN_pitch": 95.0},
       "adapter": "ihp_cupillar",
       "stackup_fragment": "libs.tech/chiplet_studio/stackup_fragments/cupillar_opt3.stackup.yaml"
@@ -103,7 +103,7 @@
           {"name": "SolderBall", "material": "SAC305", "height": 80.0, "diameter": 80.0}
         ]
       },
-      "fab_params": {"passiv_opening_um": 60.0, "tm2_enclosure_um": 10.0},
+      "fab_params": {"passiv_opening_um": 60.0, "tm2_enclosure_um": 10.0, "passivation_opening_um": 60.0, "pad_metal_enclosure_um": 10.0},
       "pitch_rules": {"IXN_spacing": 70.0, "IXN_pitch": 130.0},
       "adapter": "ihp_sbump",
       "stackup_fragment": "libs.tech/chiplet_studio/stackup_fragments/sbump_sac305.stackup.yaml"
@@ -121,7 +121,7 @@
           {"name": "VendorXBumpCap", "material": "SnAg", "height": 6.0,  "diameter": 40.0}
         ]
       },
-      "fab_params": {"passiv_opening_um": 35.0, "tm2_enclosure_um": 7.5},
+      "fab_params": {"passiv_opening_um": 35.0, "tm2_enclosure_um": 7.5, "passivation_opening_um": 35.0, "pad_metal_enclosure_um": 7.5},
       "pitch_rules": {"IXN_spacing": 15.0, "IXN_pitch": 50.0},
       "adapter": "vendorx_microbump",
       "stackup_fragment": "libs.tech/chiplet_studio/stackup_fragments/vendorx_microbump.stackup.yaml"

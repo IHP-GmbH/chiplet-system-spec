@@ -329,6 +329,47 @@ def test_halo_tool_is_a_member_path(package):
     assert tp.check_package(package).passes("B")
 
 
+# --- the KiCad view (set B, optional) ----------------------------------------
+
+def test_synthetic_carrier_has_a_whole_kicad_view():
+    report = tp.check_package(FIXTURE)
+    assert all(report.passes(name) for name in tp.SET_MEMBERS) and report.notes == []
+
+
+def test_no_kicad_template_passes_every_set_with_one_note(package):
+    _edit_manifest(package, lambda m: m.pop("kicad_template"))
+    report = tp.validate_package(package, require=("A", "B", "C"))
+    assert all(report.passes(name) for name in tp.SET_MEMBERS)
+    (note,) = report.notes
+    assert (note.message_id, note.capability_set, note.where) == (
+        "PACKAGE_NO_KICAD_VIEW", "B", "kicad_template")
+    assert note.text == (
+        f"{package}: this technology package has no KiCad view (kicad_template is not set). "
+        "The package checks pass without one, but the flow still writes a KiCad board, so "
+        "packaging-flow refuses to run on this technology. To run the flow on it, add "
+        "kicad_template and a kicad_copper_layer for every routing layer.")
+    # The member was checked and found absent: a plain pass, not a partial one.
+    assert report.verdict("B") == "set B: pass"
+    assert report.as_dict()["sets"]["B"]["not_checked"] == 0
+
+
+def test_a_routing_layer_without_its_kicad_layer_is_noted(package):
+    _edit_descriptor(package, lambda d: d["routing_layers"][0].pop("kicad_copper_layer"))
+    report = tp.check_package(package)
+    assert all(report.passes(name) for name in tp.SET_MEMBERS)
+    assert [(n.message_id, n.where) for n in report.notes] == [
+        ("PACKAGE_NO_KICAD_VIEW", f"{BASE}.routing_layers[0]")]
+    assert "R1" in report.notes[0].text and "kicad_copper_layer is not set" in report.notes[0].text
+
+
+def test_no_kicad_view_at_all_is_one_note(package):
+    """Without a template, layers without their KiCad layer add nothing."""
+    _edit_manifest(package, lambda m: m.pop("kicad_template"))
+    _edit_descriptor(package, lambda d: [layer.pop("kicad_copper_layer")
+                                         for layer in d["routing_layers"]])
+    assert [n.where for n in tp.check_package(package).notes] == ["kicad_template"]
+
+
 # --- routing descriptors (sets A and C) --------------------------------------
 
 def test_descriptor_bytes_must_match_the_recorded_sha256(package):
@@ -635,6 +676,85 @@ def test_an_unreadable_registry_is_refused(measured, text):
     with pytest.raises(tp.TechnologyPackageError) as caught:
         tp.check_package(package, methods=registry)
     assert caught.value.message_id == "PACKAGE_METHODS_UNREADABLE"
+
+
+# --- a method's pad parameters (registry 1.2) --------------------------------
+
+def test_the_reader_returns_the_new_names():
+    spec = {"fab_params": {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5,
+                           "passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5}}
+    assert tp.method_fab_params("m", spec, where="r.json") == {
+        "passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5}
+
+
+def test_the_reader_reads_a_1_1_method():
+    spec = {"fab_params": {"passiv_opening_um": 35.0, "tm2_enclosure_um": 7.5}}
+    assert tp.method_fab_params("m", spec, where="r.json") == {
+        "passivation_opening_um": 35.0, "pad_metal_enclosure_um": 7.5}
+
+
+@pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
+def test_two_spellings_with_two_values_are_refused(new, old):
+    fab_params = {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5}
+    fab_params[new] = fab_params[old] + 5.0
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_DISAGREE"
+    assert str(caught.value) == (
+        f"PACKAGE_METHODS_FAB_PARAMS_DISAGREE: r.json: method cupillar_opt2 gives "
+        f"{old} {fab_params[old]} and {new} {fab_params[new]}. Since interconnect "
+        f"methods 1.2 these are two names for one value, so the file has no single "
+        f"reading. Make them equal.")
+
+
+@pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
+def test_a_method_without_the_old_name_is_refused(new, old):
+    fab_params = {"passivation_opening_um": 40.0, "pad_metal_enclosure_um": 7.5,
+                  "passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5}
+    del fab_params[old]
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_MISSING"
+    assert str(caught.value) == (
+        f"PACKAGE_METHODS_FAB_PARAMS_MISSING: r.json: method cupillar_opt2 has no "
+        f"fab_params.{old}. Interconnect methods 1.x keeps the old name beside {new}, "
+        f"so that readers older than 1.2 still find it. Add it with the same value.")
+
+
+#: new name -> the words the refusal uses for the parameter.
+FAB_PARAMS_WORDS = {"passivation_opening_um": "passivation opening",
+                    "pad_metal_enclosure_um": "pad metal enclosure"}
+
+
+@pytest.mark.parametrize("new,old", sorted(tp.FAB_PARAMS_RENAMED.items()))
+def test_a_method_with_neither_name_is_refused(new, old):
+    fab_params = {"passiv_opening_um": 40.0, "tm2_enclosure_um": 7.5}
+    del fab_params[old]
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("cupillar_opt2", {"fab_params": fab_params}, where="r.json")
+    assert str(caught.value) == (
+        f"PACKAGE_METHODS_FAB_PARAMS_MISSING: r.json: method cupillar_opt2 has no "
+        f"{FAB_PARAMS_WORDS[new]}: fab_params.{old} and {new} are both missing. Add "
+        f"both, with the same value.")
+
+
+def test_the_package_check_refuses_a_registry_whose_pad_parameters_disagree(measured):
+    package, registry = measured
+    registry.write_text(json.dumps({"schema_version": "1.2", "methods": {"vendorx_microbump": {
+        "pitch_rules": {"IXN_pitch": 40.0},
+        "fab_params": {"passiv_opening_um": 20.0, "tm2_enclosure_um": 5.0,
+                       "passivation_opening_um": 25.0}}}}))
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.check_package(package, methods=registry)
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_DISAGREE"
+    assert str(registry) in caught.value.text
+
+
+@pytest.mark.parametrize("spec", [None, "fab", {"fab_params": "x"}, {"fab_params": None}])
+def test_what_is_not_a_method_reads_as_one_without_pad_parameters(spec):
+    with pytest.raises(tp.TechnologyPackageError) as caught:
+        tp.method_fab_params("m", spec, where="r.json")
+    assert caught.value.message_id == "PACKAGE_METHODS_FAB_PARAMS_MISSING"
 
 
 # --- the command -------------------------------------------------------------
