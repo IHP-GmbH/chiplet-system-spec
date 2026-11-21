@@ -27,15 +27,21 @@ Refusals are collected by stage, with the front end's own in the first. A
 malformed form stops everything. The inputs (base, generator report, digests)
 are checked together, then the symbols and nets when the report could be read,
 and the diff (held nets and terminals, layers) only when nothing came before it.
+
+A pin table (:func:`read_table_sheet`) is a blank sheet's second front end: a
+CSV table of die pins and their nets, read against the same given file with the
+same held nets, and no form.
 """
 from __future__ import annotations
 
 import copy
+import csv
 import hashlib
+import io
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, FrozenSet, List, Optional, Tuple
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 import yaml
 
@@ -459,12 +465,20 @@ def _blank_held(base: _Base, dies: Dict[str, GivenDie]) -> Dict[str, FrozenSet[T
     return held
 
 
+#: How a finding names the edit, and what it says to do with a held pin; a pin
+#: table passes its own.
+_SHEET_PHRASES = {"edit": "the sheet", "on": "on the sheet", "leave": "leave it unconnected"}
+_TABLE_PHRASES = {"edit": "the table", "on": "in the table", "leave": "leave its net empty"}
+
+
 def _hold(base: _Base, dies: Dict[str, GivenDie], held: Dict[str, FrozenSet[Terminal]],
           named: Dict[str, FrozenSet[Terminal]], given: str, name,
-          out: List[dict]) -> Dict[str, FrozenSet[Terminal]]:
+          out: List[dict], phrases: Mapping[str, str] = _SHEET_PHRASES
+          ) -> Dict[str, FrozenSet[Terminal]]:
     """The sheet's nets with the held ones as the given file has them. A held
     terminal may be left unconnected, or put on its own net (a power symbol of
-    that name); anything else is refused."""
+    that name); anything else is refused. ``phrases`` names the edit in the
+    messages."""
     held_of = {t: h for h, ts in held.items() for t in ts}
     sheet_of = {t: n for n, ts in named.items() for t in ts}
     told = set()            # a port of several pads is told once
@@ -481,8 +495,8 @@ def _hold(base: _Base, dies: Dict[str, GivenDie], held: Dict[str, FrozenSet[Term
         if now is not None and now != was and once(term, was):
             out.append(refusal(
                 "held_pin_changed",
-                f"{name(term)} is on {was} in {given}; leave it unconnected or put it on "
-                f"{was} (the sheet puts it on {now})",
+                f"{name(term)} is on {was} in {given}; {phrases['leave']} or put it on "
+                f"{was} ({phrases['edit']} puts it on {now})",
                 net=was, component=term[0], terminal=term[1]))
     for net in sorted(set(named) & set(held)):
         for term in sorted(named[net] - held[net]):
@@ -490,7 +504,7 @@ def _hold(base: _Base, dies: Dict[str, GivenDie], held: Dict[str, FrozenSet[Term
                 continue        # refused above, or told for another pad
             out.append(refusal(
                 "held_pin_changed",
-                f"{net} is fixed by {given}, so {name(term)} cannot join it on the sheet",
+                f"{net} is fixed by {given}, so {name(term)} cannot join it {phrases['on']}",
                 net=net, component=term[0], terminal=term[1]))
     full = {n: ts - held_of.keys() for n, ts in named.items() if n not in held}
     full = {n: ts for n, ts in full.items() if ts}
@@ -505,7 +519,7 @@ class _Edit:
 
 
 def _apply(base: _Base, drawn: _Drawn, named: Dict[str, FrozenSet[Terminal]],
-           out: List[dict]) -> Optional[_Edit]:
+           out: List[dict], phrases: Mapping[str, str] = _SHEET_PHRASES) -> Optional[_Edit]:
     start = len(out)
     # Only die terminals are edited. Any other component's terminals stay where
     # the base puts them: on their netlist net, else on their io pad's net.
@@ -523,7 +537,7 @@ def _apply(base: _Base, drawn: _Drawn, named: Dict[str, FrozenSet[Terminal]],
                 out.append(refusal(
                     "bound_net_changed",
                     f"{cid}.{pin} is a terminal of {cid}, not of a die, and stays on "
-                    f"net {was} (the sheet puts it on {now})",
+                    f"net {was} ({phrases['edit']} puts it on {now})",
                     component=cid, terminal=pin, net=was or now))
     named = {n: frozenset(t for t in ts if t[0] in editable) for n, ts in named.items()}
     named = {n: ts for n, ts in named.items() if ts}
@@ -544,9 +558,9 @@ def _apply(base: _Base, drawn: _Drawn, named: Dict[str, FrozenSet[Terminal]],
         if base_sets.get(name) != named.get(name):
             out.append(refusal(
                 "bound_net_changed",
-                f"net {name} is bound outside the sheet (an io pad, an external net or "
-                f"a terminal the sheet cannot edit) and cannot be renamed, removed or "
-                f"rewired here", net=name))
+                f"net {name} is bound outside {phrases['edit']} (an io pad, an external net "
+                f"or a terminal {phrases['edit']} cannot edit) and cannot be renamed, removed "
+                f"or rewired here", net=name))
 
     all_base = {row["name"] for row in base.nets}
     gone = [b for b in base_sets if b not in named]
@@ -674,6 +688,173 @@ def read_blank_sheet(form_path, given: str, base_raw: bytes,
     return Sheet(base.nets, edit.nets, frozenset(held), dict(edit.renamed))
 
 
+# ---------------------------------------------------------------- the pin table
+
+_TABLE_HEADER = "die,pin,net"
+
+
+def _table_rows(table: bytes, table_name: str) -> List[Tuple[int, List[str]]]:
+    """The rows of a pin table, each with the line it starts on. A table that
+    is not UTF-8 CSV with RFC 4180 quoting, or whose first line is not the
+    header, stops everything. A row with no cell, or with every cell empty, is
+    skipped."""
+    def unreadable(why):
+        return SchematicImportRefused([refusal(
+            "table_unreadable", f"{table_name} cannot be read as a UTF-8 CSV file: {why}.")])
+
+    try:
+        text = table.decode("utf-8-sig")        # drops the byte order mark Excel writes
+    except UnicodeDecodeError as exc:
+        raise unreadable(exc) from exc
+    if "\0" in text:         # the csv module reads it on some Pythons and not on others
+        raise unreadable("it holds a NUL byte")
+    first = text.split("\n", 1)[0].removesuffix("\r")
+    if first != _TABLE_HEADER:
+        raise SchematicImportRefused([refusal(
+            "table_header",
+            f"{table_name} line 1 is {first!r}; a pin table starts with the header "
+            f"{_TABLE_HEADER}.")])
+    # strict: a quote left open or followed by more of its cell is refused, not
+    # read into another cell
+    reader = csv.reader(io.StringIO(text, newline=""), strict=True)
+    rows = []
+    try:
+        next(reader)
+        end = reader.line_num
+        for row in reader:
+            # a row starts after the line the row before ends on; a quoted newline
+            # makes a row span lines
+            start, end = end + 1, reader.line_num
+            if any(row):
+                rows.append((start, row))
+    except csv.Error as exc:
+        raise unreadable(exc) from exc
+    return rows
+
+
+def _table_pin(dies: Dict[str, GivenDie], term: Terminal) -> str:
+    """A die pin as a table's finding names it: the pin, and the port it serves."""
+    return f"{term[0]}.{term[1]} (port {dies[term[0]].ports.get(term[1], term[1])})"
+
+
+def _table_net(net: str) -> str:
+    """A table cell's net as a finding names it; an empty cell is no net."""
+    return f"net {net}" if net else "no net"
+
+
+def _table_nets(rows: List[Tuple[int, List[str]]], dies: Dict[str, GivenDie], given: str,
+                table_name: str, out: List[dict]
+                ) -> Tuple[Dict[str, FrozenSet[Terminal]], Dict[Terminal, int],
+                           FrozenSet[str]]:
+    """The named nets of a pin table's rows, the line each pin is listed on,
+    and the nets a refused row names too. Each row names a die of the file, a pin of that die and a sheet name,
+    or an empty net for a pin on no net; every pin of every die is listed
+    once."""
+    listed: Dict[Terminal, Tuple[int, str]] = {}    # each pin: its row's line and net
+    nets: Dict[str, set] = {}
+    told = set()            # nets named on a row refused for its die or pin
+    for n, row in rows:
+        if len(row) != 3:
+            out.append(refusal(
+                "table_row", f"{table_name} line {n} has {len(row)} cells; a row is die,pin,net."))
+            continue
+        cid, pin, net = row
+        if cid not in dies:
+            out.append(refusal(
+                "unknown_die",
+                f"{table_name} line {n}: {cid!r} is not a die of {given}; its dies are "
+                f"{', '.join(dies)}."))
+            told.add(net)
+            continue
+        if pin not in dies[cid].terminals:
+            out.append(refusal(
+                "unknown_terminal",
+                f"{table_name} line {n}: {pin!r} is not in the pin list of {cid}.",
+                component=cid, terminal=pin))
+            told.add(net)
+            continue
+        term = (cid, pin)
+        if term in listed:
+            first, was = listed[term]
+            said = (f"is listed again (first at line {first}); list each pin once"
+                    if net == was else
+                    f"is on {_table_net(was)} at line {first} and on {_table_net(net)} here")
+            out.append(refusal(
+                "terminal_on_two_nets", f"{table_name} line {n}: {_table_pin(dies, term)} {said}.",
+                component=cid, terminal=pin))
+            continue
+        listed[term] = (n, net)
+        if not net:
+            continue            # on no net
+        if not is_sheet_name(net):
+            out.append(refusal(
+                "unmappable_name",
+                f"{table_name} line {n}: net name {net!r} is not a {SHEET_NAME_WORDS}.",
+                net=net))
+            continue
+        nets.setdefault(net, set()).add(term)
+    for cid, die in dies.items():
+        for pin in sorted(die.terminals):
+            if (cid, pin) in listed:
+                continue
+            out.append(refusal(
+                "missing_terminal",
+                f"{table_name} does not list {_table_pin(dies, (cid, pin))}; list every pin of "
+                f"every die; leave the net empty for a pin on no net.",
+                component=cid, terminal=pin))
+    named = {net: frozenset(terms) for net, terms in nets.items()}
+    return named, {term: n for term, (n, _) in listed.items()}, frozenset(told)
+
+
+def _lone_nets(named: Dict[str, FrozenSet[Terminal]], quiet: FrozenSet[str],
+               lines: Dict[Terminal, int], dies: Dict[str, GivenDie], table_name: str,
+               out: List[dict]) -> None:
+    """A pin table's net on one row only: a net with one end is no connection,
+    and is most often a name misspelled on its other row. The ``quiet`` nets
+    are not told: held ones, and ones a refused row names too."""
+    for net, terms in named.items():
+        if net in quiet or len(terms) != 1:
+            continue            # an end on a refused row is reported with it
+        (term,) = terms
+        out.append(refusal(
+            "lone_net",
+            f"{table_name} line {lines[term]}: net {net} reaches only {_table_pin(dies, term)}; "
+            f"check its spelling on the other row.",
+            net=net, component=term[0], terminal=term[1]))
+
+
+def read_table_sheet(table: bytes, table_name: str, given: str, base_raw: bytes,
+                     dies: Dict[str, GivenDie]) -> Sheet:
+    """The nets of the pin table ``table``, read as a blank sheet is against
+    its given file: ``given``, ``base_raw`` and ``dies`` as
+    :func:`read_blank_sheet` takes them, and ``table_name`` the table's name for
+    the messages. The table is CSV with the header ``die,pin,net`` and one row
+    per pin of each die, an empty net for a pin on no net; cells are compared
+    as written. The held nets are the blank sheet's, and a held pin's net is
+    empty or the one the given file has. No form is read. Refused as
+    :func:`read_sheet` is; nothing is written."""
+    rows = _table_rows(table, table_name)
+
+    def name(term: Terminal) -> str:
+        die = dies.get(term[0])
+        return f"{term[0]}.{die.ports.get(term[1], term[1]) if die else term[1]}"
+
+    out: List[dict] = []
+    named, lines, told = _table_nets(rows, dies, given, table_name, out)
+    base = _read_base(Path(given), out, raw=base_raw)
+    # No report: the given file's dies are what the table lists.
+    drawn = _Drawn(Path(given), None, tuple(dies), {i: d.terminals for i, d in dies.items()})
+    if base is None:
+        raise SchematicImportRefused(out)
+    held = _blank_held(base, dies)
+    _lone_nets(named, frozenset(held) | told, lines, dies, table_name, out)
+    full = _hold(base, dies, held, named, given, name, out, _TABLE_PHRASES) if not out else {}
+    edit = _apply(base, drawn, full, out, _TABLE_PHRASES) if not out else None
+    if out:
+        raise SchematicImportRefused(out)
+    return Sheet(base.nets, edit.nets, frozenset(held), dict(edit.renamed))
+
+
 __all__ = [
     "GivenDie",
     "SchematicImportRefused",
@@ -682,4 +863,5 @@ __all__ = [
     "read_blank_sheet",
     "read_classic_sheet",
     "read_sheet",
+    "read_table_sheet",
 ]
