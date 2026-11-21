@@ -24,6 +24,9 @@ A flow verb reads the file once and passes its bytes here with what was edited:
   exported here) takes the form of a classic sheet (form 1.2), drawn from
   blank with no file behind it, and writes the whole system it draws into its
   project file; :func:`schematic_edits` hands a classic form there.
+- :func:`table_edits` takes a pin table, a CSV table of die pins and their
+  nets, against the file itself: a blank sheet's second front end, with the
+  same held nets and the same lift, and no form read.
 
 Each returns the :mod:`~chiplet_system_description.source.patch` edits that write the
 change, after proving them: the patched text is elaborated again and must give
@@ -73,7 +76,7 @@ from .writer import SourceWriteError, _bus_affixes
 
 __all__ = ["Change", "Delete", "Edit", "EditFinding", "EditRefused", "Insert", "Patch",
            "Place", "Replace", "SetSize", "board_edits", "classic_edits", "patch_system",
-           "revision_edits", "schematic_edits"]
+           "revision_edits", "schematic_edits", "table_edits"]
 
 
 def classic_edits(data: bytes, *, path: Union[str, Path], form: Union[str, Path],
@@ -284,15 +287,26 @@ def board_edits(data: bytes, *, path: Union[str, Path], resolver: Resolver,
 # ----------------------------------------------------------------------
 Port = Tuple[str, str]  # (instance, port name)
 
-#: The sentence an import refusal opens with when the edit words it its own way.
+#: The sentence an import refusal opens with when the edit words it its own way, for a
+#: sheet and for a pin table.
 _SHEET_WORDS = {
     "sheet_other_run": "The sheet was drawn from a different run.",
     "carrier_net_changed": "A net bound outside the dies (a carrier pad, an external net) "
                            "changed on the sheet; the external interface is edited in the file, "
                            "not on the sheet.",
 }
+_TABLE_WORDS = {
+    "carrier_net_changed": "A net bound outside the dies (a carrier pad, an external net) "
+                           "changed in the table; the external interface is edited in the file, "
+                           "not in the table.",
+}
 _SHEET_CODES = {"base_digest_mismatch": "sheet_other_run",
                 "bound_net_changed": "carrier_net_changed"}
+
+#: How the lift and its proof name the edit, and what they ask of a port on no net.
+_SHEET_PHRASES = {"edit": "the sheet", "unwired": "draw its connection from the diagram"}
+_TABLE_PHRASES = {"edit": "the table",
+                  "unwired": "give it a net in the table, or state it open in the file"}
 
 
 def _terms(row: Mapping) -> frozenset:
@@ -304,10 +318,13 @@ def _connectivity(rows) -> set:
 
 
 class _Lift:
-    """The items a sheet's nets ask for, against the items the file has."""
+    """The items a sheet's nets ask for, against the items the file has.
+    ``phrases`` names the edit in the messages."""
 
-    def __init__(self, source: Source, topology: Plan, sheet, *, blank: bool = False):
+    def __init__(self, source: Source, topology: Plan, sheet, *, blank: bool = False,
+                 phrases: Mapping[str, str] = _SHEET_PHRASES):
         self.source, self.topology, self.sheet, self.blank = source, topology, sheet, blank
+        self.phrases = phrases
         self.names = item_names(source.text)
         self.findings: List[EditFinding] = []
         self.edits: List[Edit] = []
@@ -435,8 +452,9 @@ class _Lift:
             if len(planned) > 1:
                 if any(wanted.get(k) != b for k, b in zip(keys, bases)):
                     self.refuse("not_expressible", None,
-                                f"Line {line} writes a range of links, and the sheet changes "
-                                "one of them; write its links one per line first.", line)
+                                f"Line {line} writes a range of links, and "
+                                f"{self.phrases['edit']} changes one of them; write its links one "
+                                "per line first.", line)
                 for k in keys:
                     wanted.pop(k, None)
                 continue
@@ -500,8 +518,8 @@ class _Lift:
             stated = {(r.instance, r.port) for item in self.source.open for r in item.refs}
             for port in sorted(open_ - stated, key=self.rank.get):
                 self.refuse("pin_not_wired", port,
-                            f"{self.text(port)} is not wired; draw its connection from the "
-                            "diagram", _line(self.topology, self.source, port))
+                            f"{self.text(port)} is not wired; {self.phrases['unwired']}",
+                            _line(self.topology, self.source, port))
         if self.findings:
             raise EditRefused(self.findings)
         self.rails(rails)
@@ -523,7 +541,8 @@ def _line(topology: Plan, source: Source, port: Optional[Port] = None,
     return next((d.line for d in source.dies if d.id == die), 0)
 
 
-def _from_import(r: Mapping, topology: Plan, source: Source) -> EditFinding:
+def _from_import(r: Mapping, topology: Plan, source: Source,
+                 words: Mapping[str, str] = _SHEET_WORDS) -> EditFinding:
     code = _SHEET_CODES.get(r["code"], r["code"])
     port, line = None, 0
     comp, term = r.get("component"), r.get("terminal")
@@ -538,8 +557,9 @@ def _from_import(r: Mapping, topology: Plan, source: Source) -> EditFinding:
         line = _line(topology, source, instance=comp)
     elif comp and term:
         port = f"{comp}.{term}"
-    words = _SHEET_WORDS.get(code)
-    return EditFinding(code, line, port, f"{words} {r['message']}." if words else r["message"])
+    opening = words.get(code)
+    return EditFinding(code, line, port,
+                       f"{opening} {r['message']}." if opening else r["message"])
 
 
 def _form_refused(refusals, text: str, path, blank: bool) -> EditRefused:
@@ -642,17 +662,49 @@ def schematic_edits(data: bytes, *, path: Union[str, Path], resolver: Resolver,
     return edits
 
 
-def _prove_sheet(data: bytes, path, resolver: Resolver, old: Mapping, nets) -> None:
+def table_edits(data: bytes, *, path: Union[str, Path], resolver: Resolver, table: bytes,
+                table_name: str) -> Tuple[Edit, ...]:
+    """The edits that write a pin table into the source ``data``.
+
+    ``path`` is where ``data`` was read from. ``table`` is the bytes of a CSV
+    table of die pins and their nets (header ``die,pin,net``), and
+    ``table_name`` names it in the findings. The table is read as a blank sheet
+    is, against ``data`` elaborated as a sheet base: it sets the nets between
+    dies, and the rails, external pins and carrier nets stay as the file has
+    them. No connectivity form is read or written.
+    """
+    text, _ = decode(data)
+    from ..schematic_import import SchematicImportRefused, read_table_sheet
+
+    source, topology = _read(text, path, sheet_base=True)
+    old_design = elaborate(build(source, topology, resolver))
+    try:
+        sheet = read_table_sheet(table, table_name, Path(path).name,
+                                 cfio.dumps(old_design).encode("utf-8"),
+                                 _given_dies(source, topology))
+    except SchematicImportRefused as exc:
+        raise EditRefused([_from_import(r, topology, source, _TABLE_WORDS)
+                           for r in exc.refusals]) from exc
+    edits = _Lift(source, topology, sheet, blank=True, phrases=_TABLE_PHRASES).run()
+    if edits:
+        _prove_sheet(patch_system(data, edits).text, path, resolver, old_design, sheet.nets,
+                     _TABLE_PHRASES)
+    return edits
+
+
+def _prove_sheet(data: bytes, path, resolver: Resolver, old: Mapping, nets,
+                 phrases: Mapping[str, str] = _SHEET_PHRASES) -> None:
     text, _ = decode(data)
     source, findings = check_text(text, path)
     topology = plan(source) if source is not None and not findings else None
     if topology is None or topology.refusals:
         found = findings or topology.refusals
         raise EditRefused([EditFinding("not_expressible", f.line, None,
-                                       "The file cannot hold the sheet: " + f.message)
+                                       f"The file cannot hold {phrases['edit']}: {f.message}")
                            for f in found])
     got = elaborate(build(source, topology, resolver))
     outside = lambda d: {k: v for k, v in d.items() if k != "netlist"}  # noqa: E731
     if _connectivity(got["netlist"]["nets"]) != _connectivity(nets) or outside(got) != outside(old):
-        raise SystemSpecError(f"{path}: the patched file does not elaborate to the sheet's nets; "
-                              "this is a defect of the writer, nothing was written")
+        raise SystemSpecError(f"{path}: the patched file does not elaborate to "
+                              f"{phrases['edit']}'s nets; this is a defect of the writer, "
+                              "nothing was written")
