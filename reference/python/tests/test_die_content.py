@@ -28,7 +28,9 @@ WRITERS = ("build-die", "padring", "pad-frame", "partner-die")
 FAKE_ROOTS = {"run": "/fake/run/RUN_1", "design": "/fake/design", "pdk": "/fake/design/pdk"}
 MOVED_ROOTS = {"run": "/moved/runs/RUN_2", "design": "/moved/d", "pdk": "/moved/d/pdk"}
 
-#: The digests of the four pairs under die-content/v1. They move only with a
+#: The digests of the four pairs, first pinned under die-content/v1. The
+#: fixtures hold no digest map, so under die-content/v2 they key as written:
+#: a record written before v2 reads to the same digest. They move only with a
 #: new form name.
 PINNED = {
     "build-die": ("157c4b17c0fac3f9569a32bef252bccaa2c0759b7870658d670adbfc9d617517",
