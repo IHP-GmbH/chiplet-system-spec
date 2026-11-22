@@ -20,7 +20,10 @@ KiCad sheet's net, pin and pad names are written and read back with. Release
 vocabulary it is keyed by and the version readers support. Release 1.26.0
 added the die_content module, the content form of a die's build record and
 contract: its form name, its out lists and its table of bound rows are
-pinned, so the form cannot move without a new name. A value
+pinned, so the form cannot move without a new name. Release 1.27.0 made it
+die-content/v2: the digest map's row field, its two value prefixes, the
+stamped kinds and the header entries their canons drop, and the keys that
+make an object a candidate. A value
 that moves fails here, at any depth and by type as well as by value, and so
 does a public name added or removed.
 """
@@ -258,7 +261,7 @@ GOLDEN = {
         "SHEET_NAME_WORDS": "plain [A-Za-z0-9_.+-] name, with [N] subscripts allowed after its first character",
     },
     "die_content": {
-        "DIE_CONTENT_FORM": "die-content/v1",
+        "DIE_CONTENT_FORM": "die-content/v2",
         "BUILD_RECORD_OUT": (("emitted_under",), ("build_revision",), ("process", "pdk_version_source"),
                              ("process", "pdk_version_from"), ("pdk_version_from",), ("run",),
                              ("librelane_version",)),
@@ -301,6 +304,15 @@ GOLDEN = {
             ("padring", "final/def/*.def", "keep"),
             ("padring", "final/pnl/*.pnl.v", "keep"),
         ),
+        "DIGEST_MAP": "digest_map",
+        "CANON": "canon:",
+        "CONTENT": "content:",
+        "GDS": "GDS",
+        "SPEF": "SPEF",
+        "SDF": "SDF",
+        "SPEF_DROPPED": ("*DATE", "*VENDOR", "*PROGRAM", "*VERSION"),
+        "SDF_DROPPED": ("DATE", "VENDOR", "PROGRAM", "VERSION"),
+        "CANDIDATE_PATHS": ("resolved_path", "path", "source"),
     },
 }
 
@@ -341,6 +353,13 @@ PRIVATE = {
         "_ROOT_NAMES": ("run", "design", "pdk"),
         "_LAYOUT": "layout",
         "_STEP": re.compile(r"^[0-9]+-(?=[A-Za-z])"),
+        "_HEX": re.compile(r"[0-9a-f]{64}"),
+        "_GDS_HEADER": b"\x00\x06\x00\x02",
+        "_GDS_TIMED": (0x01, 0x05),
+        "_GDS_ENDLIB": 0x04,
+        "_SPEF_SECTIONS": (b"*NAME_MAP", b"*POWER_NETS", b"*GROUND_NETS", b"*PORTS", b"*PHYSICAL_PORTS",
+                           b"*DEFINE", b"*PDEFINE", b"*VARIATION_PARAMETERS", b"*D_NET", b"*R_NET",
+                           b"*D_PNET", b"*R_PNET"),
     },
     "verilog_closure": {
         "_LEX": re.compile(r'\\\S+|/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\\n])*"', re.S),
@@ -377,7 +396,9 @@ CALLABLES = {
     "sheet_names": ("is_sheet_name",),
     "die_content": ("canonical_json", "canonical_sha256", "writer_of", "strip_step", "decision", "project",
                     "build_record_content", "build_record_content_sha256", "contract_content",
-                    "contract_content_sha256"),
+                    "contract_content_sha256", "CanonError", "file_kind", "canon", "canon_sha256",
+                    "DigestMapRefused", "CandidateUnreadable", "CandidateChanged", "CandidateNamedTwice", "CandidateMalformed",
+                    "DigestCycle", "candidates", "digest_map", "check_digest_map"),
 }
 
 
